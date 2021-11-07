@@ -45,10 +45,17 @@ class SlideShow(QWidget):
         """Load all the images from the target folder.
         """
         patterns = [os.path.join(folder_path, f'*.{ext}') for ext in filter]
-        file_list = sum([glob.glob(pattern) for pattern in patterns], start=[])
+        file_list = []
+        # Cannot use sum with start in python 3.7?
+        for pattern in patterns:
+            file_list += glob.glob(pattern)
         file_list.sort()
-        pixmap_list = [QPixmap(file_path).scaledToHeight(height) for file_path in file_list]
-        pixmap_keys = [f'{i + 1}' for i, _ in enumerate(pixmap_list)]
+        pixmap_list = []
+        pixmap_keys  = []
+        for i, file_path in enumerate(file_list):
+            print(f'Loading {file_path}...')
+            pixmap_list.append(QPixmap(file_path).scaledToHeight(height))
+            pixmap_keys.append(f'{i + 1}')
         self.__current_index = 0
         return pixmap_list, pixmap_keys
 
