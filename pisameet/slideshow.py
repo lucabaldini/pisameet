@@ -108,16 +108,19 @@ class FolderDescriptor:
 
     DEFAULT_FILTERS = ('png', 'jpg')
 
-    def __init__(self, folder_path: str, filters: tuple = DEFAULT_FILTERS) -> None:
+    def __init__(self, folder_path: str, screen_id: int, filters: tuple = DEFAULT_FILTERS) -> None:
         """Constructor.
         """
         self.file_list = []
+        _start = f'{screen_id:02d}_'
         logger.info('Scanning input folder %s...', folder_path)
         for entry in os.scandir(folder_path):
             if not entry.is_file():
                 continue
             file_path = entry.path
             if file_path.split('.').pop() not in filters:
+                continue
+            if not os.path.basename(file_path).startswith(_start):
                 continue
             stat = entry.stat()
             mod_timestamp = stat.st_mtime
@@ -158,10 +161,12 @@ class SlideShow(QWidget):
     WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors'
     VALID_GEOMETRIES = ('default', 'maximize', 'fullscreen')
 
-    def __init__(self, folder_path, **kwargs):
+    def __init__(self, folder_path: str, screen: int, **kwargs):
         """Constructor.
         """
         super().__init__()
+        self.folder_path = folder_path
+        self.screen_id = screen
         # Parse the command-line arguments.
         advance_interval = kwargs.get('advance', self.DEFAULT_ADVANCE_INTERVAL)
         pause_interval = kwargs.get('pause', self.DEFAULT_PAUSE_INTERVAL)
@@ -185,7 +190,7 @@ class SlideShow(QWidget):
         self.timer = QTimer()
         self.timer.timeout.connect(self.advance)
         # Load the images.
-        self.pixmap_list, self.pixmap_keys = self._load_images(folder_path)
+        self.pixmap_list, self.pixmap_keys = self._load_images()
         self.display_image()
         # We're good to go!
         self.timer.start(self.advance_interval)
@@ -211,7 +216,7 @@ class SlideShow(QWidget):
         """
         return int(round(1.e3 * sec))
 
-    def _load_images(self, folder_path: str, height: int = 1000):
+    def _load_images(self, height: int = 1000):
         """Load all the images from the target folder.
 
         This is reading the files from disk, creating the corresponding
@@ -233,13 +238,6 @@ class SlideShow(QWidget):
 
         Arguments
         ---------
-        folder_path : str
-            The path to the folder containing the poster images.
-
-        filter : tuple or list of strings
-            A tuple or list containing all the file extensions to search for in
-            the folder passed as a first argument.
-
         height : int
             The target height (in pixel) for the QPixmap(s) showing the images.
 
@@ -249,7 +247,7 @@ class SlideShow(QWidget):
         characters for the key shortcuts.
         """
         self.__current_index = 0
-        return FolderDescriptor(folder_path).pixmap_data(height)
+        return FolderDescriptor(self.folder_path, self.screen_id).pixmap_data(height)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Overloaded method to handle key events.
@@ -287,6 +285,8 @@ class SlideShow(QWidget):
 if __name__ == '__main__':
     # pylint: disable=invalid-name
     parser = argparse.ArgumentParser()
+    parser.add_argument('--screen', type=int, default=1,
+        help='the unique identifier of the target screen')
     parser.add_argument('--advance', type=float, default=SlideShow.DEFAULT_ADVANCE_INTERVAL,
         help='the time interval for the slide show transition [s]')
     parser.add_argument('--pause', type=float, default=SlideShow.DEFAULT_PAUSE_INTERVAL,
