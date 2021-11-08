@@ -1,0 +1,84 @@
+\documentclass[portrait,final]{pmposter}
+
+% Folder(s) where LaTex is supposed to search for figures.
+\graphicspath{{figures/}}
+
+\usepackage{amsmath}
+\usepackage{bookman}
+
+% Title, authors and affiliations.
+\title{Placeholder poster---screen 1, poster id 0}
+\author{Luca Baldini}
+\affil{Universit\`a and INFN-Pisa}
+
+\begin{document}
+
+\begin{poster}
+  { % Poster Options---change stuff at your leisure.
+    grid            = no             , % Visualize a debug grid.
+    headerheight    = 0.16\textheight, % The height of the title/author block.
+    titlefont       = \bf\huge       , % Font for the title.
+    authorfont      = \large         , % Font for the authors/affiliations.
+    abstractfont    = \large         , % Font for the abstract box.
+    headerfont      = \bf\Large      , % Font for the box headers.
+    textfont        = \normalsize    , % Font for the body text.
+    textmargin      = 0.5em          , % Left/right margins for the body text.
+    textcolor       = nicegray           , % Default text color.
+    twocolsabstract = no             , % Use two columns for the abstract.
+    linewidth       = 2pt              % Width of the lines.
+  }
+  { % Logo.
+    \includegraphics[width=0.15\textwidth]{fdfp_crop}
+  }
+  {}
+
+
+  \abstract{Placeholder poster for the 15th Pisa Meeting on Advanced Detectors}{
+    This is a simple placeholder to debug the poster display system for the
+    forthcoming Pisa Meeting on Advanced Detectors.
+  }
+
+
+  % Your first box. If you specify the height, that's relative to the
+  % poster height (0.3 is 30% of the poster). If you don't the box will
+  % adapt itself to the content.
+  \headerbox{Text}{name=box1,column=0,span=3,
+    below=abstract}{%,height=0.25}{
+    Text goes here.
+  }
+
+
+  \headerbox{Pictures}{name=box2,
+    column=3,span=3, below=abstract}{%,height=0.4}{
+    %\centering\includegraphics[width=0.7\textwidth]{p302_6yr_source_composite_limit_data_plot_bb}
+    More text.
+  }
+
+
+  \headerbox{Graphics}{name=box3,column=3,span=3,
+    below=box2}{%,height=0.28}{
+    \begin{tikzpicture}[x=0.45\textwidth, y=0.45\textwidth]%
+      \useasboundingbox (0, 0) rectangle (1, 1);%
+    \end{tikzpicture}
+
+    \bigskip
+
+    Even more text.
+  }
+
+
+  \headerbox{?}{name=box4,column=0,span=3,
+    below=box1}{%,height=0.15}{
+    %\centering\includegraphics[width=0.7\textwidth]{p302_shared_events}
+
+  }
+
+
+  \bibbox{name=referencebox,column=3,span=3,below=box3,
+    bottomaligned=box4}{
+  \bibitem{p8dwarfs} Ackermann, M. et al, \emph{Searching for Dark Matter Annihilation from Milky Way Dwarf Spheroidal Galaxies with Six Years of Fermi-LAT Data}, \texttt{arXiv:1503.02641}, accepted for publication on PRL
+  }
+
+\end{poster}
+
+\end{document}
