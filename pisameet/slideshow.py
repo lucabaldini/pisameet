@@ -19,7 +19,6 @@
 """Tools for the poster slideshow.
 """
 
-import argparse
 import datetime
 import logging
 import os
@@ -33,6 +32,10 @@ from PyQt5.QtCore import QTimer
 
 
 class TerminalColors:
+
+    """Terminal facilities for printing text in colors.
+    """
+
     HEADER = '\033[95m'
     BLUE = '\033[94m'
     GREEN = '\033[92m'
@@ -42,25 +45,30 @@ class TerminalColors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-def _color(text, color):
-    """Process a piece of tect to be printed out in color.
-    """
-    return '%s%s%s' % (color, text, TerminalColors.ENDC)
+    @staticmethod
+    def _color(text, color):
+        """Process a piece of tect to be printed out in color.
+        """
+        return '%s%s%s' % (color, text, TerminalColors.ENDC)
 
-def _red(text):
-    """Process a piece of text to be printed out in red.
-    """
-    return _color(text, TerminalColors.RED)
+    @staticmethod
+    def red(text):
+        """Process a piece of text to be printed out in red.
+        """
+        return TerminalColors._color(text, TerminalColors.RED)
 
-def _yellow(text):
-    """Process a piece of text to be printed out in yellow.
-    """
-    return _color(text, TerminalColors.YELLOW)
+    @staticmethod
+    def yellow(text):
+        """Process a piece of text to be printed out in yellow.
+        """
+        return TerminalColors._color(text, TerminalColors.YELLOW)
 
-def _green(text):
-    """Process a piece of text to be printed out in green.
-    """
-    return _color(text, TerminalColors.GREEN)
+    @staticmethod
+    def green(text):
+        """Process a piece of text to be printed out in green.
+        """
+        return TerminalColors._color(text, TerminalColors.GREEN)
+
 
 
 class TerminalFormatter(logging.Formatter):
@@ -75,14 +83,13 @@ class TerminalFormatter(logging.Formatter):
         if len(record.args) > 0:
             text = text % record.args
         if record.levelno >= logging.ERROR:
-            text = _red(text)
+            text = TerminalColors.red(text)
         elif record.levelno == logging.WARNING:
-            text = _yellow(text)
+            text = TerminalColors.yellow(text)
         return text
 
 
-""" Configure the main terminal logger.
-"""
+#Configure the main terminal logger.
 logger = logging.getLogger('pisameet')
 logger.setLevel(logging.DEBUG)
 consoleHandler = logging.StreamHandler()
@@ -120,10 +127,11 @@ class FolderDescriptor:
     def pixmap_data(self, height: int):
         """Load the image data and create the relevant QPixmap objects.
         """
+        logger.info('Loading pixmap data...')
         pixmap_list = []
         pixmap_keys = []
         for i, (file_path, _) in enumerate(self.file_list):
-            print(f'Loading {file_path}...')
+            logger.info('Loading image from %s...', file_path)
             pixmap_list.append(QPixmap(file_path).scaledToHeight(height))
             pixmap_keys.append(f'{i + 1}')
         return pixmap_list, pixmap_keys
@@ -135,7 +143,7 @@ class FolderDescriptor:
         for file_path, mod_timestamp in self.file_list:
             mode_date = datetime.datetime.fromtimestamp(mod_timestamp)
             text = f'{text}{file_path} -> {mode_date}\n'
-        return text
+        return text.strip('\n')
 
 
 
@@ -144,7 +152,7 @@ class SlideShow(QWidget):
     """Basic slideshow class.
     """
 
-    DEFAULT_TIME_INTERVAL = 30.
+    DEFAULT_SHOW_TIME = 30.
     DEFAULT_PAUSE_TIME = 120.
     WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors'
 
@@ -153,12 +161,12 @@ class SlideShow(QWidget):
         """
         super().__init__()
         # Parse the command-line arguments.
-        time_interval = kwargs.get('time_interval', self.DEFAULT_TIME_INTERVAL)
+        show_time = kwargs.get('show_time', self.DEFAULT_SHOW_TIME)
         pause_time = kwargs.get('pause_time', self.DEFAULT_PAUSE_TIME)
         background_color = kwargs.get('background_color', 'black')
         geometry = kwargs.get('geometry')
         # Convert times from s to msec.
-        self.time_interval = self.sec_to_msec(time_interval)
+        self.show_time = self.sec_to_msec(show_time)
         self.pause_time = self.sec_to_msec(pause_time)
         # Reset the slideshow index.
         self.__current_index = 0
@@ -177,7 +185,7 @@ class SlideShow(QWidget):
         self.pixmap_list, self.pixmap_keys = self._load_images(folder_path)
         self.show_image()
         # We're good to go!
-        self.timer.start(self.time_interval)
+        self.timer.start(self.show_time)
         if geometry == 'maximized':
             self.showMaximized()
         elif geometry == 'fullscreen':
@@ -237,9 +245,8 @@ class SlideShow(QWidget):
         Two lists of the same length, containing the QPixmap objects and the
         characters for the key shortcuts.
         """
-        descr = FolderDescriptor(folder_path)
         self.__current_index = 0
-        return descr.pixmap_data(height)
+        return FolderDescriptor(folder_path).pixmap_data(height)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Overloaded method to handle key events.
@@ -276,5 +283,5 @@ class SlideShow(QWidget):
 if __name__ == '__main__':
     # pylint: disable=invalid-name
     app = QApplication(sys.argv)
-    slideshow = SlideShow('posters', time_interval=1.)
+    slideshow = SlideShow('posters', show_time=1.)
     sys.exit(app.exec_())
