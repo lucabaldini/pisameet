@@ -19,6 +19,7 @@
 """Tools for the poster slideshow.
 """
 
+import datetime
 import glob
 import os
 import sys
@@ -27,6 +28,52 @@ import sys
 from PyQt5.QtWidgets import QApplication, QLabel, QGridLayout, QWidget
 from PyQt5.QtGui import QPixmap, QKeyEvent
 from PyQt5.QtCore import QTimer
+
+
+
+class FolderDescriptor:
+
+    """Small container class to keep track of the image files to be looped
+    over in a given directory.
+    """
+
+    DEFAULT_FILTERS = ('png', 'jpg')
+
+    def __init__(self, folder_path: str, filters: tuple = DEFAULT_FILTERS) -> None:
+        """Constructor.
+        """
+        self.file_list = []
+        for entry in os.scandir(folder_path):
+            if not entry.is_file():
+                continue
+            file_path = entry.path
+            if file_path.split('.').pop() not in filters:
+                continue
+            stat = entry.stat()
+            mod_timestamp = stat.st_mtime
+            self.file_list.append((file_path, mod_timestamp))
+        self.file_list.sort()
+
+    def pixmap_data(self, height: int):
+        """Load the image data and create the relevant QPixmap objects.
+        """
+        pixmap_list = []
+        pixmap_keys = []
+        for i, (file_path, _) in enumerate(self.file_list):
+            print(f'Loading {file_path}...')
+            pixmap_list.append(QPixmap(file_path).scaledToHeight(height))
+            pixmap_keys.append(f'{i + 1}')
+        return pixmap_list, pixmap_keys
+
+    def __str__(self) -> str:
+        """String formatting.
+        """
+        text = ''
+        for file_path, mod_timestamp in self.file_list:
+            mode_date = datetime.datetime.fromtimestamp(mod_timestamp)
+            text = f'{text}{file_path} -> {mode_date}\n'
+        return text
+
 
 
 class SlideShow(QWidget):
@@ -128,24 +175,10 @@ class SlideShow(QWidget):
         Two lists of the same length, containing the QPixmap objects and the
         characters for the key shortcuts.
         """
-        patterns = [os.path.join(folder_path, f'*.{ext}') for ext in filters]
-        # Should you be tempted to use the builtin sum() with start=[], here,
-        # keep in mind that can be used as a keyword argument only starting
-        # from Python 3.8.
-        file_list = []
-        for pattern in patterns:
-            file_list += glob.glob(pattern)
-        # We want the file list sorted :-)
-        file_list.sort()
-        # Create the QPixmap objects.
-        pixmap_list = []
-        pixmap_keys = []
-        for i, file_path in enumerate(file_list):
-            print(f'Loading {file_path}...')
-            pixmap_list.append(QPixmap(file_path).scaledToHeight(height))
-            pixmap_keys.append(f'{i + 1}')
+        descr = FolderDescriptor(folder_path)
+        print(descr)
         self.__current_index = 0
-        return pixmap_list, pixmap_keys
+        return descr.pixmap_data(height)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Overloaded method to handle key events.
