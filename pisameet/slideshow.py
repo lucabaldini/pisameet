@@ -28,7 +28,7 @@ import sys
 # pylint: disable=no-name-in-module
 from PyQt5.QtWidgets import QApplication, QLabel, QGridLayout, QWidget
 from PyQt5.QtGui import QPixmap, QKeyEvent
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import Qt, QTimer
 
 
 
@@ -130,13 +130,18 @@ class FolderDescriptor:
 
     def pixmap_data(self, height: int):
         """Load the image data and create the relevant QPixmap objects.
+
+        Note that it is *very* important to call the QPixmap.scaledToHeight()
+        method with the Qt.SmoothTransformation transformation mode, so that
+        a bilinear interpolation is performed when remapping the original
+        image into the target QLabel object.
         """
         logger.info('Loading pixmap data...')
         pixmap_list = []
         pixmap_keys = []
         for i, (file_path, _) in enumerate(self.file_list):
             logger.info('Loading image from %s...', file_path)
-            pixmap_list.append(QPixmap(file_path).scaledToHeight(height))
+            pixmap_list.append(QPixmap(file_path).scaledToHeight(height, Qt.SmoothTransformation))
             pixmap_keys.append(f'{i + 1}')
         return pixmap_list, pixmap_keys
 
