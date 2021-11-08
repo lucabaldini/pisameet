@@ -7,7 +7,7 @@
 \usepackage{bookman}
 
 % Title, authors and affiliations.
-\title{Placeholder poster---screen 1, poster id 0}
+\title{A Wonderful Placeholder Poster---screen 1, id 0}
 \author{Luca Baldini}
 \affil{Universit\`a and INFN-Pisa}
 
@@ -16,7 +16,7 @@
 \begin{poster}
   { % Poster Options---change stuff at your leisure.
     grid            = no             , % Visualize a debug grid.
-    headerheight    = 0.16\textheight, % The height of the title/author block.
+    headerheight    = 0.22\textheight, % The height of the title/author block.
     titlefont       = \bf\huge       , % Font for the title.
     authorfont      = \large         , % Font for the authors/affiliations.
     abstractfont    = \large         , % Font for the abstract box.
@@ -28,7 +28,7 @@
     linewidth       = 2pt              % Width of the lines.
   }
   { % Logo.
-    \includegraphics[width=0.15\textwidth]{fdfp_crop}
+    \includegraphics[width=0.6\textwidth]{fdfp}
   }
   {}
 
@@ -39,24 +39,24 @@
   }
 
 
-  % Your first box. If you specify the height, that's relative to the
-  % poster height (0.3 is 30% of the poster). If you don't the box will
-  % adapt itself to the content.
-  \headerbox{Text}{name=box1,column=0,span=3,
-    below=abstract}{%,height=0.25}{
-    Text goes here.
+  % If you specify the height, that's relative to the poster height, i.e., 0.3
+  % is 30% of the poster). If you don't the box will adapt itself to the content.
+  \headerbox{Text}{name=textbox,column=0,span=3, below=abstract, height=0.44}
+  {
+    Sample box for plain text. You will notice that we have deliberately chosen
+    a font that is hard to read.
+
+    \medskip
+
+    And here are different font sizes:
+    \begin{itemize}
+    \item {\Huge this text is huge;}
+    \item {\scriptsize this text is scriptsize;}
+    \end{itemize}
   }
 
-
-  \headerbox{Pictures}{name=box2,
-    column=3,span=3, below=abstract}{%,height=0.4}{
-    %\centering\includegraphics[width=0.7\textwidth]{p302_6yr_source_composite_limit_data_plot_bb}
-    More text.
-  }
-
-
-  \headerbox{Graphics}{name=box3,column=3,span=3,
-    below=box2}{%,height=0.28}{
+  \headerbox{Graphics}{name=graphbox,column=0, span=3, below=textbox, height=0.44}
+  {
     \begin{tikzpicture}[x=0.45\textwidth, y=0.45\textwidth]%
       \useasboundingbox (0, 0) rectangle (1, 1);%
     \end{tikzpicture}
@@ -66,16 +66,18 @@
     Even more text.
   }
 
-
-  \headerbox{?}{name=box4,column=0,span=3,
-    below=box1}{%,height=0.15}{
-    %\centering\includegraphics[width=0.7\textwidth]{p302_shared_events}
-
+  \headerbox{Pictures}{name=picbox, column=3,span=3, below=abstract, height=0.35}
+  {
+    More text.
   }
 
 
-  \bibbox{name=referencebox,column=3,span=3,below=box3,
-    bottomaligned=box4}{
+  \headerbox{Miscellanea}{name=miscbox,column=3,span=3, below=picbox, height=0.35}
+  {
+    More text.
+  }
+
+  \bibbox{name=referencebox,column=3,span=3,below=miscbox, bottomaligned=graphbox}{
   \bibitem{p8dwarfs} Ackermann, M. et al, \emph{Searching for Dark Matter Annihilation from Milky Way Dwarf Spheroidal Galaxies with Six Years of Fermi-LAT Data}, \texttt{arXiv:1503.02641}, accepted for publication on PRL
   }
 

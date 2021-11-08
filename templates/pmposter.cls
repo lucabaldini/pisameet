@@ -1303,7 +1303,7 @@
     %
     %
     %      % Draw Header%
-    \draw (north west) +(0em,1em+0.5\headerheight) node(image)[anchor=west]   { {\usebox{\baposter@titleimage@left }} };%
+    \draw (north west) +(0.5\textwidth,1em+0.65\headerheight) node(image)[anchor=center]   { {\usebox{\baposter@titleimage@left }} };%
     \draw (north east) +(0em,1em+0.5\headerheight) node(logo) [anchor=east]   { {\usebox{\baposter@titleimage@right}} };%
     %\ifthenelse{\equal{\baposter@eyecatcher}{no}}{% Has no eye catcher
     %  \draw (image.east) node(title)[anchor=west]{%
@@ -1311,9 +1311,8 @@
     %        {\bf\Huge \@title}\\{\Large \@author}
     %  \end{minipage}} };%
     %}{ % Has eye catcher%
-    \draw (image.north east) node(title)[anchor=north west,
-      text width=\baposter@titleimage@textwidth]{%
-      \begin{minipage}{\baposter@titleimage@textwidth}%
+    \draw (image.south) + (0em, -0.1\headerheight) node(title)[anchor=north,
+      text width=\textwidth]{\begin{minipage}{\textwidth}%
         \begin{center}%
           {\baposter@titlefont\begin{spacing}{1.15}\@title\end{spacing}}
 
