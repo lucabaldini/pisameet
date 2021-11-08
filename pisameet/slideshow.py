@@ -19,7 +19,9 @@
 """Tools for the poster slideshow.
 """
 
+import argparse
 import datetime
+import logging
 import os
 import sys
 
@@ -27,6 +29,66 @@ import sys
 from PyQt5.QtWidgets import QApplication, QLabel, QGridLayout, QWidget
 from PyQt5.QtGui import QPixmap, QKeyEvent
 from PyQt5.QtCore import QTimer
+
+
+
+class TerminalColors:
+    HEADER = '\033[95m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def _color(text, color):
+    """Process a piece of tect to be printed out in color.
+    """
+    return '%s%s%s' % (color, text, TerminalColors.ENDC)
+
+def _red(text):
+    """Process a piece of text to be printed out in red.
+    """
+    return _color(text, TerminalColors.RED)
+
+def _yellow(text):
+    """Process a piece of text to be printed out in yellow.
+    """
+    return _color(text, TerminalColors.YELLOW)
+
+def _green(text):
+    """Process a piece of text to be printed out in green.
+    """
+    return _color(text, TerminalColors.GREEN)
+
+
+class TerminalFormatter(logging.Formatter):
+
+    """Logging terminal formatter class.
+    """
+
+    def format(self, record):
+        """Overloaded format method.
+        """
+        text = ('>>> %s' % record.msg)
+        if len(record.args) > 0:
+            text = text % record.args
+        if record.levelno >= logging.ERROR:
+            text = _red(text)
+        elif record.levelno == logging.WARNING:
+            text = _yellow(text)
+        return text
+
+
+""" Configure the main terminal logger.
+"""
+logger = logging.getLogger('pisameet')
+logger.setLevel(logging.DEBUG)
+consoleHandler = logging.StreamHandler()
+consoleHandler.setLevel(logging.DEBUG)
+consoleHandler.setFormatter(TerminalFormatter())
+logger.addHandler(consoleHandler)
 
 
 
@@ -42,6 +104,7 @@ class FolderDescriptor:
         """Constructor.
         """
         self.file_list = []
+        logger.info('Scanning input folder %s...', folder_path)
         for entry in os.scandir(folder_path):
             if not entry.is_file():
                 continue
@@ -52,6 +115,7 @@ class FolderDescriptor:
             mod_timestamp = stat.st_mtime
             self.file_list.append((file_path, mod_timestamp))
         self.file_list.sort()
+        logger.info('Done, %d image file(s) found.\n%s', len(self.file_list), self)
 
     def pixmap_data(self, height: int):
         """Load the image data and create the relevant QPixmap objects.
@@ -174,7 +238,6 @@ class SlideShow(QWidget):
         characters for the key shortcuts.
         """
         descr = FolderDescriptor(folder_path)
-        print(descr)
         self.__current_index = 0
         return descr.pixmap_data(height)
 
