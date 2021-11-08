@@ -100,6 +100,54 @@ logger.addHandler(consoleHandler)
 
 
 
+class Pixmap(QPixmap):
+
+    """Lightweight wrapper around a QPixmap object.
+    """
+
+    def __init__(self, file_path: str, key: str, height: int) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.file_path = file_path
+        self.key = key
+        self.height = height
+        self.timestamp = self._read_timestamp()
+        self._load_data()
+
+    def _read_timestamp(self):
+        """Return the last modification timestamp for the underlying file.
+
+        See https://stackoverflow.com/questions/237079 for more details about
+        retrieving the last modification timestamp for a file.
+        """
+        return os.path.getmtime(self.file_path)
+
+    def _load_data(self) -> None:
+        """Load the image data from file and resize the pixmap to the target height.
+
+        Note that it is *very* important to call the QPixmap.scaledToHeight()
+        method with the Qt.SmoothTransformation transformation mode, so that
+        a bilinear interpolation is performed when remapping the original
+        image into the target QLabel object.
+        """
+        logger.debug('Loading image data from %s...', self.file_path)
+        QPixmap.load(self, self.file_path)
+        logger.debug('Resizing image...')
+        super().__init__(self.scaledToHeight(self.height, Qt.SmoothTransformation))
+
+    def check_underlying_file(self):
+        """Check whether the underlying file has been modified, and reload the
+        image data if necessary.
+        """
+        _ts = self._read_timestamp()
+        if _ts > self.timestamp:
+            logger.warning('File %s has been modified on disk, reloading data...', self.file_path)
+            self._load_data()
+            self.timestamp = _ts
+
+
+
 class FolderDescriptor:
 
     """Small container class to keep track of the image files to be looped
@@ -130,20 +178,12 @@ class FolderDescriptor:
 
     def pixmap_data(self, height: int):
         """Load the image data and create the relevant QPixmap objects.
-
-        Note that it is *very* important to call the QPixmap.scaledToHeight()
-        method with the Qt.SmoothTransformation transformation mode, so that
-        a bilinear interpolation is performed when remapping the original
-        image into the target QLabel object.
         """
         logger.info('Loading pixmap data...')
         pixmap_list = []
-        pixmap_keys = []
         for i, (file_path, _) in enumerate(self.file_list):
-            logger.info('Loading image from %s...', file_path)
-            pixmap_list.append(QPixmap(file_path).scaledToHeight(height, Qt.SmoothTransformation))
-            pixmap_keys.append(f'{i + 1}')
-        return pixmap_list, pixmap_keys
+            pixmap_list.append(Pixmap(file_path, f'{i + 1}', height))
+        return pixmap_list
 
     def __str__(self) -> str:
         """String formatting.
@@ -195,7 +235,8 @@ class SlideShow(QWidget):
         self.timer = QTimer()
         self.timer.timeout.connect(self.advance)
         # Load the images.
-        self.pixmap_list, self.pixmap_keys = self._load_images()
+        self.pixmap_list = self._load_images()
+        self.pixmap_keys = [pixmap.key for pixmap in self.pixmap_list]
         self.display_image()
         # We're good to go!
         self.timer.start(self.advance_interval)
@@ -278,7 +319,9 @@ class SlideShow(QWidget):
         """
         self.__current_index = index % len(self.pixmap_list)
         logger.debug('Displaying image %d...', self.__current_index)
-        self.label.setPixmap(self.pixmap_list[self.__current_index])
+        pixmap = self.pixmap_list[self.__current_index]
+        pixmap.check_underlying_file()
+        self.label.setPixmap(pixmap)
 
     def advance(self) -> None:
         """Advance to the next image.
@@ -291,15 +334,15 @@ if __name__ == '__main__':
     # pylint: disable=invalid-name
     parser = argparse.ArgumentParser()
     parser.add_argument('--screen', type=int, default=1,
-        help='the unique identifier of the target screen')
+                        help='the unique identifier of the target screen')
     parser.add_argument('--advance', type=float, default=SlideShow.DEFAULT_ADVANCE_INTERVAL,
-        help='the time interval for the slide show transition [s]')
+                        help='the time interval for the slide show transition [s]')
     parser.add_argument('--pause', type=float, default=SlideShow.DEFAULT_PAUSE_INTERVAL,
-        help='the time interval for the slide show pause [s]')
+                        help='the time interval for the slide show pause [s]')
     parser.add_argument('--geometry', type=str, default='default', choices=SlideShow.VALID_GEOMETRIES,
-        help='the widget geometry')
+                        help='the widget geometry')
     parser.add_argument('--background', type=str, default='black',
-        help='the widget background color')
+                        help='the widget background color')
     args = parser.parse_args()
     app = QApplication(sys.argv)
     slideshow = SlideShow('posters', **args.__dict__)
