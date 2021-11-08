@@ -19,6 +19,7 @@
 """Tools for the poster slideshow.
 """
 
+import argparse
 import datetime
 import logging
 import os
@@ -152,22 +153,24 @@ class SlideShow(QWidget):
     """Basic slideshow class.
     """
 
-    DEFAULT_SHOW_TIME = 30.
-    DEFAULT_PAUSE_TIME = 120.
+    DEFAULT_ADVANCE_INTERVAL = 30.
+    DEFAULT_PAUSE_INTERVAL = 120.
     WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors'
+    VALID_GEOMETRIES = ('default', 'maximize', 'fullscreen')
 
     def __init__(self, folder_path, **kwargs):
         """Constructor.
         """
         super().__init__()
         # Parse the command-line arguments.
-        show_time = kwargs.get('show_time', self.DEFAULT_SHOW_TIME)
-        pause_time = kwargs.get('pause_time', self.DEFAULT_PAUSE_TIME)
-        background_color = kwargs.get('background_color', 'black')
+        advance_interval = kwargs.get('advance', self.DEFAULT_ADVANCE_INTERVAL)
+        pause_interval = kwargs.get('pause', self.DEFAULT_PAUSE_INTERVAL)
+        background_color = kwargs.get('background', 'black')
         geometry = kwargs.get('geometry')
+        assert geometry in self.VALID_GEOMETRIES
         # Convert times from s to msec.
-        self.show_time = self.sec_to_msec(show_time)
-        self.pause_time = self.sec_to_msec(pause_time)
+        self.advance_interval = self.sec_to_msec(advance_interval)
+        self.pause_interval = self.sec_to_msec(pause_interval)
         # Reset the slideshow index.
         self.__current_index = 0
         # Setup the widget.
@@ -185,8 +188,8 @@ class SlideShow(QWidget):
         self.pixmap_list, self.pixmap_keys = self._load_images(folder_path)
         self.display_image()
         # We're good to go!
-        self.timer.start(self.show_time)
-        if geometry == 'maximized':
+        self.timer.start(self.advance_interval)
+        if geometry == 'maximize':
             self.showMaximized()
         elif geometry == 'fullscreen':
             self.showFullScreen()
@@ -256,7 +259,7 @@ class SlideShow(QWidget):
             index = int(event.text()) - 1
             self.show_image(index)
             self.timer.stop()
-            self.timer.singleShot(self.pause_time, self.timer.start)
+            self.timer.singleShot(self.pause_interval, self.timer.start)
 
     def display_image(self, index: int = 0) -> None:
         """Show a given image.
@@ -283,6 +286,16 @@ class SlideShow(QWidget):
 
 if __name__ == '__main__':
     # pylint: disable=invalid-name
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--advance', type=float, default=SlideShow.DEFAULT_ADVANCE_INTERVAL,
+        help='the time interval for the slide show transition [s]')
+    parser.add_argument('--pause', type=float, default=SlideShow.DEFAULT_PAUSE_INTERVAL,
+        help='the time interval for the slide show pause [s]')
+    parser.add_argument('--geometry', type=str, default='default', choices=SlideShow.VALID_GEOMETRIES,
+        help='the widget geometry')
+    parser.add_argument('--background', type=str, default='black',
+        help='the widget background color')
+    args = parser.parse_args()
     app = QApplication(sys.argv)
-    slideshow = SlideShow('posters', show_time=1.)
+    slideshow = SlideShow('posters', **args.__dict__)
     sys.exit(app.exec_())
