@@ -140,9 +140,9 @@ class FolderDescriptor:
         """String formatting.
         """
         text = ''
-        for file_path, mod_timestamp in self.file_list:
+        for i, (file_path, mod_timestamp) in enumerate(self.file_list):
             mode_date = datetime.datetime.fromtimestamp(mod_timestamp)
-            text = f'{text}{file_path} -> {mode_date}\n'
+            text = f'{text}[{i}] {file_path} -> {mode_date}\n'
         return text.strip('\n')
 
 
@@ -183,7 +183,7 @@ class SlideShow(QWidget):
         self.timer.timeout.connect(self.advance)
         # Load the images.
         self.pixmap_list, self.pixmap_keys = self._load_images(folder_path)
-        self.show_image()
+        self.display_image()
         # We're good to go!
         self.timer.start(self.show_time)
         if geometry == 'maximized':
@@ -258,7 +258,7 @@ class SlideShow(QWidget):
             self.timer.stop()
             self.timer.singleShot(self.pause_time, self.timer.start)
 
-    def show_image(self, index: int = 0) -> None:
+    def display_image(self, index: int = 0) -> None:
         """Show a given image.
 
         This is setting the proper QPixmap object to be shown and setting the
@@ -271,12 +271,13 @@ class SlideShow(QWidget):
             total number of images in the slideshow).
         """
         self.__current_index = index % len(self.pixmap_list)
+        logger.debug('Displaying image %d...', self.__current_index)
         self.label.setPixmap(self.pixmap_list[self.__current_index])
 
     def advance(self) -> None:
         """Advance to the next image.
         """
-        self.show_image(self.__current_index + 1)
+        self.display_image(self.__current_index + 1)
 
 
 
