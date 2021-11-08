@@ -5,6 +5,8 @@
 
 \usepackage{amsmath}
 \usepackage{bookman}
+\usepackage{float}
+\usepackage{lipsum}
 
 % Title, authors and affiliations.
 \title{A Wonderful Placeholder Poster---screen 1, id 0}
@@ -41,7 +43,7 @@
 
   % If you specify the height, that's relative to the poster height, i.e., 0.3
   % is 30% of the poster). If you don't the box will adapt itself to the content.
-  \headerbox{Text}{name=textbox,column=0,span=3, below=abstract, height=0.44}
+  \headerbox{Text}{name=textbox,column=0,span=3, below=abstract, height=0.4}
   {
     Sample box for plain text. You will notice that we have deliberately chosen
     a font that is hard to read.
@@ -63,26 +65,38 @@
     \end{itemize}
   }
 
-  \headerbox{Graphics}{name=graphbox,column=0, span=3, below=textbox, height=0.44}
+  \headerbox{Graphics}{name=graphbox,column=0, span=3, below=textbox, height=0.48}
   {
-    \begin{tikzpicture}[x=0.45\textwidth, y=0.45\textwidth]%
-      \useasboundingbox (0, 0) rectangle (1, 1);%
+    \begin{tikzpicture}[x=\linewidth, y=\linewidth]%
+      \useasboundingbox (-0.5, 0) rectangle (1., 1.);%
+      \foreach \x in {1,...,16}{%
+        \pgfmathparse{(\x-1)*45 + floor(\x/9)*22.5}
+        \node[draw,circle,inner sep=0.25cm,yshift=5.cm] (N-\x) at (\pgfmathresult:5.4cm) [thick] {};
+      }
+      \foreach \x [count=\xi from 1] in {2,...,16}{%
+        \foreach \y in {\x,...,16}{%
+        \path (N-\xi) edge[-] (N-\y);
+      }
+    }
     \end{tikzpicture}
-
-    \bigskip
-
-    Even more text.
   }
 
   \headerbox{Pictures}{name=picbox, column=3,span=3, below=abstract, height=0.35}
   {
-    More text.
+    How does this look like?
+
+    \medskip
+
+    \begin{figure}[H]
+      \includegraphics[width=\linewidth]{cms_tracker}
+      \caption{The CMS silicon tracker (courtesy of CERN).}
+    \end{figure}
   }
 
 
-  \headerbox{Miscellanea}{name=miscbox,column=3,span=3, below=picbox, height=0.35}
+  \headerbox{Miscellanea}{name=miscbox,column=3,span=3, below=picbox, height=0.37}
   {
-    More text.
+    \lipsum[3-4]
   }
 
   \bibbox{name=referencebox,column=3,span=3,below=miscbox, bottomaligned=graphbox}{
