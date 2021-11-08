@@ -20,7 +20,6 @@
 """
 
 import datetime
-import glob
 import os
 import sys
 
@@ -81,7 +80,6 @@ class SlideShow(QWidget):
     """Basic slideshow class.
     """
 
-    # pylint: disable=too-many-instance-attributes
     DEFAULT_TIME_INTERVAL = 30.
     DEFAULT_PAUSE_TIME = 120.
     WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors'
@@ -103,11 +101,11 @@ class SlideShow(QWidget):
         # Setup the widget.
         self.setStyleSheet(f'background-color: {background_color}')
         self.label = QLabel()
-        self._grid = QGridLayout()
-        self._grid.setColumnStretch(0, 1)
-        self._grid.setColumnStretch(2, 1)
-        self._grid.addWidget(self.label, 1, 1)
-        self.setLayout(self._grid)
+        _grid = QGridLayout()
+        _grid.setColumnStretch(0, 1)
+        _grid.setColumnStretch(2, 1)
+        _grid.addWidget(self.label, 1, 1)
+        self.setLayout(_grid)
         self.setWindowTitle(self.WINDOW_TITLE)
         self.timer = QTimer()
         self.timer.timeout.connect(self.advance)
@@ -138,7 +136,7 @@ class SlideShow(QWidget):
         """
         return int(round(1.e3 * sec))
 
-    def _load_images(self, folder_path: str, filters: tuple = ('png', 'jpg'), height: int = 1000):
+    def _load_images(self, folder_path: str, height: int = 1000):
         """Load all the images from the target folder.
 
         This is reading the files from disk, creating the corresponding
