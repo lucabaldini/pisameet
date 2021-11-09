@@ -244,6 +244,7 @@ class SlideShow(QWidget):
         self.pause_interval = self.sec_to_msec(pause_interval)
         # Reset the slideshow index.
         self.__current_index = 0
+        self.pixmap_list = []
         # Setup the widget.
         self.setStyleSheet(f'background-color: {background_color}')
         self.label = QLabel()
@@ -256,7 +257,7 @@ class SlideShow(QWidget):
         self.timer = QTimer()
         self.timer.timeout.connect(self.advance)
         # Load the images.
-        self.pixmap_list = self._load_images()
+        self._load_images()
         self.display_image()
         # We're good to go!
         self.timer.start(self.advance_interval)
@@ -302,11 +303,10 @@ class SlideShow(QWidget):
             The target height (in pixel) for the QPixmap(s) showing the images.
         """
         self.__current_index = 0
-        pixmap_list = PixmapList(self.folder_path, self.screen_id, height)
-        if len(pixmap_list) == 0:
+        self.pixmap_list = PixmapList(self.folder_path, self.screen_id, height)
+        if len(self.pixmap_list) == 0:
             logger.error('No suitable image file(s) found.')
             sys.exit('Abort.')
-        return pixmap_list
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Overloaded method to handle key events.
@@ -331,8 +331,13 @@ class SlideShow(QWidget):
             The index of the image to be shown (note this is intended modulo the
             total number of images in the slideshow).
         """
-        #print(self.pixmap_list.file_list() == PixmapList.build_file_list(self.folder_path, self.screen_id))
-        self.__current_index = index % len(self.pixmap_list)
+        current_file_list = PixmapList.build_file_list(self.folder_path, self.screen_id)
+        cached_file_list = self.pixmap_list.file_list()
+        if cached_file_list != current_file_list:
+            logger.warning('Poster folder changed on disk!')
+            self._load_images()
+        else:
+            self.__current_index = index % len(self.pixmap_list)
         logger.debug('Displaying image %s...', PixmapList.pixmap_key(self.__current_index))
         pixmap = self.pixmap_list[self.__current_index]
         pixmap.synch()
