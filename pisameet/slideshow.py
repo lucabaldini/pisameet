@@ -217,6 +217,54 @@ class PixmapList(list):
 
 
 
+class FadingEffect(QGraphicsOpacityEffect):
+
+    """
+    """
+
+    def __init__(self, step: float = 0.005, interval: int = 10):
+        """Constructor.
+        """
+        super().__init__()
+        self.setOpacity(1.)
+        self._step = step
+        self._interval = interval
+        self._timer = QTimer()
+
+    def _decrease_opacity(self):
+        """
+        """
+        opacity = self.opacity() - self._step
+        if opacity <= 0.:
+            self._timer.stop()
+            self.setOpacity(0.)
+        self.setOpacity(opacity)
+
+    def _increase_opacity(self):
+        """
+        """
+        opacity = self.opacity() + self._step
+        if opacity >= 1.:
+            self._timer.stop()
+            self.setOpacity(1.)
+        self.setOpacity(opacity)
+
+    def fade_in(self):
+        """
+        """
+        self.setOpacity(0.)
+        self._timer.timeout.connect(self._increase_opacity)
+        self._timer.start(self._interval)
+
+    def fade_out(self):
+        """
+        """
+        self.setOpacity(1.)
+        self._timer.timeout.connect(self._decrease_opacity)
+        self._timer.start(self._interval)
+
+
+
 class SlideShow(QWidget):
 
     """Basic slideshow class.
@@ -249,9 +297,8 @@ class SlideShow(QWidget):
         # Setup the widget.
         self.setStyleSheet(f'background-color: {background_color}')
         self.label = QLabel()
-        self.opacity_effect = QGraphicsOpacityEffect()
-        self.opacity_effect.setOpacity(1.)
-        self.label.setGraphicsEffect(self.opacity_effect)
+        self.fading_effect = FadingEffect()
+        self.label.setGraphicsEffect(self.fading_effect)
         _grid = QGridLayout()
         _grid.setColumnStretch(0, 1)
         _grid.setColumnStretch(2, 1)
@@ -345,8 +392,8 @@ class SlideShow(QWidget):
         logger.debug('Displaying image %s...', PixmapList.pixmap_key(self.__current_index))
         pixmap = self.pixmap_list[self.__current_index]
         pixmap.synch()
-        #self.opacity_effect.setOpacity(self.__current_index / 3)
         self.label.setPixmap(pixmap)
+        self.fading_effect.fade_in()
 
     def advance(self) -> None:
         """Advance to the next image.
