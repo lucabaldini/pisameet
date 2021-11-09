@@ -238,6 +238,7 @@ class SlideShow(QWidget):
         pause_interval = kwargs.get('pause', self.DEFAULT_PAUSE_INTERVAL)
         background_color = kwargs.get('background', 'black')
         geometry = kwargs.get('geometry')
+        self.height = kwargs.get('height')
         assert geometry in self.VALID_GEOMETRIES
         # Convert times from s to msec.
         self.advance_interval = self.sec_to_msec(advance_interval)
@@ -283,7 +284,7 @@ class SlideShow(QWidget):
         """
         return int(round(1.e3 * sec))
 
-    def _load_images(self, height: int = 1000):
+    def _load_images(self):
         """Load all the images from the target folder.
 
         This is reading the files from disk, creating the corresponding
@@ -303,7 +304,7 @@ class SlideShow(QWidget):
             The target height (in pixel) for the QPixmap(s) showing the images.
         """
         self.__current_index = 0
-        self.pixmap_list = PixmapList(self.folder_path, self.screen_id, height)
+        self.pixmap_list = PixmapList(self.folder_path, self.screen_id, self.height)
         if len(self.pixmap_list) == 0:
             logger.error('No suitable image file(s) found.')
             sys.exit('Abort.')
@@ -360,7 +361,9 @@ if __name__ == '__main__':
     parser.add_argument('--pause', type=float, default=SlideShow.DEFAULT_PAUSE_INTERVAL,
                         help='the time interval for the slide show pause [s]')
     parser.add_argument('--geometry', type=str, default='default', choices=SlideShow.VALID_GEOMETRIES,
-                        help='the widget geometry')
+	                help='display geometry')
+    parser.add_argument('--height', type=int, default=1000,
+                        help='the target image height')
     parser.add_argument('--background', type=str, default='black',
                         help='the widget background color')
     args = parser.parse_args()
