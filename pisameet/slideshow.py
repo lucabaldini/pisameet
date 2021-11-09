@@ -20,7 +20,7 @@
 """
 
 import argparse
-import datetime
+import glob
 import logging
 import os
 import sys
@@ -103,6 +103,22 @@ logger.addHandler(consoleHandler)
 class Pixmap(QPixmap):
 
     """Lightweight wrapper around a QPixmap object.
+
+    This is building on the standard QPixmap class to make a timestamp-aware
+    object able to reload the image data whenever the underlying file is changed
+    on disk. In addition, we keep track of the pixmap height and the keyboard
+    shortcut associated to the image.
+
+    Arguments
+    ---------
+    file_path : str
+        The path to the image file.
+
+    key : str
+        The associated key to be used to pause the slideshow from the keyboard.
+
+    height : int
+        The target height for the image resize.
     """
 
     def __init__(self, file_path: str, key: str, height: int) -> None:
@@ -115,7 +131,7 @@ class Pixmap(QPixmap):
         self.timestamp = self._read_timestamp()
         self._load_data()
 
-    def _read_timestamp(self):
+    def _read_timestamp(self) -> float:
         """Return the last modification timestamp for the underlying file.
 
         See https://stackoverflow.com/questions/237079 for more details about
@@ -136,7 +152,7 @@ class Pixmap(QPixmap):
         logger.debug('Resizing image...')
         super().__init__(self.scaledToHeight(self.height, Qt.SmoothTransformation))
 
-    def check_underlying_file(self):
+    def synch(self) -> None:
         """Check whether the underlying file has been modified, and reload the
         image data if necessary.
         """
@@ -148,51 +164,56 @@ class Pixmap(QPixmap):
 
 
 
-class FolderDescriptor:
+class PixmapList(list):
 
-    """Small container class to keep track of the image files to be looped
-    over in a given directory.
+    """Class describing a list of pixmaps.
+
+    The constructor is crawling through a given folder and loading in memeory
+    all the image files for later use.
     """
 
-    DEFAULT_FILTERS = ('png', 'jpg')
-
-    def __init__(self, folder_path: str, screen_id: int, filters: tuple = DEFAULT_FILTERS) -> None:
+    def __init__(self, folder_path: str, screen_id: int, height: int) -> None:
         """Constructor.
         """
-        self.file_list = []
+        super().__init__()
+        self._key_dict = {}
+        for i, file_path in enumerate(self.build_file_list(folder_path, screen_id)):
+            key = self.pixmap_key(i)
+            self.append(Pixmap(file_path, key, height))
+            self._key_dict[key] = i
+
+    @staticmethod
+    def pixmap_key(index: int) -> str:
+        """Return the key corresponding to a given sequential index.
+        """
+        return f'{index + 1}'
+
+    def pixmap_index(self, key: str) -> int:
+        """Return the index corresponding to a given key, if valid.
+        """
+        return self._key_dict.get(key, None)
+
+    def file_list(self):
+        """Return the underlying (cached) file list.
+        """
+        return [pixmap.file_path for pixmap in self]
+
+    @staticmethod
+    def build_file_list(folder_path: str, screen_id: int, filters: tuple = ('png', 'jpg')) -> None:
+        """Process a folder content and build the list of image files.
+        """
         _start = f'{screen_id:02d}_'
-        logger.info('Scanning input folder %s...', folder_path)
-        for entry in os.scandir(folder_path):
-            if not entry.is_file():
-                continue
-            file_path = entry.path
+        file_list = []
+        logger.info('Compiling file list from %s...', folder_path)
+        for file_path in glob.glob(os.path.join(folder_path, '*.*')):
             if file_path.split('.').pop() not in filters:
                 continue
             if not os.path.basename(file_path).startswith(_start):
                 continue
-            stat = entry.stat()
-            mod_timestamp = stat.st_mtime
-            self.file_list.append((file_path, mod_timestamp))
-        self.file_list.sort()
-        logger.info('Done, %d image file(s) found.\n%s', len(self.file_list), self)
-
-    def pixmap_data(self, height: int):
-        """Load the image data and create the relevant QPixmap objects.
-        """
-        logger.info('Loading pixmap data...')
-        pixmap_list = []
-        for i, (file_path, _) in enumerate(self.file_list):
-            pixmap_list.append(Pixmap(file_path, f'{i + 1}', height))
-        return pixmap_list
-
-    def __str__(self) -> str:
-        """String formatting.
-        """
-        text = ''
-        for i, (file_path, mod_timestamp) in enumerate(self.file_list):
-            mode_date = datetime.datetime.fromtimestamp(mod_timestamp)
-            text = f'{text}[{i}] {file_path} -> {mode_date}\n'
-        return text.strip('\n')
+            file_list.append(file_path)
+        file_list.sort()
+        logger.info('Done, %d image file(s) found.', len(file_list))
+        return file_list
 
 
 
@@ -236,7 +257,6 @@ class SlideShow(QWidget):
         self.timer.timeout.connect(self.advance)
         # Load the images.
         self.pixmap_list = self._load_images()
-        self.pixmap_keys = [pixmap.key for pixmap in self.pixmap_list]
         self.display_image()
         # We're good to go!
         self.timer.start(self.advance_interval)
@@ -267,14 +287,8 @@ class SlideShow(QWidget):
 
         This is reading the files from disk, creating the corresponding
         QPixmap objects and resizing them to the proper size, so that they are
-        ready to be displyed in the main QLabel object. The main idea is that
-        all the I/O and computations happen once, at the beginning, and then
-        we just set the proper QPixmap to the main QLabel.
-
-        Also, this is filling the list of characters to be associated to each
-        image, that can be used later to process QKeyEvents.
-
-        Note we set the __current_index class member to 0.
+        ready to be displyed in the main QLabel object. Note we also set the
+        __current_index class member to 0.
 
         .. warning::
 
@@ -286,24 +300,24 @@ class SlideShow(QWidget):
         ---------
         height : int
             The target height (in pixel) for the QPixmap(s) showing the images.
-
-        Return
-        ------
-        Two lists of the same length, containing the QPixmap objects and the
-        characters for the key shortcuts.
         """
         self.__current_index = 0
-        return FolderDescriptor(self.folder_path, self.screen_id).pixmap_data(height)
+        pixmap_list = PixmapList(self.folder_path, self.screen_id, height)
+        if len(pixmap_list) == 0:
+            logger.error('No suitable image file(s) found.')
+            sys.exit('Abort.')
+        return pixmap_list
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Overloaded method to handle key events.
         """
         # pylint: disable=invalid-name
-        if event.text() in self.pixmap_keys:
-            index = int(event.text()) - 1
-            self.show_image(index)
-            self.timer.stop()
-            self.timer.singleShot(self.pause_interval, self.timer.start)
+        index = self.pixmap_list.pixmap_index(event.text())
+        if index is None:
+            return
+        self.display_image(index)
+        self.timer.stop()
+        self.timer.singleShot(self.pause_interval, self.timer.start)
 
     def display_image(self, index: int = 0) -> None:
         """Show a given image.
@@ -317,10 +331,11 @@ class SlideShow(QWidget):
             The index of the image to be shown (note this is intended modulo the
             total number of images in the slideshow).
         """
+        #print(self.pixmap_list.file_list() == PixmapList.build_file_list(self.folder_path, self.screen_id))
         self.__current_index = index % len(self.pixmap_list)
-        logger.debug('Displaying image %d...', self.__current_index)
+        logger.debug('Displaying image %s...', PixmapList.pixmap_key(self.__current_index))
         pixmap = self.pixmap_list[self.__current_index]
-        pixmap.check_underlying_file()
+        pixmap.synch()
         self.label.setPixmap(pixmap)
 
     def advance(self) -> None:
