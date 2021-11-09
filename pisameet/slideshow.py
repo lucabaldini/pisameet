@@ -26,7 +26,7 @@ import os
 import sys
 
 # pylint: disable=no-name-in-module
-from PyQt5.QtWidgets import QApplication, QLabel, QGridLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect
 from PyQt5.QtGui import QPixmap, QKeyEvent
 from PyQt5.QtCore import Qt, QTimer
 
@@ -249,6 +249,9 @@ class SlideShow(QWidget):
         # Setup the widget.
         self.setStyleSheet(f'background-color: {background_color}')
         self.label = QLabel()
+        self.opacity_effect = QGraphicsOpacityEffect()
+        self.opacity_effect.setOpacity(1.)
+        self.label.setGraphicsEffect(self.opacity_effect)
         _grid = QGridLayout()
         _grid.setColumnStretch(0, 1)
         _grid.setColumnStretch(2, 1)
@@ -342,6 +345,7 @@ class SlideShow(QWidget):
         logger.debug('Displaying image %s...', PixmapList.pixmap_key(self.__current_index))
         pixmap = self.pixmap_list[self.__current_index]
         pixmap.synch()
+        #self.opacity_effect.setOpacity(self.__current_index / 3)
         self.label.setPixmap(pixmap)
 
     def advance(self) -> None:
