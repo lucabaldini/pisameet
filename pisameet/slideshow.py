@@ -222,7 +222,7 @@ class FadingEffect(QGraphicsOpacityEffect):
     """
     """
 
-    def __init__(self, step: float = 0.005, interval: int = 10):
+    def __init__(self, step: float = 0.003, interval: int = 10):
         """Constructor.
         """
         super().__init__()
@@ -265,6 +265,37 @@ class FadingEffect(QGraphicsOpacityEffect):
 
 
 
+class Banner(QWidget):
+
+    """
+    """
+
+    def __init__(self):
+        """
+        """
+        super().__init__()
+        self.pic_label = QLabel()
+        pic = QPixmap('posters/forti.jpg').scaledToHeight(100, 1)
+        self.pic_label.setPixmap(pic)
+        self.text_label = QLabel()
+        self.text_label.setWordWrap(True)
+        self.text_label.setMargin(20)
+        self.text_label.setText('Session/track:\nAuthor:\nMore text:')
+        self.qrcode_label = QLabel()
+        qrcode = QPixmap('posters/qrcode.png').scaledToHeight(100, 1)
+        self.qrcode_label.setPixmap(qrcode)
+        _grid = QGridLayout()
+        _grid.setContentsMargins(0, 0, 0, 0)
+        _grid.setColumnStretch(1, 1)
+        _grid.addWidget(self.pic_label, 0, 0)
+        _grid.addWidget(self.text_label, 0, 1)
+        _grid.addWidget(self.qrcode_label, 0, 2)
+        self.setLayout(_grid)
+        self.setFixedHeight(100)
+        self.setStyleSheet('background-color: white')
+
+
+
 class SlideShow(QWidget):
 
     """Basic slideshow class.
@@ -297,11 +328,13 @@ class SlideShow(QWidget):
         # Setup the widget.
         self.setStyleSheet(f'background-color: {background_color}')
         self.label = QLabel()
+        self.banner = Banner()
         self.fading_effect = FadingEffect()
         self.label.setGraphicsEffect(self.fading_effect)
         _grid = QGridLayout()
         _grid.setColumnStretch(0, 1)
         _grid.setColumnStretch(2, 1)
+        _grid.addWidget(self.banner, 0, 1)
         _grid.addWidget(self.label, 1, 1)
         self.setLayout(_grid)
         self.setWindowTitle(self.WINDOW_TITLE)
@@ -413,7 +446,7 @@ if __name__ == '__main__':
                         help='the time interval for the slide show pause [s]')
     parser.add_argument('--geometry', type=str, default='default', choices=SlideShow.VALID_GEOMETRIES,
 	                help='display geometry')
-    parser.add_argument('--height', type=int, default=1000,
+    parser.add_argument('--height', type=int, default=800,
                         help='the target image height')
     parser.add_argument('--background', type=str, default='black',
                         help='the widget background color')
