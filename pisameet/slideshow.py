@@ -294,38 +294,86 @@ class FadingEffect(QGraphicsOpacityEffect):
 
 
 
-class Banner(QWidget):
+class WidgetBase(QWidget):
 
-    """
+    """Base class for the slideshow widgets.
     """
 
-    def __init__(self):
-        """
+    def __init__(self, column_stretch: dict={}, **kwargs):
+        """Constructor.
         """
         super().__init__()
+        grid = QGridLayout()
+        for col, stretch in column_stretch.items():
+            grid.setColumnStretch(col, stretch)
+        self.setLayout(grid)
+        background_color = kwargs.get('background')
+        if background_color is not None:
+            self.setStyleSheet(f'background-color: {background_color}')
+
+    def add_widget(self, widget, row, col, row_span=1, col_span=1):
+        """Add a widget to the underlying grid layout.
+        """
+        self.layout().addWidget(widget, row, col, row_span, col_span)
+
+
+
+class Banner(WidgetBase):
+
+    """Base class for a banner.
+    """
+
+    def __init__(self, height):
+        """Constructor.
+        """
+        super().__init__(column_stretch={1: 1}, background='white')
+        self.setFixedHeight(height)
+        self.layout().setContentsMargins(0, 0, 0, 0)
+
+
+
+class SlideShowHeader(Banner):
+
+    """Class describing the header of the slideshow.
+    """
+
+    def __init__(self, height=100):
+        """Constructor.
+        """
+        super().__init__(height)
         self.pic_label = QLabel()
-        pic = QPixmap('posters/forti.jpg').scaledToHeight(100, 1)
+        pic = QPixmap('posters/forti.jpg').scaledToHeight(height, Qt.SmoothTransformation)
         self.pic_label.setPixmap(pic)
         self.text_label = QLabel()
         self.text_label.setWordWrap(True)
         self.text_label.setMargin(20)
         self.text_label.setText('Session/track:\nAuthor:\nMore text:')
         self.qrcode_label = QLabel()
-        qrcode = QPixmap('posters/qrcode.png').scaledToHeight(100, 1)
+        qrcode = QPixmap('posters/qrcode.png').scaledToHeight(height, Qt.SmoothTransformation)
         self.qrcode_label.setPixmap(qrcode)
-        _grid = QGridLayout()
-        _grid.setContentsMargins(0, 0, 0, 0)
-        _grid.setColumnStretch(1, 1)
-        _grid.addWidget(self.pic_label, 0, 0)
-        _grid.addWidget(self.text_label, 0, 1)
-        _grid.addWidget(self.qrcode_label, 0, 2)
-        self.setLayout(_grid)
-        self.setFixedHeight(100)
-        self.setStyleSheet('background-color: white')
+        self.add_widget(self.pic_label, 0, 0)
+        self.add_widget(self.text_label, 0, 1)
+        self.add_widget(self.qrcode_label, 0, 2)
 
 
 
-class SlideShow(QWidget):
+class SlideShowFooter(Banner):
+
+    """Class describing the footer for the slideshow.
+    """
+
+    def __init__(self, height=50):
+        """Constructor.
+        """
+        super().__init__(height)
+        self.text_label = QLabel()
+        self.text_label.setMargin(10)
+        self.text_label.setText('Footer text')
+        self.add_widget(self.text_label, 0, 1)
+
+
+
+class SlideShow(WidgetBase):
 
     """Basic slideshow class.
     """
@@ -338,13 +386,12 @@ class SlideShow(QWidget):
     def __init__(self, folder_path: str, screen: int, **kwargs):
         """Constructor.
         """
-        super().__init__()
+        super().__init__(column_stretch={0: 1, 2: 1}, **kwargs)
         self.folder_path = folder_path
         self.screen_id = screen
         # Parse the command-line arguments.
         advance_interval = kwargs.get('advance', self.DEFAULT_ADVANCE_INTERVAL)
         pause_interval = kwargs.get('pause', self.DEFAULT_PAUSE_INTERVAL)
-        background_color = kwargs.get('background', 'black')
         geometry = kwargs.get('geometry')
         self.height = kwargs.get('height')
         assert geometry in self.VALID_GEOMETRIES
@@ -355,17 +402,14 @@ class SlideShow(QWidget):
         self.__current_index = 0
         self.pixmap_list = []
         # Setup the widget.
-        self.setStyleSheet(f'background-color: {background_color}')
         self.label = QLabel()
-        self.banner = Banner()
+        self.header = SlideShowHeader()
+        self.footer = SlideShowFooter()
         self.fading_effect = FadingEffect()
         self.label.setGraphicsEffect(self.fading_effect)
-        _grid = QGridLayout()
-        _grid.setColumnStretch(0, 1)
-        _grid.setColumnStretch(2, 1)
-        _grid.addWidget(self.banner, 0, 1)
-        _grid.addWidget(self.label, 1, 1)
-        self.setLayout(_grid)
+        self.add_widget(self.header, 0, 1)
+        self.add_widget(self.label, 1, 1)
+        self.add_widget(self.footer, 2, 1)
         self.setWindowTitle(self.WINDOW_TITLE)
         self.timer = QTimer()
         self.timer.timeout.connect(self.advance)
