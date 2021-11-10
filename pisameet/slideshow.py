@@ -219,7 +219,20 @@ class PixmapList(list):
 
 class FadingEffect(QGraphicsOpacityEffect):
 
-    """
+    """Graphic effect for picture fade-in/out.
+
+    This is simple graphic effect allowing a fade-in/out effect to a gradual
+    change in the opacity. Internally, the transitions are controlled via a
+    QTimer() object increasing or decreasing the opacity by a fixed amount
+    (the _step class member) at each timeout.
+
+    Arguments
+    ---------
+    step : float
+        The basic opacity step used when increasing/decreasing the opacity.
+
+    interval : int
+        The basic time interval (in ms) during the transitions.
     """
 
     def __init__(self, step: float = 0.003, interval: int = 10):
@@ -230,38 +243,54 @@ class FadingEffect(QGraphicsOpacityEffect):
         self._step = step
         self._interval = interval
         self._timer = QTimer()
+        self._timer.start(self._interval)
+        logger.debug('Opacity fade time set to %.3f s', self.fade_time())
+
+    def fade_time(self):
+        """Return the total fade-in/out time in seconds, i.e., the time that it
+        takes for the opacity to change all the way from 0 to 1 or vice-versa.
+        """
+        return 1.e-3 * self._interval / self._step
 
     def _decrease_opacity(self):
-        """
+        """Decrease the opacity by one step.
+
+        Since this is typically controlled by the underlying QTimer object, when
+        the opacity reaches (or crosses) zero the timer is disconnected from all
+        the slots, and the opacity is set to 0 (fully opaque).
         """
         opacity = self.opacity() - self._step
         if opacity <= 0.:
-            self._timer.stop()
+            self._timer.disconnect()
             self.setOpacity(0.)
         self.setOpacity(opacity)
 
     def _increase_opacity(self):
-        """
+        """Increase the opacity by one step.
+
+        Since this is typically controlled by the underlying QTimer object, when
+        the opacity reaches (or crosses) one the timer is disconnected from all
+        the slots, and the opacity is set to 1 (fully transparent).
         """
         opacity = self.opacity() + self._step
         if opacity >= 1.:
-            self._timer.stop()
+            self._timer.disconnect()
             self.setOpacity(1.)
         self.setOpacity(opacity)
 
-    def fade_in(self):
+    def fade_in(self, start_from_zero=True):
+        """Fade in effect, i.e., gradually change opacity to 1.
         """
-        """
-        self.setOpacity(0.)
+        if start_from_zero:
+            self.setOpacity(0.)
         self._timer.timeout.connect(self._increase_opacity)
-        self._timer.start(self._interval)
 
-    def fade_out(self):
+    def fade_out(self, start_from_one=True):
+        """Fade in effect, i.e., gradually change opacity to 0.
         """
-        """
-        self.setOpacity(1.)
+        if start_from_one:
+            self.setOpacity(1.)
         self._timer.timeout.connect(self._decrease_opacity)
-        self._timer.start(self._interval)
 
 
 
