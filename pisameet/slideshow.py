@@ -362,7 +362,7 @@ class SlideShowFooter(Banner):
     """Class describing the footer for the slideshow.
     """
 
-    def __init__(self, height=50):
+    def __init__(self, height=40):
         """Constructor.
         """
         super().__init__(height)
