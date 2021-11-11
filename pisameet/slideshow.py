@@ -332,12 +332,36 @@ class Banner(WidgetBase):
 
 
 
-class SlideShowHeader(Banner):
+class SessionHeader(Banner):
 
-    """Class describing the header of the slideshow.
+    """
     """
 
-    def __init__(self, height=100):
+    def __init__(self, height=50):
+        """Constructor.
+        """
+        super().__init__(height)
+        self.text_label = QLabel()
+        self.text_label.setWordWrap(True)
+        self.text_label.setIndent(20)
+        self.add_widget(self.text_label, 0, 1)
+
+    def set_text(self, session, posters=(), current=None):
+        """
+        """
+        text = f'Session: {session}\n'
+        for i, name in enumerate(posters):
+            text += f'{i}: {name} '
+        self.text_label.setText(text)
+
+
+
+class PosterHeader(Banner):
+
+    """Class describing the poster header.
+    """
+
+    def __init__(self, height=70):
         """Constructor.
         """
         super().__init__(height)
@@ -346,14 +370,19 @@ class SlideShowHeader(Banner):
         self.pic_label.setPixmap(pic)
         self.text_label = QLabel()
         self.text_label.setWordWrap(True)
-        self.text_label.setMargin(20)
-        self.text_label.setText('Session/track:\nAuthor:\nMore text:')
+        self.text_label.setIndent(20)
         self.qrcode_label = QLabel()
         qrcode = QPixmap('posters/qrcode.png').scaledToHeight(height, Qt.SmoothTransformation)
         self.qrcode_label.setPixmap(qrcode)
         self.add_widget(self.pic_label, 0, 0)
         self.add_widget(self.text_label, 0, 1)
         self.add_widget(self.qrcode_label, 0, 2)
+
+    def set_text(self, presenter, poster_id):
+        """
+        """
+        text = f'Presenter: {presenter}\nPoster ID: {poster_id}'
+        self.text_label.setText(text)
 
 
 
@@ -403,19 +432,24 @@ class SlideShow(WidgetBase):
         self.pixmap_list = []
         # Setup the widget.
         self.label = QLabel()
-        self.header = SlideShowHeader()
+        self.session_header = SessionHeader()
+        self.poster_header = PosterHeader()
         self.footer = SlideShowFooter()
         self.fading_effect = FadingEffect()
         self.label.setGraphicsEffect(self.fading_effect)
-        self.add_widget(self.header, 0, 1)
-        self.add_widget(self.label, 1, 1)
-        self.add_widget(self.footer, 2, 1)
+        self.add_widget(self.session_header, 0, 1)
+        self.add_widget(self.poster_header, 1, 1)
+        self.add_widget(self.label, 2, 1)
+        self.add_widget(self.footer, 3, 1)
         self.setWindowTitle(self.WINDOW_TITLE)
         self.timer = QTimer()
         self.timer.timeout.connect(self.advance)
         # Load the images.
         self._load_images()
         self.display_image()
+        #
+        self.session_header.set_text('Gas detectors', ['A', 'B'])
+        self.poster_header.set_text('Luca Baldini', 12)
         # We're good to go!
         self.timer.start(self.advance_interval)
         if geometry == 'maximize':
