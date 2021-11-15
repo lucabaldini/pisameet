@@ -26,7 +26,7 @@ import os
 import sys
 
 # pylint: disable=no-name-in-module
-from PyQt5.QtWidgets import QApplication, QLabel, QGridLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect
 from PyQt5.QtGui import QPixmap, QKeyEvent
 from PyQt5.QtCore import Qt, QTimer
 
@@ -218,7 +218,192 @@ class PixmapList(list):
 
 
 
-class SlideShow(QWidget):
+class FadingEffect(QGraphicsOpacityEffect):
+
+    """Graphic effect for picture fade-in/out.
+
+    This is simple graphic effect allowing a fade-in/out effect to a gradual
+    change in the opacity. Internally, the transitions are controlled via a
+    QTimer() object increasing or decreasing the opacity by a fixed amount
+    (the _step class member) at each timeout.
+
+    Arguments
+    ---------
+    step : float
+        The basic opacity step used when increasing/decreasing the opacity.
+
+    interval : int
+        The basic time interval (in ms) during the transitions.
+    """
+
+    def __init__(self, step: float = 0.003, interval: int = 10):
+        """Constructor.
+        """
+        super().__init__()
+        self.setOpacity(1.)
+        self._step = step
+        self._interval = interval
+        self._timer = QTimer()
+        self._timer.start(self._interval)
+        logger.debug('Opacity fade time set to %.3f s', self.fade_time())
+
+    def fade_time(self):
+        """Return the total fade-in/out time in seconds, i.e., the time that it
+        takes for the opacity to change all the way from 0 to 1 or vice-versa.
+        """
+        return 1.e-3 * self._interval / self._step
+
+    def _decrease_opacity(self):
+        """Decrease the opacity by one step.
+
+        Since this is typically controlled by the underlying QTimer object, when
+        the opacity reaches (or crosses) zero the timer is disconnected from all
+        the slots, and the opacity is set to 0 (fully opaque).
+        """
+        opacity = self.opacity() - self._step
+        if opacity <= 0.:
+            self._timer.disconnect()
+            self.setOpacity(0.)
+        self.setOpacity(opacity)
+
+    def _increase_opacity(self):
+        """Increase the opacity by one step.
+
+        Since this is typically controlled by the underlying QTimer object, when
+        the opacity reaches (or crosses) one the timer is disconnected from all
+        the slots, and the opacity is set to 1 (fully transparent).
+        """
+        opacity = self.opacity() + self._step
+        if opacity >= 1.:
+            self._timer.disconnect()
+            self.setOpacity(1.)
+        self.setOpacity(opacity)
+
+    def fade_in(self, start_from_zero=True):
+        """Fade in effect, i.e., gradually change opacity to 1.
+        """
+        if start_from_zero:
+            self.setOpacity(0.)
+        self._timer.timeout.connect(self._increase_opacity)
+
+    def fade_out(self, start_from_one=True):
+        """Fade in effect, i.e., gradually change opacity to 0.
+        """
+        if start_from_one:
+            self.setOpacity(1.)
+        self._timer.timeout.connect(self._decrease_opacity)
+
+
+
+class WidgetBase(QWidget):
+
+    """Base class for the slideshow widgets.
+    """
+
+    def __init__(self, column_stretch: dict={}, **kwargs):
+        """Constructor.
+        """
+        super().__init__()
+        grid = QGridLayout()
+        for col, stretch in column_stretch.items():
+            grid.setColumnStretch(col, stretch)
+        self.setLayout(grid)
+        background_color = kwargs.get('background')
+        if background_color is not None:
+            self.setStyleSheet(f'background-color: {background_color}')
+
+    def add_widget(self, widget, row, col, row_span=1, col_span=1):
+        """Add a widget to the underlying grid layout.
+        """
+        self.layout().addWidget(widget, row, col, row_span, col_span)
+
+
+
+class Banner(WidgetBase):
+
+    """Base class for a banner.
+    """
+
+    def __init__(self, height):
+        """Constructor.
+        """
+        super().__init__(column_stretch={1: 1}, background='white')
+        self.setFixedHeight(height)
+        self.layout().setContentsMargins(0, 0, 0, 0)
+
+
+
+class SessionHeader(Banner):
+
+    """
+    """
+
+    def __init__(self, height=50):
+        """Constructor.
+        """
+        super().__init__(height)
+        self.text_label = QLabel()
+        self.text_label.setWordWrap(True)
+        self.text_label.setIndent(20)
+        self.add_widget(self.text_label, 0, 1)
+
+    def set_text(self, session, posters=(), current=None):
+        """
+        """
+        text = f'Session: {session}\n'
+        for i, name in enumerate(posters):
+            text += f'{i}: {name} '
+        self.text_label.setText(text)
+
+
+
+class PosterHeader(Banner):
+
+    """Class describing the poster header.
+    """
+
+    def __init__(self, height=70):
+        """Constructor.
+        """
+        super().__init__(height)
+        self.pic_label = QLabel()
+        pic = QPixmap('posters/forti.jpg').scaledToHeight(height, Qt.SmoothTransformation)
+        self.pic_label.setPixmap(pic)
+        self.text_label = QLabel()
+        self.text_label.setWordWrap(True)
+        self.text_label.setIndent(20)
+        self.qrcode_label = QLabel()
+        qrcode = QPixmap('posters/qrcode.png').scaledToHeight(height, Qt.SmoothTransformation)
+        self.qrcode_label.setPixmap(qrcode)
+        self.add_widget(self.pic_label, 0, 0)
+        self.add_widget(self.text_label, 0, 1)
+        self.add_widget(self.qrcode_label, 0, 2)
+
+    def set_text(self, presenter, poster_id):
+        """
+        """
+        text = f'Presenter: {presenter}\nPoster ID: {poster_id}'
+        self.text_label.setText(text)
+
+
+
+class SlideShowFooter(Banner):
+
+    """Class describing the footer for the slideshow.
+    """
+
+    def __init__(self, height=40):
+        """Constructor.
+        """
+        super().__init__(height)
+        self.text_label = QLabel()
+        self.text_label.setMargin(10)
+        self.text_label.setText('Footer text')
+        self.add_widget(self.text_label, 0, 1)
+
+
+
+class SlideShow(WidgetBase):
 
     """Basic slideshow class.
     """
@@ -231,13 +416,12 @@ class SlideShow(QWidget):
     def __init__(self, folder_path: str, screen: int, **kwargs):
         """Constructor.
         """
-        super().__init__()
+        super().__init__(column_stretch={0: 1, 2: 1}, **kwargs)
         self.folder_path = folder_path
         self.screen_id = screen
         # Parse the command-line arguments.
         advance_interval = kwargs.get('advance', self.DEFAULT_ADVANCE_INTERVAL)
         pause_interval = kwargs.get('pause', self.DEFAULT_PAUSE_INTERVAL)
-        background_color = kwargs.get('background', 'black')
         geometry = kwargs.get('geometry')
         self.height = kwargs.get('height')
         assert geometry in self.VALID_GEOMETRIES
@@ -248,19 +432,25 @@ class SlideShow(QWidget):
         self.__current_index = 0
         self.pixmap_list = []
         # Setup the widget.
-        self.setStyleSheet(f'background-color: {background_color}')
         self.label = QLabel()
-        _grid = QGridLayout()
-        _grid.setColumnStretch(0, 1)
-        _grid.setColumnStretch(2, 1)
-        _grid.addWidget(self.label, 1, 1)
-        self.setLayout(_grid)
+        self.session_header = SessionHeader()
+        self.poster_header = PosterHeader()
+        self.footer = SlideShowFooter()
+        self.fading_effect = FadingEffect()
+        self.label.setGraphicsEffect(self.fading_effect)
+        self.add_widget(self.session_header, 0, 1)
+        self.add_widget(self.poster_header, 1, 1)
+        self.add_widget(self.label, 2, 1)
+        self.add_widget(self.footer, 3, 1)
         self.setWindowTitle(self.WINDOW_TITLE)
         self.timer = QTimer()
         self.timer.timeout.connect(self.advance)
         # Load the images.
         self._load_images()
         self.display_image()
+        #
+        self.session_header.set_text('Gas detectors', ['A', 'B'])
+        self.poster_header.set_text('Luca Baldini', 12)
         # We're good to go!
         self.timer.start(self.advance_interval)
         if geometry == 'maximize':
@@ -351,6 +541,7 @@ class SlideShow(QWidget):
         pixmap = self.pixmap_list[self.__current_index]
         pixmap.synch()
         self.label.setPixmap(pixmap)
+        self.fading_effect.fade_in()
 
     def advance(self) -> None:
         """Advance to the next image.
@@ -370,7 +561,7 @@ if __name__ == '__main__':
                         help='the time interval for the slide show pause [s]')
     parser.add_argument('--geometry', type=str, default='default', choices=SlideShow.VALID_GEOMETRIES,
 	                help='display geometry')
-    parser.add_argument('--height', type=int, default=1000,
+    parser.add_argument('--height', type=int, default=800,
                         help='the target image height')
     parser.add_argument('--background', type=str, default='black',
                         help='the widget background color')
