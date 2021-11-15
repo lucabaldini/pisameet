@@ -30,6 +30,7 @@ from PyQt5.QtWidgets import QApplication, QLabel, QGridLayout, QWidget
 from PyQt5.QtGui import QPixmap, QKeyEvent
 from PyQt5.QtCore import Qt, QTimer
 
+import touchphat
 
 
 class TerminalColors:
@@ -313,12 +314,19 @@ class SlideShow(QWidget):
         """Overloaded method to handle key events.
         """
         # pylint: disable=invalid-name
+        print(event.text())
         index = self.pixmap_list.pixmap_index(event.text())
         if index is None:
             return
         self.display_image(index)
         self.timer.stop()
         self.timer.singleShot(self.pause_interval, self.timer.start)
+
+    @touchphat.on_touch(['Back', 'A', 'B', 'C', 'D', 'Enter'])
+    def handle_touch(event):
+        """
+        """
+        print(event.name)
 
     def display_image(self, index: int = 0) -> None:
         """Show a given image.
