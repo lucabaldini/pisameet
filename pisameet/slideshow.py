@@ -30,7 +30,17 @@ from PyQt5.QtWidgets import QApplication, QLabel, QGridLayout, QWidget, QGraphic
 from PyQt5.QtGui import QPixmap, QKeyEvent
 from PyQt5.QtCore import Qt, QTimer
 
-import touchphat
+try:
+    import touchphat
+except ImportError:
+    class touchphat:
+        @staticmethod
+        def no_op(*args, **kwargs):
+            pass
+        @staticmethod
+        def on_touch(*args, **kwargs):
+            return touchphat.no_op
+
 
 
 class TerminalColors:
