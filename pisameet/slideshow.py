@@ -187,7 +187,7 @@ class PixmapList(list):
     def pixmap_key(index: int) -> str:
         """Return the key corresponding to a given sequential index.
         """
-        return f'{index + 1}'
+        return ['A', 'B', 'C', 'D'][index]
 
     def pixmap_index(self, key: str) -> int:
         """Return the index corresponding to a given key, if valid.
@@ -236,7 +236,7 @@ class FadingEffect(QGraphicsOpacityEffect):
         The basic time interval (in ms) during the transitions.
     """
 
-    def __init__(self, step: float = 0.003, interval: int = 10):
+    def __init__(self, step: float = 0.025, interval: int = 5):
         """Constructor.
         """
         super().__init__()
@@ -416,7 +416,7 @@ class SlideShow(WidgetBase):
     def __init__(self, folder_path: str, screen: int, **kwargs):
         """Constructor.
         """
-        super().__init__(column_stretch={0: 1, 2: 1}, **kwargs)
+        super().__init__(column_stretch={0: 1, 1: 100, 2: 1}, **kwargs)
         self.folder_path = folder_path
         self.screen_id = screen
         # Parse the command-line arguments.
@@ -512,11 +512,18 @@ class SlideShow(WidgetBase):
         self.timer.stop()
         self.timer.singleShot(self.pause_interval, self.timer.start)
 
-    @touchphat.on_touch(['Back', 'A', 'B', 'C', 'D', 'Enter'])
-    def handle_touch(event):
+    def touch_event(self, event) -> None:
+        """Overloaded method to handle key events.
         """
-        """
-        print(event.name)
+        # pylint: disable=invalid-name
+        print(f'Key pressed {event.name} (inner)')
+        index = self.pixmap_list.pixmap_index(event.name)
+        print(index)
+        if index is None:
+            return
+        self.display_image(index)
+        self.timer.stop()
+        self.timer.singleShot(self.pause_interval, self.timer.start)
 
     def display_image(self, index: int = 0) -> None:
         """Show a given image.
@@ -568,4 +575,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     app = QApplication(sys.argv)
     slideshow = SlideShow('posters', **args.__dict__)
+
+    @touchphat.on_touch(['Back', 'A', 'B', 'C', 'D', 'Enter'])
+    def handle_touch(event):
+        """
+        """
+        print(f'Key pressed {event.name}')
+        slideshow.touch_event(event)
+
     sys.exit(app.exec_())
+
