@@ -227,6 +227,47 @@ class PixmapList(list):
         return file_list
 
 
+class Poster:
+
+    """
+    """
+
+    def __init__(self, poster_file_path, screen_id, poster_id, pixmap_key, pixmap_height, surname, name, presenter_pic_file_path):
+        """
+        """
+        self.pixmap = Pixmap(poster_file_path, pixmap_key, pixmap_height)
+        self.screen_id = screen_id
+        self.poster_id = poster_id
+        self.surname = surname
+        self.name = name
+        self.presenter = f'{name} {surname}'
+        self.presenter_pixmap = QPixmap(presenter_pic_file_path)
+
+
+class PosterList(list):
+
+    """
+    """
+
+    def __init__(self, config_file_path, pixmap_height):
+        """
+        """
+        super().__init__()
+        config_folder = os.path.dirname(config_file_path)
+        logger.info('Reading poster configuration file %s...', config_file_path)
+        for line in open(config_file_path):
+            poster_file_name, screen_id, poster_id, surname, name, pic_file_name =\
+                line.strip('\n').split(', ')
+            screen_id = int(screen_id)
+            poster_id = int(poster_id)
+            print(poster_file_name, surname, name, pic_file_name)
+            poster_file_path = os.path.join(config_folder, poster_file_name)
+            pic_file_path = os.path.join(config_folder, pic_file_name)
+            pixmap_key = PixmapList.pixmap_key(poster_id - 1)
+            self.append(Poster(poster_file_path, screen_id, poster_id, pixmap_key,\
+                pixmap_height, surname, name, pic_file_path))
+
+
 
 class FadingEffect(QGraphicsOpacityEffect):
 
@@ -376,9 +417,9 @@ class PosterHeader(Banner):
         """Constructor.
         """
         super().__init__(height)
+        self.height = height
         self.pic_label = QLabel()
-        pic = QPixmap('posters/forti.jpg').scaledToHeight(height, Qt.SmoothTransformation)
-        self.pic_label.setPixmap(pic)
+
         self.text_label = QLabel()
         self.text_label.setWordWrap(True)
         self.text_label.setIndent(20)
@@ -388,6 +429,11 @@ class PosterHeader(Banner):
         self.add_widget(self.pic_label, 0, 0)
         self.add_widget(self.text_label, 0, 1)
         self.add_widget(self.qrcode_label, 0, 2)
+
+    def set_presenter_pixmap(self, pixmap):
+        """
+        """
+        self.pic_label.setPixmap(pixmap.scaledToHeight(self.height, Qt.SmoothTransformation))
 
     def set_text(self, presenter, poster_id):
         """
@@ -456,11 +502,13 @@ class SlideShow(WidgetBase):
         self.timer = QTimer()
         self.timer.timeout.connect(self.advance)
         # Load the images.
-        self._load_images()
+        self.__current_index = 0
+        self.poster_list = PosterList('posters/config.txt', self.height)
+
+        #self._load_images()
         self.display_image()
         #
         self.session_header.set_text('Gas detectors', ['A', 'B'])
-        self.poster_header.set_text('Luca Baldini', 12)
         # We're good to go!
         self.timer.start(self.advance_interval)
         if geometry == 'maximize':
@@ -547,17 +595,20 @@ class SlideShow(WidgetBase):
             The index of the image to be shown (note this is intended modulo the
             total number of images in the slideshow).
         """
-        current_file_list = PixmapList.build_file_list(self.folder_path, self.screen_id)
-        cached_file_list = self.pixmap_list.file_list()
-        if cached_file_list != current_file_list:
-            logger.warning('Poster folder changed on disk!')
-            self._load_images()
-        else:
-            self.__current_index = index % len(self.pixmap_list)
+        #current_file_list = PixmapList.build_file_list(self.folder_path, self.screen_id)
+        #cached_file_list = self.pixmap_list.file_list()
+        #if cached_file_list != current_file_list:
+        #    logger.warning('Poster folder changed on disk!')
+        #    self._load_images()
+        #else:
+        self.__current_index = index % len(self.poster_list)
         logger.debug('Displaying image %s...', PixmapList.pixmap_key(self.__current_index))
-        pixmap = self.pixmap_list[self.__current_index]
+        poster = self.poster_list[self.__current_index]
+        pixmap = poster.pixmap
         pixmap.synch()
         self.label.setPixmap(pixmap)
+        self.poster_header.set_presenter_pixmap(poster.presenter_pixmap)
+        self.poster_header.set_text(poster.presenter, poster.poster_id)
         self.fading_effect.fade_in()
 
     def advance(self) -> None:
