@@ -78,3 +78,9 @@ to rotate the screen by 90 degrees (i.e., to the right).
 Presentation software
 ---------------------
 
+In order to clone the repository just do
+
+.. code-block::
+
+   > git clone https://github.com/lucabaldini/pisameet.git
+
