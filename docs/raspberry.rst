@@ -51,7 +51,7 @@ Dependencies
 ------------
 
 The only additional package that you need, on top of the standard raspbian
-Desktop installation, is the Python wrappers to the Qt library for the GUI. 
+Desktop installation, is the Python wrappers to the Qt library for the GUI.
 
 .. code-block::
 
@@ -62,6 +62,17 @@ Desktop installation, is the Python wrappers to the Qt library for the GUI.
 Setting up the screen
 ---------------------
 
+You get control of the screen orientation (e.g., vertical vs. horizontal) through
+the `Preferences -> Screen Configuration` dialog. This will open the screen
+editor that allows to change the orientation.
+
+Alternatively, you can hack the ``/boot/config.txt``, e.g.
+
+.. code-block::
+
+    display_hdmi_rotate=1
+
+to rotate the screen by 90 degrees (i.e., to the right).
 
 
 Presentation software
