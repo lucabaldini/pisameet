@@ -196,8 +196,6 @@ class PosterHeader(Banner):
         self.text_label.setIndent(20)
         self.qrcode_label = QLabel()
         self.qrcode_label.setFixedSize(height, height)
-        qrcode = QPixmap('posters/qrcode.png').scaledToHeight(height, Qt.SmoothTransformation)
-        self.qrcode_label.setPixmap(qrcode)
         self.add_widget(self.presenter_label, 0, 0)
         self.add_widget(self.text_label, 0, 1)
         self.add_widget(self.qrcode_label, 0, 2)
@@ -210,6 +208,10 @@ class PosterHeader(Banner):
             self.presenter_label.setPixmap(poster.presenter_pixmap)
         except TypeError:
             self.presenter_label.clear()
+        try:
+            self.qrcode_label.setPixmap(poster.qrcode_pixmap)
+        except TypeError:
+            self.qrcode_label.clear()
         text = f'<font color="black" size="4">{presenter.full_name()}</font><br/>'\
                f'<font color="gray" size="2">{presenter.affiliation}</font><br/>'
         self.text_label.setText(text)

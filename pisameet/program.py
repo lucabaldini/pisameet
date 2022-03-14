@@ -130,6 +130,10 @@ class Poster:
             logger.warning('Presenter file path undefined for %s', self)
         else:
             self.presenter_pixmap = self.load_pixmap(presenter_file_path, header_height)
+        if qrcode_file_path is None:
+            logger.warning('QR-code file path undefined for %s', self)
+        else:
+            self.qrcode_pixmap = self.load_pixmap(qrcode_file_path, header_height)
 
     def __str__(self):
         """String formatting.
@@ -204,6 +208,7 @@ class PosterRoster(list):
     SESSION_COL_NAMES = ('Poster ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation')
     POSTER_FOLDER_NAME = 'poster_images'
     PRESENTER_FOLDER_NAME = 'presenters'
+    QRCODE_FOLDER_NAME = 'qrcodes'
 
     def __init__(self, config_file_path : str, root_folder_path : str, screen_id : int) -> None:
         """Constructor
@@ -213,6 +218,7 @@ class PosterRoster(list):
         self.root_folder_path = root_folder_path
         self.poster_folder_path = os.path.join(self.root_folder_path, self.POSTER_FOLDER_NAME)
         self.presenter_folder_path = os.path.join(self.root_folder_path, self.PRESENTER_FOLDER_NAME)
+        self.qrcode_folder_path = os.path.join(self.root_folder_path, self.QRCODE_FOLDER_NAME)
         self.screen_id = screen_id
         logger.info('Populating session list...')
         logger.debug('Reading %s sheet from %s...', self.PROGRAM_SHEET_NAME, config_file_path)
@@ -288,7 +294,7 @@ class PosterRoster(list):
         poster_ids = [poster.unique_id for poster in self]
         poster_file_dict = self._file_dict(self.poster_folder_path, poster_ids, '.png')
         presenter_file_dict = self._file_dict(self.presenter_folder_path, poster_ids, '.png', '.jpg', '.jpeg')
-        qrcode_file_dict = {}
+        qrcode_file_dict = self._file_dict(self.qrcode_folder_path, poster_ids, '.png')
         for poster in self:
             args = [d.get(poster.unique_id) for d in (poster_file_dict, presenter_file_dict, qrcode_file_dict)]
             args += [poster_size, header_height]

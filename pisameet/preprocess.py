@@ -23,6 +23,9 @@ import glob
 import os
 import subprocess
 
+from __init__ import logger
+from qrcode_ import generate_qrcode
+
 
 def crawl(folder_path: str, file_type: str = '.pdf', filter_pattern: str = None) -> list:
     """Crawl a given folder recursively and return a list of all the files of
@@ -63,6 +66,15 @@ def pdf_to_png(input_file_path: str, output_folder_path) -> str:
     subprocess.run(['convert', input_file_path, output_file_path])
     return output_file_path
 
+def generate_qrcodes(folder_path : str, output_folder_path : str):
+    """
+    """
+    for file_path in crawl(folder_path):
+        poster_id = os.path.basename(file_path).split('-')[0]
+        file_name = f'{poster_id}-qrcode.png'
+        qrcode_path = os.path.join(output_folder_path, file_name)
+        logger.info('Writing QR-code to %s...', qrcode_path)
+        generate_qrcode(file_path, qrcode_path)
 
 def preprocess_posters(folder_path : str, output_folder_path : str):
     """Save png versions of the posters.
@@ -73,4 +85,5 @@ def preprocess_posters(folder_path : str, output_folder_path : str):
 
 
 if __name__ == '__main__':
-    preprocess_posters('pm2018/poster_original', 'pm2018/poster_images')
+    #preprocess_posters('pm2018/poster_original', 'pm2018/poster_images')
+    generate_qrcodes('pm2018/poster_original', 'pm2018/qrcodes')
