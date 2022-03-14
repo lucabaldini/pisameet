@@ -128,10 +128,10 @@ class WidgetBase(QWidget):
         if background_color is not None:
             self.setStyleSheet(f'background-color: {background_color}')
 
-    def add_widget(self, widget, row, col, row_span=1, col_span=1, alignment=Qt.AlignHCenter):
+    def add_widget(self, widget, row, col, row_span=1, col_span=1):
         """Add a widget to the underlying grid layout.
         """
-        self.layout().addWidget(widget, row, col, row_span, col_span, alignment)
+        self.layout().addWidget(widget, row, col, row_span, col_span)
 
 
 
@@ -140,11 +140,11 @@ class Banner(WidgetBase):
     """Base class for a banner.
     """
 
-    def __init__(self, width, height):
+    def __init__(self, height):
         """Constructor.
         """
         super().__init__(column_stretch={1: 1}, background='white')
-        self.setFixedSize(width, height)
+        self.setFixedHeight(height)
         self.layout().setContentsMargins(0, 0, 0, 0)
 
 
@@ -154,12 +154,12 @@ class RosterHeader(Banner):
     """
     """
 
-    def __init__(self, width, height):
+    def __init__(self, height):
         """Constructor.
         """
-        super().__init__(width, height)
+        super().__init__(height)
         self.text_label = QLabel()
-        self.text_label.setFixedSize(width, height)
+        self.text_label.setFixedHeight(height)
         self.text_label.setWordWrap(True)
         self.text_label.setIndent(10)
         self.text_label.setMargin(10)
@@ -185,20 +185,20 @@ class PosterHeader(Banner):
     """Class describing the poster header.
     """
 
-    def __init__(self, width, height):
+    def __init__(self, height):
         """Constructor.
         """
-        super().__init__(width, height)
+        super().__init__(height)
         self.height = height
         self.presenter_label = QLabel()
-        self.presenter_label.setFixedSize(height, height)
+        self.presenter_label.setFixedHeight(height)
         self.text_label = QLabel()
-        self.text_label.setFixedSize(width - 2 * height - 20, height)
+        self.text_label.setFixedHeight(height)
         self.text_label.setWordWrap(True)
         self.text_label.setIndent(20)
         #self.text_label.setStyleSheet("border: 1px solid gray; border-radius: 5px");
         self.qrcode_label = QLabel()
-        self.qrcode_label.setFixedSize(height, height)
+        self.qrcode_label.setFixedHeight(height)
         self.add_widget(self.presenter_label, 0, 0)
         self.add_widget(self.text_label, 0, 1)
         self.add_widget(self.qrcode_label, 0, 2)
@@ -226,13 +226,13 @@ class Footer(Banner):
     """Class describing the footer for the slideshow.
     """
 
-    def __init__(self, width, height, parent=None):
+    def __init__(self, height, parent=None):
         """Constructor.
         """
-        super().__init__(width, height)
+        super().__init__(height)
         self.parent = parent
         self.text_label = QLabel()
-        self.text_label.setFixedSize(width, height)
+        self.text_label.setFixedHeight(height)
         self.text_label.setMargin(10)
         self.add_widget(self.text_label, 0, 1)
 
@@ -271,11 +271,11 @@ class SlideShow(WidgetBase):
         self.pause_interval = self.sec_to_msec(pause_interval)
         # Setup the widget.
         poster_size = (kwargs.get('poster_width'), kwargs.get('poster_height'))
-
         self.poster_label = QLabel()
-        self.roster_header = RosterHeader(kwargs.get('poster_width'), kwargs.get('roster_header_height', 50))
-        self.poster_header = PosterHeader(kwargs.get('poster_width'), kwargs.get('poster_header_height', 70))
-        self.footer = Footer(kwargs.get('poster_width'), kwargs.get('footer_height', 40), self)
+        self.poster_label.setAlignment(Qt.AlignCenter)
+        self.roster_header = RosterHeader(kwargs.get('roster_header_height', 50))
+        self.poster_header = PosterHeader(kwargs.get('poster_header_height', 70))
+        self.footer = Footer(kwargs.get('footer_height', 40), self)
         self.fading_effect = FadingEffect()
         self.poster_label.setGraphicsEffect(self.fading_effect)
         self.add_widget(self.roster_header, 0, 1)
