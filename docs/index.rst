@@ -11,6 +11,9 @@ Poster Facilities for the Pisa meeting
    :caption: Contents:
 
    raspberry
+   files
+   preprocessing
+   api
 
 
 Indices and tables
