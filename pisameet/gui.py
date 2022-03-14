@@ -149,7 +149,7 @@ class Banner(WidgetBase):
 
 
 
-class SessionHeader(Banner):
+class RosterHeader(Banner):
 
     """
     """
@@ -162,13 +162,18 @@ class SessionHeader(Banner):
         self.text_label.setFixedSize(width, height)
         self.text_label.setWordWrap(True)
         self.text_label.setIndent(20)
-        self.text_label.setAlignment(Qt.AlignCenter)
+        self.text_label.setAlignment(Qt.AlignLeft)
         self.add_widget(self.text_label, 0, 1)
 
-    def set_session(self, session):
+    def set_roster(self, roster, current_poster_id):
         """
         """
-        text = f'<font color="black" size="4">{session}</font><br/>'
+        text = f'<font color="black" size="4">{roster.session}</font><br/><br/>'
+        for i, poster in enumerate(roster):
+            if i == current_poster_id:
+                text += f'<font color="black" size="2">{poster}</font><br/>'
+            else:
+                text += f'<font color="gray" size="2">{poster}</font><br/>'
         self.text_label.setText(text)
 
 
@@ -201,10 +206,12 @@ class PosterHeader(Banner):
         """
         """
         presenter = poster.presenter
-        self.presenter_label.setPixmap(poster.presenter_pixmap)
+        try:
+            self.presenter_label.setPixmap(poster.presenter_pixmap)
+        except TypeError:
+            self.presenter_label.clear()
         text = f'<font color="black" size="4">{presenter.full_name()}</font><br/>'\
-               f'<font color="gray" size="2">{presenter.affiliation}</font><br/>'\
-               f'<font color="gray" size="2">Poster ID: {poster.unique_id}</font><br/>'
+               f'<font color="gray" size="2">{presenter.affiliation}</font><br/>'
         self.text_label.setText(text)
 
 
@@ -214,19 +221,21 @@ class Footer(Banner):
     """Class describing the footer for the slideshow.
     """
 
-    def __init__(self, width, height):
+    def __init__(self, width, height, parent=None):
         """Constructor.
         """
         super().__init__(width, height)
+        self.parent = parent
         self.text_label = QLabel()
         self.text_label.setFixedSize(width, height)
         self.text_label.setMargin(10)
         self.add_widget(self.text_label, 0, 1)
 
-    def set_text(self, text):
+    def update(self):
         """
         """
-        text = f'<font color="gray" size="2">{text}</font><br/>'
+        t = int(self.parent.timer.remainingTime() / 1000. + 0.9)
+        text = f'<font color="gray" size="2">Status: running, {t} s to the next poster</font><br/>'
         self.text_label.setText(text)
 
 
@@ -259,18 +268,21 @@ class SlideShow(WidgetBase):
         poster_size = (kwargs.get('poster_width'), kwargs.get('poster_height'))
 
         self.poster_label = QLabel()
-        self.session_header = SessionHeader(kwargs.get('poster_width'), kwargs.get('session_header_height', 50))
+        self.roster_header = RosterHeader(kwargs.get('poster_width'), kwargs.get('roster_header_height', 50))
         self.poster_header = PosterHeader(kwargs.get('poster_width'), kwargs.get('poster_header_height', 70))
-        self.footer = Footer(kwargs.get('poster_width'), kwargs.get('footer_height', 40))
+        self.footer = Footer(kwargs.get('poster_width'), kwargs.get('footer_height', 40), self)
         self.fading_effect = FadingEffect()
         self.poster_label.setGraphicsEffect(self.fading_effect)
-        self.add_widget(self.session_header, 0, 1)
+        self.add_widget(self.roster_header, 0, 1)
         self.add_widget(self.poster_header, 1, 1)
         self.add_widget(self.poster_label, 2, 1)
         self.add_widget(self.footer, 3, 1)
         self.setWindowTitle(self.WINDOW_TITLE)
         self.timer = QTimer()
         self.timer.timeout.connect(self.advance)
+        self.footer_timer = QTimer()
+        self.footer_timer.timeout.connect(self.footer.update)
+        self.footer_timer.start(250)
         # We're good to go!
         self.timer.start(self.advance_interval)
         if geometry == 'maximize':
@@ -283,7 +295,6 @@ class SlideShow(WidgetBase):
         config_file_path = kwargs.get('cfgfile')
         root_folder_path = os.path.dirname(config_file_path)
         self.poster_roster = PosterRoster(config_file_path, root_folder_path, self.screen_id)
-        self.session_header.set_session(self.poster_roster.session)
         self.poster_roster.load_poster_data(poster_size, self.poster_header.height)
         self.display_poster(0)
 
@@ -291,11 +302,11 @@ class SlideShow(WidgetBase):
         """Display a given poster.
         """
         self.__current_index = index % len(self.poster_roster)
+        self.roster_header.set_roster(self.poster_roster, self.__current_index)
         poster = self.poster_roster[self.__current_index]
         self.poster_header.set_poster(poster)
         next_id = (self.__current_index + 1) % len(self.poster_roster)
         next_poster = self.poster_roster[next_id]
-        self.footer.set_text(f'Coming next: {next_poster}')
         self.poster_label.setPixmap(poster.poster_pixmap)
         self.fading_effect.fade_in()
 

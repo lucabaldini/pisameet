@@ -39,7 +39,7 @@ PARSER.add_argument('--poster-width', type=int, default=625,
     help='the width for the poster display')
 PARSER.add_argument('--poster-height', type=int, default=800,
     help='the height for the poster display')
-PARSER.add_argument('--session-header-height', type=int, default=50,
+PARSER.add_argument('--roster-header-height', type=int, default=150,
     help='the height of the session header')
 PARSER.add_argument('--poster-header-height', type=int, default=70,
     help='the height of the poster header')
