@@ -35,11 +35,18 @@ PARSER.add_argument('--pause', type=float, default=SlideShow.DEFAULT_PAUSE_INTER
     help='the time interval for the slide show pause [s]')
 PARSER.add_argument('--geometry', type=str, default='default', choices=SlideShow.VALID_GEOMETRIES,
     help='display geometry')
-PARSER.add_argument('--height', type=int, default=800,
-    help='the target image height')
-PARSER.add_argument('--background', type=str, default='black',
+PARSER.add_argument('--poster-width', type=int, default=625,
+    help='the width for the poster display')
+PARSER.add_argument('--poster-height', type=int, default=800,
+    help='the height for the poster display')
+PARSER.add_argument('--session-header-height', type=int, default=50,
+    help='the height of the session header')
+PARSER.add_argument('--poster-header-height', type=int, default=70,
+    help='the height of the poster header')
+PARSER.add_argument('--footer-height', type=int, default=40,
+    help='the height of the footer')
+PARSER.add_argument('--background', type=str, default='white',
     help='the widget background color')
-
 
 
 if __name__ == '__main__':

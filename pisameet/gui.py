@@ -127,10 +127,10 @@ class WidgetBase(QWidget):
         if background_color is not None:
             self.setStyleSheet(f'background-color: {background_color}')
 
-    def add_widget(self, widget, row, col, row_span=1, col_span=1):
+    def add_widget(self, widget, row, col, row_span=1, col_span=1, alignment=Qt.AlignHCenter):
         """Add a widget to the underlying grid layout.
         """
-        self.layout().addWidget(widget, row, col, row_span, col_span)
+        self.layout().addWidget(widget, row, col, row_span, col_span, alignment)
 
 
 
@@ -139,11 +139,11 @@ class Banner(WidgetBase):
     """Base class for a banner.
     """
 
-    def __init__(self, height):
+    def __init__(self, width, height):
         """Constructor.
         """
         super().__init__(column_stretch={1: 1}, background='white')
-        self.setFixedHeight(height)
+        self.setFixedSize(width, height)
         self.layout().setContentsMargins(0, 0, 0, 0)
 
 
@@ -153,19 +153,21 @@ class SessionHeader(Banner):
     """
     """
 
-    def __init__(self, height=50):
+    def __init__(self, width, height):
         """Constructor.
         """
-        super().__init__(height)
+        super().__init__(width, height)
         self.text_label = QLabel()
+        self.text_label.setFixedSize(width, height)
         self.text_label.setWordWrap(True)
         self.text_label.setIndent(20)
+        self.text_label.setAlignment(Qt.AlignCenter)
         self.add_widget(self.text_label, 0, 1)
 
     def set_session(self, session):
         """
         """
-        text = f'{session}'
+        text = f'<font color="black" size="4">{session}</font><br/>'
         self.text_label.setText(text)
 
 
@@ -175,16 +177,19 @@ class PosterHeader(Banner):
     """Class describing the poster header.
     """
 
-    def __init__(self, height=70):
+    def __init__(self, width, height):
         """Constructor.
         """
-        super().__init__(height)
+        super().__init__(width, height)
         self.height = height
         self.presenter_label = QLabel()
+        self.presenter_label.setFixedSize(height, height)
         self.text_label = QLabel()
+        self.text_label.setFixedSize(width, height)
         self.text_label.setWordWrap(True)
         self.text_label.setIndent(20)
         self.qrcode_label = QLabel()
+        self.qrcode_label.setFixedSize(height, height)
         qrcode = QPixmap('posters/qrcode.png').scaledToHeight(height, Qt.SmoothTransformation)
         self.qrcode_label.setPixmap(qrcode)
         self.add_widget(self.presenter_label, 0, 0)
@@ -194,8 +199,11 @@ class PosterHeader(Banner):
     def set_poster(self, poster):
         """
         """
+        presenter = poster.presenter
         self.presenter_label.setPixmap(poster.presenter_pixmap)
-        text = f'{poster.presenter}\nPoster ID: {poster.unique_id}'
+        text = f'<font color="black" size="4">{presenter.full_name()}</font><br/>'\
+               f'<font color="gray" size="2">{presenter.affiliation}</font><br/>'\
+               f'<font color="gray" size="2">Poster ID: {poster.unique_id}</font><br/>'
         self.text_label.setText(text)
 
 
@@ -205,17 +213,19 @@ class Footer(Banner):
     """Class describing the footer for the slideshow.
     """
 
-    def __init__(self, height=40):
+    def __init__(self, width, height):
         """Constructor.
         """
-        super().__init__(height)
+        super().__init__(width, height)
         self.text_label = QLabel()
+        self.text_label.setFixedSize(width, height)
         self.text_label.setMargin(10)
         self.add_widget(self.text_label, 0, 1)
 
     def set_text(self, text):
         """
         """
+        text = f'<font color="gray" size="2">{text}</font><br/>'
         self.text_label.setText(text)
 
 
@@ -240,21 +250,22 @@ class SlideShow(WidgetBase):
         advance_interval = kwargs.get('advance', self.DEFAULT_ADVANCE_INTERVAL)
         pause_interval = kwargs.get('pause', self.DEFAULT_PAUSE_INTERVAL)
         geometry = kwargs.get('geometry')
-        self.height = kwargs.get('height')
         assert geometry in self.VALID_GEOMETRIES
         # Convert times from s to msec.
         self.advance_interval = self.sec_to_msec(advance_interval)
         self.pause_interval = self.sec_to_msec(pause_interval)
         # Setup the widget.
-        self.label = QLabel()
-        self.session_header = SessionHeader()
-        self.poster_header = PosterHeader()
-        self.footer = Footer()
+        poster_size = (kwargs.get('poster_width'), kwargs.get('poster_height'))
+
+        self.poster_label = QLabel()
+        self.session_header = SessionHeader(kwargs.get('poster_width'), kwargs.get('session_header_height', 50))
+        self.poster_header = PosterHeader(kwargs.get('poster_width'), kwargs.get('poster_header_height', 70))
+        self.footer = Footer(kwargs.get('poster_width'), kwargs.get('footer_height', 40))
         self.fading_effect = FadingEffect()
-        self.label.setGraphicsEffect(self.fading_effect)
+        self.poster_label.setGraphicsEffect(self.fading_effect)
         self.add_widget(self.session_header, 0, 1)
         self.add_widget(self.poster_header, 1, 1)
-        self.add_widget(self.label, 2, 1)
+        self.add_widget(self.poster_label, 2, 1)
         self.add_widget(self.footer, 3, 1)
         self.setWindowTitle(self.WINDOW_TITLE)
         self.timer = QTimer()
@@ -273,7 +284,7 @@ class SlideShow(WidgetBase):
         screen_id = 1
         self.poster_roster = PosterRoster(config_file_path, root_folder_path, screen_id)
         self.session_header.set_session(self.poster_roster.session)
-        self.poster_roster.load_poster_data((600, 600), self.poster_header.height)
+        self.poster_roster.load_poster_data(poster_size, self.poster_header.height)
         self.display_poster(0)
 
     def display_poster(self, index: int = 0) -> None:
@@ -285,7 +296,7 @@ class SlideShow(WidgetBase):
         next_id = (self.__current_index + 1) % len(self.poster_roster)
         next_poster = self.poster_roster[next_id]
         self.footer.set_text(f'Coming next: {next_poster}')
-        self.label.setPixmap(poster.poster_pixmap)
+        self.poster_label.setPixmap(poster.poster_pixmap)
         self.fading_effect.fade_in()
 
     def advance(self) -> None:
