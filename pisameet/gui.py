@@ -161,9 +161,11 @@ class RosterHeader(Banner):
         self.text_label = QLabel()
         self.text_label.setFixedSize(width, height)
         self.text_label.setWordWrap(True)
-        self.text_label.setIndent(20)
+        self.text_label.setIndent(10)
+        self.text_label.setMargin(10)
         self.text_label.setAlignment(Qt.AlignLeft)
         self.add_widget(self.text_label, 0, 1)
+        self.setStyleSheet("border: 1px solid gray; border-radius: 5px");
 
     def set_roster(self, roster, current_poster_id):
         """
@@ -191,9 +193,10 @@ class PosterHeader(Banner):
         self.presenter_label = QLabel()
         self.presenter_label.setFixedSize(height, height)
         self.text_label = QLabel()
-        self.text_label.setFixedSize(width, height)
+        self.text_label.setFixedSize(width - 2 * height - 20, height)
         self.text_label.setWordWrap(True)
         self.text_label.setIndent(20)
+        #self.text_label.setStyleSheet("border: 1px solid gray; border-radius: 5px");
         self.qrcode_label = QLabel()
         self.qrcode_label.setFixedSize(height, height)
         self.add_widget(self.presenter_label, 0, 0)
