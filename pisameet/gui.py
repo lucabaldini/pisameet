@@ -282,7 +282,7 @@ class SlideShow(WidgetBase):
         self.timer.timeout.connect(self.advance)
         self.footer_timer = QTimer()
         self.footer_timer.timeout.connect(self.footer.update)
-        self.footer_timer.start(250)
+        self.footer_timer.start(100)
         # We're good to go!
         self.timer.start(self.advance_interval)
         if geometry == 'maximize':
