@@ -66,7 +66,7 @@ def pdf_to_png(input_file_path: str, output_folder_path) -> str:
     subprocess.run(['convert', input_file_path, output_file_path])
     return output_file_path
 
-def generate_qrcodes(folder_path : str, output_folder_path : str):
+def generate_qr_codes(folder_path : str, output_folder_path : str):
     """
     """
     for file_path in crawl(folder_path):
@@ -86,4 +86,4 @@ def preprocess_posters(folder_path : str, output_folder_path : str):
 
 if __name__ == '__main__':
     #preprocess_posters('pm2018/poster_original', 'pm2018/poster_images')
-    generate_qrcodes('pm2018/poster_original', 'pm2018/qrcodes')
+    generate_qr_codes('pm2018/poster_original', 'pm2018/qrcodes')
