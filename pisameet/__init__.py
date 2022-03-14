@@ -106,7 +106,8 @@ _SAMPLE_SCREEN_ID_FILE_PATH = os.path.join(PISAMEET_ROOT, 'screen.cfg.sample')
 
 
 def copy_screen_id_sample_file():
-    """
+    """Copy the sample configuration file with the screen identifier to the
+    proper location, for it to be manually edited.
     """
     src = _SAMPLE_SCREEN_ID_FILE_PATH
     dest = _SCREEN_ID_FILE_PATH
@@ -115,7 +116,11 @@ def copy_screen_id_sample_file():
 
 
 def read_screen_id():
-    """
+    """Read the screen identifier from the local configuration file.
+
+    Note that if the proper text files does not exists, a copy from a sample
+    file will be created, for the user to edit it by hand.
+    (The configuration file is included in the .gitignore file.)
     """
     if not os.path.exists(_SCREEN_ID_FILE_PATH):
         copy_screen_id_sample_file()
