@@ -166,7 +166,7 @@ class RosterHeader(Banner):
         self.text_label.setAlignment(Qt.AlignLeft)
         self.add_widget(self.text_label, 0, 2, 2, 1)
         self.text_label.setStyleSheet("border: 1px solid gray; border-radius: 5px");
-        side = height / 2
+        side = int(height / 2)
         self.portrait_label = QLabel()
         self.portrait_label.setFixedSize(side, side)
         self.portrait_label.setAlignment(Qt.AlignCenter)
