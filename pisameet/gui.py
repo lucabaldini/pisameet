@@ -164,8 +164,22 @@ class RosterHeader(Banner):
         self.text_label.setIndent(10)
         self.text_label.setMargin(10)
         self.text_label.setAlignment(Qt.AlignLeft)
-        self.add_widget(self.text_label, 0, 1)
-        self.setStyleSheet("border: 1px solid gray; border-radius: 5px");
+        self.add_widget(self.text_label, 0, 2, 2, 1)
+        self.text_label.setStyleSheet("border: 1px solid gray; border-radius: 5px");
+        side = height / 2
+        self.portrait_label = QLabel()
+        self.portrait_label.setFixedSize(side, side)
+        self.portrait_label.setAlignment(Qt.AlignCenter)
+        self.qrcode_label = QLabel()
+        self.qrcode_label.setFixedSize(side, side)
+        self.qrcode_label.setAlignment(Qt.AlignCenter)
+        self.add_widget(self.portrait_label, 0, 0)
+        self.add_widget(self.qrcode_label, 0, 1)
+        self.presenter_label = QLabel()
+        self.presenter_label.setFixedWidth(height)
+        self.presenter_label.setWordWrap(True)
+        self.presenter_label.setIndent(20)
+        self.add_widget(self.presenter_label, 1, 0, 1, 2)
 
     def set_roster(self, roster, current_poster_id):
         """
@@ -178,6 +192,21 @@ class RosterHeader(Banner):
                 text += f'<font color="gray" size="2">{poster}</font><br/>'
         self.text_label.setText(text)
 
+    def set_poster(self, poster):
+        """
+        """
+        presenter = poster.presenter
+        try:
+            self.portrait_label.setPixmap(poster.presenter_pixmap)
+        except TypeError:
+            self.portrait_label.clear()
+        try:
+            self.qrcode_label.setPixmap(poster.qrcode_pixmap)
+        except TypeError:
+            self.qrcode_label.clear()
+        text = f'<font color="black" size="4">{presenter.full_name()}</font><br/>'\
+               f'<font color="gray" size="2">{presenter.affiliation}</font><br/>'
+        self.presenter_label.setText(text)
 
 
 class PosterHeader(Banner):
@@ -279,7 +308,7 @@ class SlideShow(WidgetBase):
         self.fading_effect = FadingEffect()
         self.poster_label.setGraphicsEffect(self.fading_effect)
         self.add_widget(self.roster_header, 0, 1)
-        self.add_widget(self.poster_header, 1, 1)
+        #self.add_widget(self.poster_header, 1, 1)
         self.add_widget(self.poster_label, 2, 1)
         self.add_widget(self.footer, 3, 1)
         self.setWindowTitle(self.WINDOW_TITLE)
@@ -309,7 +338,8 @@ class SlideShow(WidgetBase):
         self.__current_index = index % len(self.poster_roster)
         self.roster_header.set_roster(self.poster_roster, self.__current_index)
         poster = self.poster_roster[self.__current_index]
-        self.poster_header.set_poster(poster)
+        self.roster_header.set_poster(poster)
+        #self.poster_header.set_poster(poster)
         next_id = (self.__current_index + 1) % len(self.poster_roster)
         next_poster = self.poster_roster[next_id]
         self.poster_label.setPixmap(poster.poster_pixmap)
