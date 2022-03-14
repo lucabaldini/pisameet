@@ -116,7 +116,7 @@ class Poster:
         logger.debug('Loading image data from %s...', file_path)
         return QPixmap(file_path).scaledToHeight(height, Qt.SmoothTransformation)
 
-    def load_data(self, poster_file_path, pic_file_path, qrcode_file_path,
+    def load_data(self, poster_file_path, presenter_file_path, qrcode_file_path,
         poster_size, header_height):
         """Load all the necessary poster data.
         """
@@ -126,10 +126,10 @@ class Poster:
         else:
             width, height = poster_size
             self.poster_pixmap = self.load_pixmap(poster_file_path, height)
-        if pic_file_path is None:
-            logger.warning('Pic file path undefined for %s', self)
+        if presenter_file_path is None:
+            logger.warning('Presenter file path undefined for %s', self)
         else:
-            self.presenter_pixmap = self.load_pixmap(pic_file_path, header_height)
+            self.presenter_pixmap = self.load_pixmap(presenter_file_path, header_height)
 
     def __str__(self):
         """String formatting.
@@ -202,8 +202,8 @@ class PosterRoster(list):
     DATETIME_FORMAT = '%d/%m/%Y %H:%M'
     PROGRAM_COL_NAMES = ('Session ID', 'Session Name', 'Start Date', 'End Date')
     SESSION_COL_NAMES = ('Poster ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation')
-    POSTER_FOLDER_NAME = 'poster_imgs'
-    PIC_FOLDER_NAME = 'pics'
+    POSTER_FOLDER_NAME = 'poster_images'
+    PRESENTER_FOLDER_NAME = 'presenters'
 
     def __init__(self, config_file_path : str, root_folder_path : str, screen_id : int) -> None:
         """Constructor
@@ -212,7 +212,7 @@ class PosterRoster(list):
         self.config_file_path = config_file_path
         self.root_folder_path = root_folder_path
         self.poster_folder_path = os.path.join(self.root_folder_path, self.POSTER_FOLDER_NAME)
-        self.pic_folder_path = os.path.join(self.root_folder_path, self.PIC_FOLDER_NAME)
+        self.presenter_folder_path = os.path.join(self.root_folder_path, self.PRESENTER_FOLDER_NAME)
         self.screen_id = screen_id
         logger.info('Populating session list...')
         logger.debug('Reading %s sheet from %s...', self.PROGRAM_SHEET_NAME, config_file_path)
@@ -287,10 +287,10 @@ class PosterRoster(list):
         logger.info('Loading poster data...')
         poster_ids = [poster.unique_id for poster in self]
         poster_file_dict = self._file_dict(self.poster_folder_path, poster_ids, '.png')
-        pic_file_dict = self._file_dict(self.pic_folder_path, poster_ids, '.png', '.jpg', '.jpeg')
+        presenter_file_dict = self._file_dict(self.presenter_folder_path, poster_ids, '.png', '.jpg', '.jpeg')
         qrcode_file_dict = {}
         for poster in self:
-            args = [d.get(poster.unique_id) for d in (poster_file_dict, pic_file_dict, qrcode_file_dict)]
+            args = [d.get(poster.unique_id) for d in (poster_file_dict, presenter_file_dict, qrcode_file_dict)]
             args += [poster_size, header_height]
             poster.load_data(*args)
 

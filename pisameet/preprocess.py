@@ -73,4 +73,4 @@ def preprocess_posters(folder_path : str, output_folder_path : str):
 
 
 if __name__ == '__main__':
-    preprocess_posters('/data/work/pm18/posters', '/data/work/pm18/poster_imgs')
+    preprocess_posters('pm2018/poster_original', 'pm2018/poster_images')

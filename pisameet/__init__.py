@@ -21,6 +21,16 @@
 
 
 import logging
+import os
+import shutil
+
+#
+# System-wide environment settings.
+#
+PACKAGE_NAME = 'pisameet'
+PISAMEET_ROOT = os.path.abspath(os.path.dirname(__file__))
+PISAMEET_BASE = os.path.abspath(os.path.join(PISAMEET_ROOT, os.pardir))
+
 
 
 class TerminalColors:
@@ -88,3 +98,29 @@ consoleHandler = logging.StreamHandler()
 consoleHandler.setLevel(logging.DEBUG)
 consoleHandler.setFormatter(TerminalFormatter())
 logger.addHandler(consoleHandler)
+
+
+# Relevant files for setting up the screen ID.
+_SCREEN_ID_FILE_PATH = os.path.join(PISAMEET_ROOT, 'screen.cfg')
+_SAMPLE_SCREEN_ID_FILE_PATH = os.path.join(PISAMEET_ROOT, 'screen.cfg.sample')
+
+
+def copy_screen_id_sample_file():
+    """
+    """
+    src = _SAMPLE_SCREEN_ID_FILE_PATH
+    dest = _SCREEN_ID_FILE_PATH
+    logger.info('Copying %s to %s...', src, dest)
+    shutil.copyfile(src, dest)
+
+
+def read_screen_id():
+    """
+    """
+    if not os.path.exists(_SCREEN_ID_FILE_PATH):
+        copy_screen_id_sample_file()
+    logger.info('Reading tyeh screen identifier from %s...', _SCREEN_ID_FILE_PATH)
+    with open(_SCREEN_ID_FILE_PATH) as input_file:
+        screen_id = int(input_file.read())
+    logger.info('Local screen identifier: %d', screen_id)
+    return screen_id

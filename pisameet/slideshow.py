@@ -27,8 +27,8 @@ from PyQt5.QtWidgets import QApplication
 from gui import SlideShow
 
 PARSER = argparse.ArgumentParser()
-PARSER.add_argument('--screen', type=int, default=1,
-    help='the unique identifier of the target screen')
+PARSER.add_argument('cfgfile', type=str,
+    help='path to the input excel configuration file')
 PARSER.add_argument('--advance', type=float, default=SlideShow.DEFAULT_ADVANCE_INTERVAL,
     help='the time interval for the slide show transition [s]')
 PARSER.add_argument('--pause', type=float, default=SlideShow.DEFAULT_PAUSE_INTERVAL,

@@ -19,6 +19,7 @@
 
 
 import argparse
+import os
 import sys
 
 # pylint: disable=no-name-in-module
@@ -26,7 +27,7 @@ from PyQt5.QtWidgets import QApplication, QLabel, QGridLayout, QWidget, QGraphic
 from PyQt5.QtGui import QPixmap, QKeyEvent
 from PyQt5.QtCore import Qt, QTimer
 
-from __init__ import logger
+from __init__ import logger, read_screen_id
 from program import PosterRoster
 
 
@@ -240,12 +241,12 @@ class SlideShow(WidgetBase):
     WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors'
     VALID_GEOMETRIES = ('default', 'maximize', 'fullscreen')
 
-    def __init__(self, folder_path: str, screen: int, **kwargs):
+    def __init__(self, folder_path: str, **kwargs):
         """Constructor.
         """
         super().__init__(column_stretch={0: 1, 1: 100, 2: 1}, **kwargs)
         self.folder_path = folder_path
-        self.screen_id = screen
+        self.screen_id = read_screen_id()
         # Parse the command-line arguments.
         advance_interval = kwargs.get('advance', self.DEFAULT_ADVANCE_INTERVAL)
         pause_interval = kwargs.get('pause', self.DEFAULT_PAUSE_INTERVAL)
@@ -279,10 +280,9 @@ class SlideShow(WidgetBase):
         else:
             self.show()
         #
-        config_file_path = '/data/work/pisameet/pisameet/config/pm2018_sample.xlsx'
-        root_folder_path = '/data/work/pm18/'
-        screen_id = 1
-        self.poster_roster = PosterRoster(config_file_path, root_folder_path, screen_id)
+        config_file_path = kwargs.get('cfgfile')
+        root_folder_path = os.path.dirname(config_file_path)
+        self.poster_roster = PosterRoster(config_file_path, root_folder_path, self.screen_id)
         self.session_header.set_session(self.poster_roster.session)
         self.poster_roster.load_poster_data(poster_size, self.poster_header.height)
         self.display_poster(0)
