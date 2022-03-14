@@ -1,0 +1,321 @@
+# Copyright (C) 2021, luca.baldini@pi.infn.it
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+"""Graphical user interface.
+"""
+
+
+import argparse
+import sys
+
+# pylint: disable=no-name-in-module
+from PyQt5.QtWidgets import QApplication, QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect
+from PyQt5.QtGui import QPixmap, QKeyEvent
+from PyQt5.QtCore import Qt, QTimer
+
+from __init__ import logger
+from program import PosterRoster
+
+
+
+class FadingEffect(QGraphicsOpacityEffect):
+
+    """Graphic effect for picture fade-in/out.
+
+    This is simple graphic effect allowing a fade-in/out effect to a gradual
+    change in the opacity. Internally, the transitions are controlled via a
+    QTimer() object increasing or decreasing the opacity by a fixed amount
+    (the _step class member) at each timeout.
+
+    Arguments
+    ---------
+    step : float
+        The basic opacity step used when increasing/decreasing the opacity.
+
+    interval : int
+        The basic time interval (in ms) during the transitions.
+    """
+
+    def __init__(self, step: float = 0.025, interval: int = 5):
+        """Constructor.
+        """
+        super().__init__()
+        self.setOpacity(1.)
+        self._step = step
+        self._interval = interval
+        self._timer = QTimer()
+        self._timer.start(self._interval)
+        logger.debug('Opacity fade time set to %.3f s', self.fade_time())
+
+    def fade_time(self):
+        """Return the total fade-in/out time in seconds, i.e., the time that it
+        takes for the opacity to change all the way from 0 to 1 or vice-versa.
+        """
+        return 1.e-3 * self._interval / self._step
+
+    def _decrease_opacity(self):
+        """Decrease the opacity by one step.
+
+        Since this is typically controlled by the underlying QTimer object, when
+        the opacity reaches (or crosses) zero the timer is disconnected from all
+        the slots, and the opacity is set to 0 (fully opaque).
+        """
+        opacity = self.opacity() - self._step
+        if opacity <= 0.:
+            self._timer.disconnect()
+            self.setOpacity(0.)
+        self.setOpacity(opacity)
+
+    def _increase_opacity(self):
+        """Increase the opacity by one step.
+
+        Since this is typically controlled by the underlying QTimer object, when
+        the opacity reaches (or crosses) one the timer is disconnected from all
+        the slots, and the opacity is set to 1 (fully transparent).
+        """
+        opacity = self.opacity() + self._step
+        if opacity >= 1.:
+            self._timer.disconnect()
+            self.setOpacity(1.)
+        self.setOpacity(opacity)
+
+    def fade_in(self, start_from_zero=True):
+        """Fade in effect, i.e., gradually change opacity to 1.
+        """
+        if start_from_zero:
+            self.setOpacity(0.)
+        self._timer.timeout.connect(self._increase_opacity)
+
+    def fade_out(self, start_from_one=True):
+        """Fade in effect, i.e., gradually change opacity to 0.
+        """
+        if start_from_one:
+            self.setOpacity(1.)
+        self._timer.timeout.connect(self._decrease_opacity)
+
+
+
+class WidgetBase(QWidget):
+
+    """Base class for the slideshow widgets.
+
+    This is basically a QWidget with a built-in QGridLayout.
+    """
+
+    def __init__(self, column_stretch: dict={}, **kwargs):
+        """Constructor.
+        """
+        super().__init__()
+        grid = QGridLayout()
+        for col, stretch in column_stretch.items():
+            grid.setColumnStretch(col, stretch)
+        self.setLayout(grid)
+        background_color = kwargs.get('background')
+        if background_color is not None:
+            self.setStyleSheet(f'background-color: {background_color}')
+
+    def add_widget(self, widget, row, col, row_span=1, col_span=1):
+        """Add a widget to the underlying grid layout.
+        """
+        self.layout().addWidget(widget, row, col, row_span, col_span)
+
+
+
+class Banner(WidgetBase):
+
+    """Base class for a banner.
+    """
+
+    def __init__(self, height):
+        """Constructor.
+        """
+        super().__init__(column_stretch={1: 1}, background='white')
+        self.setFixedHeight(height)
+        self.layout().setContentsMargins(0, 0, 0, 0)
+
+
+
+class SessionHeader(Banner):
+
+    """
+    """
+
+    def __init__(self, height=50):
+        """Constructor.
+        """
+        super().__init__(height)
+        self.text_label = QLabel()
+        self.text_label.setWordWrap(True)
+        self.text_label.setIndent(20)
+        self.add_widget(self.text_label, 0, 1)
+
+    def set_session(self, session):
+        """
+        """
+        text = f'{session}'
+        self.text_label.setText(text)
+
+
+
+class PosterHeader(Banner):
+
+    """Class describing the poster header.
+    """
+
+    def __init__(self, height=70):
+        """Constructor.
+        """
+        super().__init__(height)
+        self.height = height
+        self.presenter_label = QLabel()
+        self.text_label = QLabel()
+        self.text_label.setWordWrap(True)
+        self.text_label.setIndent(20)
+        self.qrcode_label = QLabel()
+        qrcode = QPixmap('posters/qrcode.png').scaledToHeight(height, Qt.SmoothTransformation)
+        self.qrcode_label.setPixmap(qrcode)
+        self.add_widget(self.presenter_label, 0, 0)
+        self.add_widget(self.text_label, 0, 1)
+        self.add_widget(self.qrcode_label, 0, 2)
+
+    def set_poster(self, poster):
+        """
+        """
+        self.presenter_label.setPixmap(poster.presenter_pixmap)
+        text = f'{poster.presenter}\nPoster ID: {poster.unique_id}'
+        self.text_label.setText(text)
+
+
+
+class Footer(Banner):
+
+    """Class describing the footer for the slideshow.
+    """
+
+    def __init__(self, height=40):
+        """Constructor.
+        """
+        super().__init__(height)
+        self.text_label = QLabel()
+        self.text_label.setMargin(10)
+        self.add_widget(self.text_label, 0, 1)
+
+    def set_text(self, text):
+        """
+        """
+        self.text_label.setText(text)
+
+
+
+class SlideShow(WidgetBase):
+
+    """Basic slideshow class.
+    """
+
+    DEFAULT_ADVANCE_INTERVAL = 30.
+    DEFAULT_PAUSE_INTERVAL = 120.
+    WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors'
+    VALID_GEOMETRIES = ('default', 'maximize', 'fullscreen')
+
+    def __init__(self, folder_path: str, screen: int, **kwargs):
+        """Constructor.
+        """
+        super().__init__(column_stretch={0: 1, 1: 100, 2: 1}, **kwargs)
+        self.folder_path = folder_path
+        self.screen_id = screen
+        # Parse the command-line arguments.
+        advance_interval = kwargs.get('advance', self.DEFAULT_ADVANCE_INTERVAL)
+        pause_interval = kwargs.get('pause', self.DEFAULT_PAUSE_INTERVAL)
+        geometry = kwargs.get('geometry')
+        self.height = kwargs.get('height')
+        assert geometry in self.VALID_GEOMETRIES
+        # Convert times from s to msec.
+        self.advance_interval = self.sec_to_msec(advance_interval)
+        self.pause_interval = self.sec_to_msec(pause_interval)
+        # Setup the widget.
+        self.label = QLabel()
+        self.session_header = SessionHeader()
+        self.poster_header = PosterHeader()
+        self.footer = Footer()
+        self.fading_effect = FadingEffect()
+        self.label.setGraphicsEffect(self.fading_effect)
+        self.add_widget(self.session_header, 0, 1)
+        self.add_widget(self.poster_header, 1, 1)
+        self.add_widget(self.label, 2, 1)
+        self.add_widget(self.footer, 3, 1)
+        self.setWindowTitle(self.WINDOW_TITLE)
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.advance)
+        # We're good to go!
+        self.timer.start(self.advance_interval)
+        if geometry == 'maximize':
+            self.showMaximized()
+        elif geometry == 'fullscreen':
+            self.showFullScreen()
+        else:
+            self.show()
+        #
+        config_file_path = '/data/work/pisameet/pisameet/config/pm2018_sample.xlsx'
+        root_folder_path = '/data/work/pm18/'
+        screen_id = 1
+        self.poster_roster = PosterRoster(config_file_path, root_folder_path, screen_id)
+        self.session_header.set_session(self.poster_roster.session)
+        self.poster_roster.load_poster_data((600, 600), self.poster_header.height)
+        self.display_poster(0)
+
+    def display_poster(self, index: int = 0) -> None:
+        """Display a given poster.
+        """
+        self.__current_index = index % len(self.poster_roster)
+        poster = self.poster_roster[self.__current_index]
+        self.poster_header.set_poster(poster)
+        next_id = (self.__current_index + 1) % len(self.poster_roster)
+        next_poster = self.poster_roster[next_id]
+        self.footer.set_text(f'Coming next: {next_poster}')
+        self.label.setPixmap(poster.poster_pixmap)
+        self.fading_effect.fade_in()
+
+    def advance(self) -> None:
+        """Advance to the next image.
+        """
+        self.display_poster(self.__current_index + 1)
+
+    @staticmethod
+    def sec_to_msec(sec: float) -> int:
+        """Convert a time from seconds to ms.
+
+        Arguments
+        ---------
+        sec : float
+            The time interval in s.
+
+        Return
+        ------
+            The time interval in ms, rounded to the nearest integer.
+        """
+        return int(round(1.e3 * sec))
+
+    # def keyPressEvent(self, event: QKeyEvent) -> None:
+    #     """Overloaded method to handle key events.
+    #     """
+    #     # pylint: disable=invalid-name
+    #     print(event.text())
+    #     index = self.pixmap_list.pixmap_index(event.text())
+    #     if index is None:
+    #         return
+    #     self.display_image(index)
+    #     self.timer.stop()
+    #     self.timer.singleShot(self.pause_interval, self.timer.start)

@@ -64,32 +64,13 @@ def pdf_to_png(input_file_path: str, output_folder_path) -> str:
     return output_file_path
 
 
-def crawl_pm2018(folder_path: str) -> list:
-    """Crawl the 2018 Pisa meeting material folder and return a dictionary of
-    file paths, organized by session.
+def preprocess_posters(folder_path : str, output_folder_path : str):
+    """Save png versions of the posters.
     """
-    file_list = crawl(folder_path, '.pdf', 'Poster')
-    file_dict = {}
-    for file_path in file_list:
-        session_name = file_path.split(os.sep)[-3].replace('_-_Poster_Session', '')
-        if session_name in file_dict:
-            file_dict[session_name].append(file_path)
-        else:
-            file_dict[session_name] = [file_path]
-    return file_dict
-
-
-def convert_pm2018(input_folder_path, output_folder_path):
-    """Convert all the pdf files of the 2018 Pisa meeting to png format.
-    """
-    for session_name, file_list in crawl_pm2018(input_folder_path).items():
-        _output_folder = os.path.join(output_folder_path, session_name)
-        os.makedirs(_output_folder)
-        for file_path in file_list:
-            pdf_to_png(file_path, _output_folder)
-
+    for file_path in crawl(folder_path):
+        pdf_to_png(file_path, output_folder_path)
 
 
 
 if __name__ == '__main__':
-    convert_pm2018('/data/work/pm2018_material/', '/home/data/work/pm2018_posters')
+    preprocess_posters('/data/work/pm18/posters', '/data/work/pm18/poster_imgs')

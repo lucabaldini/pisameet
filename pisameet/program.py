@@ -22,6 +22,8 @@ import os
 import pathlib
 
 import pandas as pd
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap
 
 from __init__ import logger
 
@@ -88,6 +90,9 @@ class Poster:
         self.screen_id = screen_id
         self.title = title
         self.presenter = presenter
+        self.poster_pixmap = None
+        self.presenter_pixmap = None
+        self.qrcode_pixmap = None
 
     @classmethod
     def from_df_row(cls, row):
@@ -105,12 +110,26 @@ class Poster:
         else:
             return f'{self.title[:max_chars - 3]}...'
 
-    def load_data(self, poster_file_path, pic_file_path, qrcode_file_path):
+    def load_pixmap(self, file_path : str, height : int, width : int=None):
+        """
+        """
+        logger.debug('Loading image data from %s...', file_path)
+        return QPixmap(file_path).scaledToHeight(height, Qt.SmoothTransformation)
+
+    def load_data(self, poster_file_path, pic_file_path, qrcode_file_path,
+        poster_size, header_height):
         """Load all the necessary poster data.
         """
         logger.info('Loading data for poster %s...', self)
         if poster_file_path is None:
             logger.error('Poster file path undefined for %s', self)
+        else:
+            width, height = poster_size
+            self.poster_pixmap = self.load_pixmap(poster_file_path, height)
+        if pic_file_path is None:
+            logger.warning('Pic file path undefined for %s', self)
+        else:
+            self.presenter_pixmap = self.load_pixmap(pic_file_path, header_height)
 
     def __str__(self):
         """String formatting.
@@ -183,7 +202,7 @@ class PosterRoster(list):
     DATETIME_FORMAT = '%d/%m/%Y %H:%M'
     PROGRAM_COL_NAMES = ('Session ID', 'Session Name', 'Start Date', 'End Date')
     SESSION_COL_NAMES = ('Poster ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation')
-    POSTER_FOLDER_NAME = 'posters'
+    POSTER_FOLDER_NAME = 'poster_imgs'
     PIC_FOLDER_NAME = 'pics'
 
     def __init__(self, config_file_path : str, root_folder_path : str, screen_id : int) -> None:
@@ -211,6 +230,8 @@ class PosterRoster(list):
                         self.append(poster)
             except ValueError as e:
                 logger.warning('Data not available for session %s: %s', session.name, e)
+            self.session = session
+            break
 
     @staticmethod
     def _poster_id(file_path, separator='-'):
@@ -243,7 +264,7 @@ class PosterRoster(list):
             if file_path.suffix in extensions:
                 poster_id = self._poster_id(file_path)
                 if poster_id in poster_ids:
-                    file_dict[poster_id] = file_path
+                    file_dict[poster_id] = str(file_path)
         num_files = len(file_dict)
         num_posters = len(poster_ids)
         if num_files != num_posters:
@@ -256,7 +277,7 @@ class PosterRoster(list):
             logger.debug('[%03d] %s', key, value)
         return file_dict
 
-    def load_poster_data(self):
+    def load_poster_data(self, poster_size, header_height):
         """Load all the poster data.
 
         Note that much of the logic, here, could be deferred to the Poster class
@@ -265,11 +286,12 @@ class PosterRoster(list):
         """
         logger.info('Loading poster data...')
         poster_ids = [poster.unique_id for poster in self]
-        poster_file_dict = self._file_dict(self.poster_folder_path, poster_ids, '.pdf')
+        poster_file_dict = self._file_dict(self.poster_folder_path, poster_ids, '.png')
         pic_file_dict = self._file_dict(self.pic_folder_path, poster_ids, '.png', '.jpg', '.jpeg')
         qrcode_file_dict = {}
         for poster in self:
             args = [d.get(poster.unique_id) for d in (poster_file_dict, pic_file_dict, qrcode_file_dict)]
+            args += [poster_size, header_height]
             poster.load_data(*args)
 
     def __str__(self):
@@ -285,4 +307,3 @@ if __name__ == '__main__':
     screen_id = 1
     roster = PosterRoster(config_file_path, root_folder_path, screen_id)
     print(roster)
-    roster.load_poster_data()
