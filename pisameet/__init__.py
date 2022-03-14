@@ -94,10 +94,10 @@ class TerminalFormatter(logging.Formatter):
 #Configure the main terminal logger.
 logger = logging.getLogger('pisameet')
 logger.setLevel(logging.DEBUG)
-consoleHandler = logging.StreamHandler()
-consoleHandler.setLevel(logging.DEBUG)
-consoleHandler.setFormatter(TerminalFormatter())
-logger.addHandler(consoleHandler)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+console_handler.setFormatter(TerminalFormatter())
+logger.addHandler(console_handler)
 
 
 # Relevant files for setting up the screen ID.
