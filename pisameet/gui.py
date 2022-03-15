@@ -266,6 +266,7 @@ class SlideShow(WidgetBase):
     DEFAULT_PAUSE_INTERVAL = 120.
     WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors'
     VALID_GEOMETRIES = ('default', 'maximize', 'fullscreen')
+    VALID_KEYS = [str(int(val)) for val in KeyMap.__members__.values()]
 
     def __init__(self, folder_path: str, **kwargs):
         """Constructor.
@@ -375,7 +376,11 @@ class SlideShow(WidgetBase):
         """Overloaded method to handle key events.
         """
         # pylint: disable=invalid-name
-        key = int(event.text())
+        key = event.text()
+        if not key in self.VALID_KEYS:
+            logger.warning('Invalid key pressed (%s).', key)
+            return
+        key = int(key)
         if key == KeyMap.ADVANCE:
             logger.info('ADVANCE pressed.')
             self.stop()
@@ -390,3 +395,8 @@ class SlideShow(WidgetBase):
         elif key == KeyMap.START:
             logger.info('START pressed.')
             self.start()
+
+    #def keyReleaseEvent(self, event: QKeyEvent) -> None:
+    #    """
+    #    """
+    #    print(event)
