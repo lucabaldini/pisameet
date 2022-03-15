@@ -50,12 +50,15 @@ After the OS installation you might want to do an update:
 Dependencies
 ------------
 
-The only additional package that you need, on top of the standard raspbian
-Desktop installation, is the Python wrappers to the Qt library for the GUI.
+The only additional packages that you need, on top of the standard raspbian
+Desktop installation, are:
+
+* the Python wrappers to the Qt library for the GUI;
+* the pandas framework for parsing the excel configuration file.
 
 .. code-block::
 
-   > sudo apt-get install python3-pyqt5
+   > sudo apt-get install python3-pyqt5 python3-pandas
 
 
 
