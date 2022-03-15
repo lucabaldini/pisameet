@@ -149,12 +149,12 @@ class Banner(WidgetBase):
 
 
 
-class RosterHeader(Banner):
+class Header(Banner):
 
-    """
+    """Poster header.
     """
 
-    def __init__(self, height):
+    def __init__(self, height, portrait_height):
         """Constructor.
         """
         super().__init__(height)
@@ -166,12 +166,11 @@ class RosterHeader(Banner):
         self.text_label.setAlignment(Qt.AlignLeft)
         self.add_widget(self.text_label, 0, 2, 2, 1)
         self.text_label.setStyleSheet("border: 1px solid gray; border-radius: 5px");
-        side = int(height / 2)
         self.portrait_label = QLabel()
-        self.portrait_label.setFixedSize(side, side)
+        self.portrait_label.setFixedSize(portrait_height, portrait_height)
         self.portrait_label.setAlignment(Qt.AlignCenter)
         self.qrcode_label = QLabel()
-        self.qrcode_label.setFixedSize(side, side)
+        self.qrcode_label.setFixedSize(portrait_height, portrait_height)
         self.qrcode_label.setAlignment(Qt.AlignCenter)
         self.add_widget(self.portrait_label, 0, 0)
         self.add_widget(self.qrcode_label, 0, 1)
@@ -181,8 +180,8 @@ class RosterHeader(Banner):
         self.presenter_label.setIndent(20)
         self.add_widget(self.presenter_label, 1, 0, 1, 2)
 
-    def set_roster(self, roster, current_poster_id):
-        """
+    def update(self, roster, current_poster_id):
+        """Update the header based on the roster information and the current poster.
         """
         text = f'<font color="black" size="4">{roster.session}</font><br/><br/>'
         for i, poster in enumerate(roster):
@@ -191,11 +190,7 @@ class RosterHeader(Banner):
             else:
                 text += f'<font color="gray" size="2">{poster}</font><br/>'
         self.text_label.setText(text)
-
-    def set_poster(self, poster):
-        """
-        """
-        presenter = poster.presenter
+        poster = roster[current_poster_id]
         try:
             self.portrait_label.setPixmap(poster.presenter_pixmap)
         except TypeError:
@@ -204,49 +199,10 @@ class RosterHeader(Banner):
             self.qrcode_label.setPixmap(poster.qrcode_pixmap)
         except TypeError:
             self.qrcode_label.clear()
+        presenter = poster.presenter
         text = f'<font color="black" size="4">{presenter.full_name()}</font><br/>'\
                f'<font color="gray" size="2">{presenter.affiliation}</font><br/>'
         self.presenter_label.setText(text)
-
-
-class PosterHeader(Banner):
-
-    """Class describing the poster header.
-    """
-
-    def __init__(self, height):
-        """Constructor.
-        """
-        super().__init__(height)
-        self.height = height
-        self.presenter_label = QLabel()
-        self.presenter_label.setFixedHeight(height)
-        self.text_label = QLabel()
-        self.text_label.setFixedHeight(height)
-        self.text_label.setWordWrap(True)
-        self.text_label.setIndent(20)
-        #self.text_label.setStyleSheet("border: 1px solid gray; border-radius: 5px");
-        self.qrcode_label = QLabel()
-        self.qrcode_label.setFixedHeight(height)
-        self.add_widget(self.presenter_label, 0, 0)
-        self.add_widget(self.text_label, 0, 1)
-        self.add_widget(self.qrcode_label, 0, 2)
-
-    def set_poster(self, poster):
-        """
-        """
-        presenter = poster.presenter
-        try:
-            self.presenter_label.setPixmap(poster.presenter_pixmap)
-        except TypeError:
-            self.presenter_label.clear()
-        try:
-            self.qrcode_label.setPixmap(poster.qrcode_pixmap)
-        except TypeError:
-            self.qrcode_label.clear()
-        text = f'<font color="black" size="4">{presenter.full_name()}</font><br/>'\
-               f'<font color="gray" size="2">{presenter.affiliation}</font><br/>'
-        self.text_label.setText(text)
 
 
 
@@ -266,7 +222,7 @@ class Footer(Banner):
         self.add_widget(self.text_label, 0, 1)
 
     def update(self):
-        """
+        """Update the footer.
         """
         t = int(self.parent.timer.remainingTime() / 1000. + 0.9)
         text = f'<font color="gray" size="2">Status: running, {t} s to the next poster</font><br/>'
@@ -302,13 +258,11 @@ class SlideShow(WidgetBase):
         poster_size = (kwargs.get('poster_width'), kwargs.get('poster_height'))
         self.poster_label = QLabel()
         self.poster_label.setAlignment(Qt.AlignCenter)
-        self.roster_header = RosterHeader(kwargs.get('roster_header_height', 50))
-        self.poster_header = PosterHeader(kwargs.get('poster_header_height', 70))
-        self.footer = Footer(kwargs.get('footer_height', 40), self)
+        self.header = Header(kwargs.get('header_height'), kwargs.get('portrait_height'))
+        self.footer = Footer(kwargs.get('footer_height'), self)
         self.fading_effect = FadingEffect()
         self.poster_label.setGraphicsEffect(self.fading_effect)
-        self.add_widget(self.roster_header, 0, 1)
-        #self.add_widget(self.poster_header, 1, 1)
+        self.add_widget(self.header, 0, 1)
         self.add_widget(self.poster_label, 2, 1)
         self.add_widget(self.footer, 3, 1)
         self.setWindowTitle(self.WINDOW_TITLE)
@@ -325,23 +279,20 @@ class SlideShow(WidgetBase):
             self.showFullScreen()
         else:
             self.show()
-        #
         config_file_path = kwargs.get('cfgfile')
         root_folder_path = os.path.dirname(config_file_path)
         self.poster_roster = PosterRoster(config_file_path, root_folder_path, self.screen_id)
-        self.poster_roster.load_poster_data(poster_size, self.poster_header.height)
+        self.poster_roster.load_poster_data(poster_size, kwargs.get('portrait_height'))
         self.display_poster(0)
 
     def display_poster(self, index: int = 0) -> None:
         """Display a given poster.
         """
         self.__current_index = index % len(self.poster_roster)
-        self.roster_header.set_roster(self.poster_roster, self.__current_index)
-        poster = self.poster_roster[self.__current_index]
-        self.roster_header.set_poster(poster)
-        #self.poster_header.set_poster(poster)
+        self.header.update(self.poster_roster, self.__current_index)
         next_id = (self.__current_index + 1) % len(self.poster_roster)
         next_poster = self.poster_roster[next_id]
+        poster = self.poster_roster[self.__current_index]
         self.poster_label.setPixmap(poster.poster_pixmap)
         self.fading_effect.fade_in()
 

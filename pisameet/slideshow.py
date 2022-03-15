@@ -37,9 +37,9 @@ PARSER.add_argument('--geometry', type=str, default='default', choices=SlideShow
     help='display geometry')
 PARSER.add_argument('--poster-height', type=int, default=600,
     help='the height for the poster display')
-PARSER.add_argument('--roster-header-height', type=int, default=220,
+PARSER.add_argument('--header-height', type=int, default=220,
     help='the height of the session header')
-PARSER.add_argument('--poster-header-height', type=int, default=100,
+PARSER.add_argument('--portrait-height', type=int, default=120,
     help='the height of the poster header')
 PARSER.add_argument('--footer-height', type=int, default=40,
     help='the height of the footer')
