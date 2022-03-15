@@ -19,6 +19,7 @@
 
 
 import argparse
+from enum import Enum, IntEnum
 import os
 import sys
 
@@ -230,6 +231,27 @@ class Footer(Banner):
 
 
 
+class KeyMap(IntEnum):
+
+    """Basic mapping of the four-key keyboard.
+    """
+
+    ADVANCE = 1
+    BACKUP = 2
+    STOP = 3
+    START = 4
+
+
+class SlideShowStatus(Enum):
+
+    """Status of the slideshow finite-state machine.
+    """
+
+    STOPPED = 1
+    RUNNING = 2
+
+
+
 class SlideShow(WidgetBase):
 
     """Basic slideshow class.
@@ -243,6 +265,7 @@ class SlideShow(WidgetBase):
     def __init__(self, folder_path: str, **kwargs):
         """Constructor.
         """
+        self.__status = SlideShowStatus.STOPPED
         super().__init__(column_stretch={0: 1, 1: 100, 2: 1}, **kwargs)
         self.folder_path = folder_path
         self.screen_id = read_screen_id()
@@ -271,8 +294,6 @@ class SlideShow(WidgetBase):
         self.footer_timer = QTimer()
         self.footer_timer.timeout.connect(self.footer.update)
         self.footer_timer.start(100)
-        # We're good to go!
-        self.timer.start(self.advance_interval)
         if geometry == 'maximize':
             self.showMaximized()
         elif geometry == 'fullscreen':
@@ -284,6 +305,21 @@ class SlideShow(WidgetBase):
         self.poster_roster = PosterRoster(config_file_path, root_folder_path, self.screen_id)
         self.poster_roster.load_poster_data(poster_size, kwargs.get('portrait_height'))
         self.display_poster(0)
+        self.start()
+
+    def start(self):
+        """Start the slideshow.
+        """
+        self.__status = SlideShowStatus.RUNNING
+        if not self.timer.isActive():
+            self.timer.start(self.advance_interval)
+
+    def stop(self):
+        """Stop the Slideshow.
+        """
+        self.__status = SlideShowStatus.STOPPED
+        if self.timer.isActive():
+            self.timer.stop()
 
     def display_poster(self, index: int = 0) -> None:
         """Display a given poster.
@@ -301,6 +337,11 @@ class SlideShow(WidgetBase):
         """
         self.display_poster(self.__current_index + 1)
 
+    def backup(self) -> None:
+        """Advance to the next image.
+        """
+        self.display_poster(self.__current_index - 1)
+
     @staticmethod
     def sec_to_msec(sec: float) -> int:
         """Convert a time from seconds to ms.
@@ -316,14 +357,22 @@ class SlideShow(WidgetBase):
         """
         return int(round(1.e3 * sec))
 
-    # def keyPressEvent(self, event: QKeyEvent) -> None:
-    #     """Overloaded method to handle key events.
-    #     """
-    #     # pylint: disable=invalid-name
-    #     print(event.text())
-    #     index = self.pixmap_list.pixmap_index(event.text())
-    #     if index is None:
-    #         return
-    #     self.display_image(index)
-    #     self.timer.stop()
-    #     self.timer.singleShot(self.pause_interval, self.timer.start)
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """Overloaded method to handle key events.
+        """
+        # pylint: disable=invalid-name
+        key = int(event.text())
+        if key == KeyMap.ADVANCE:
+            logger.info('ADVANCE pressed.')
+            self.stop()
+            self.advance()
+        elif key == KeyMap.BACKUP:
+            logger.info('BACKUP pressed.')
+            self.stop()
+            self.backup()
+        elif key == KeyMap.STOP:
+            logger.info('STOP pressed.')
+            self.stop()
+        elif key == KeyMap.START:
+            logger.info('START pressed.')
+            self.start()
