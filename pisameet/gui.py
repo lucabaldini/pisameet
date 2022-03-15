@@ -225,8 +225,12 @@ class Footer(Banner):
     def update(self):
         """Update the footer.
         """
-        t = int(self.parent.timer.remainingTime() / 1000. + 0.9)
-        text = f'<font color="gray" size="2">Status: running, {t} s to the next poster</font><br/>'
+        status = self.parent.status()
+        if self.parent.running():
+            dt = int(self.parent.timer.remainingTime() / 1000. + 0.9)
+            text = f'<font color="gray" size="2">Status: {status}, {dt} s to the next poster</font><br/>'
+        else:
+            text = f'<font color="gray" size="2">Status: {status}</font><br/>'
         self.text_label.setText(text)
 
 
@@ -278,9 +282,8 @@ class SlideShow(WidgetBase):
         self.advance_interval = self.sec_to_msec(advance_interval)
         self.pause_interval = self.sec_to_msec(pause_interval)
         # Setup the widget.
-        poster_size = (kwargs.get('poster_width'), kwargs.get('poster_height'))
         self.poster_label = QLabel()
-        self.poster_label.setAlignment(Qt.AlignCenter)
+        self.poster_label.setAlignment(Qt.AlignHCenter or Qt.AlignTop)
         self.header = Header(kwargs.get('header_height'), kwargs.get('portrait_height'))
         self.footer = Footer(kwargs.get('footer_height'), self)
         self.fading_effect = FadingEffect()
@@ -303,9 +306,19 @@ class SlideShow(WidgetBase):
         config_file_path = kwargs.get('cfgfile')
         root_folder_path = os.path.dirname(config_file_path)
         self.poster_roster = PosterRoster(config_file_path, root_folder_path, self.screen_id)
-        self.poster_roster.load_poster_data(poster_size, kwargs.get('portrait_height'))
+        self.poster_roster.load_poster_data(kwargs.get('poster_width'), kwargs.get('portrait_height'))
         self.display_poster(0)
         self.start()
+
+    def status(self):
+        """
+        """
+        return self.__status
+
+    def running(self):
+        """
+        """
+        return self.__status == SlideShowStatus.RUNNING
 
     def start(self):
         """Start the slideshow.

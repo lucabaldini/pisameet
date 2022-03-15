@@ -110,30 +110,35 @@ class Poster:
         else:
             return f'{self.title[:max_chars - 3]}...'
 
-    def load_pixmap(self, file_path : str, height : int, width : int=None):
+    def load_pixmap_w(self, file_path : str, width : int):
+        """
+        """
+        logger.debug('Loading image data from %s...', file_path)
+        return QPixmap(file_path).scaledToWidth(width, Qt.SmoothTransformation)
+
+    def load_pixmap_h(self, file_path : str, height : int):
         """
         """
         logger.debug('Loading image data from %s...', file_path)
         return QPixmap(file_path).scaledToHeight(height, Qt.SmoothTransformation)
 
     def load_data(self, poster_file_path, presenter_file_path, qrcode_file_path,
-        poster_size, header_height):
+        poster_width, portrait_height):
         """Load all the necessary poster data.
         """
         logger.info('Loading data for poster %s...', self)
         if poster_file_path is None:
             logger.error('Poster file path undefined for %s', self)
         else:
-            width, height = poster_size
-            self.poster_pixmap = self.load_pixmap(poster_file_path, height)
+            self.poster_pixmap = self.load_pixmap_w(poster_file_path, poster_width)
         if presenter_file_path is None:
             logger.warning('Presenter file path undefined for %s', self)
         else:
-            self.presenter_pixmap = self.load_pixmap(presenter_file_path, header_height)
+            self.presenter_pixmap = self.load_pixmap_h(presenter_file_path, portrait_height)
         if qrcode_file_path is None:
             logger.warning('QR-code file path undefined for %s', self)
         else:
-            self.qrcode_pixmap = self.load_pixmap(qrcode_file_path, header_height)
+            self.qrcode_pixmap = self.load_pixmap_h(qrcode_file_path, portrait_height)
 
     def __str__(self):
         """String formatting.
