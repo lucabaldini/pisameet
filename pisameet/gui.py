@@ -186,10 +186,11 @@ class Header(Banner):
         """
         text = f'<font color="black" size="4">{roster.session}</font><br/><br/>'
         for i, poster in enumerate(roster):
+            poster_text = poster.pretty_print(70)
             if i == current_poster_id:
-                text += f'<font color="black" size="2">{poster}</font><br/>'
+                text += f'<font color="black" size="2">{poster_text}</font><br/>'
             else:
-                text += f'<font color="gray" size="2">{poster}</font><br/>'
+                text += f'<font color="gray" size="2">{poster_text}</font><br/>'
         self.text_label.setText(text)
         poster = roster[current_poster_id]
         try:

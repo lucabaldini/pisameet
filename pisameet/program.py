@@ -140,10 +140,15 @@ class Poster:
         else:
             self.qrcode_pixmap = self.load_pixmap_h(qrcode_file_path, portrait_height)
 
+    def pretty_print(self, max_chars=40):
+        """
+        """
+        return f'[{self.unique_id:03}] {self.short_title(max_chars)} ({self.presenter.full_name()})'
+
     def __str__(self):
         """String formatting.
         """
-        return f'[{self.unique_id:03}] {self.short_title()} ({self.presenter.full_name()})'
+        return self.pretty_print()
 
 
 

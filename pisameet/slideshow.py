@@ -37,7 +37,7 @@ PARSER.add_argument('--geometry', type=str, default='default', choices=SlideShow
     help='display geometry')
 PARSER.add_argument('--poster-width', type=int, default=600,
     help='width of the poster display')
-PARSER.add_argument('--header-height', type=int, default=220,
+PARSER.add_argument('--header-height', type=int, default=200,
     help='height of the poster header')
 PARSER.add_argument('--portrait-height', type=int, default=120,
     help='height of the presenter portraits and QR codes')
