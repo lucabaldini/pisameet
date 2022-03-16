@@ -19,7 +19,7 @@
 
 
 import argparse
-from enum import Enum, IntEnum
+from enum import Enum, IntEnum, auto
 import os
 import sys
 
@@ -250,11 +250,19 @@ class KeyMap(IntEnum):
 class SlideShowStatus(Enum):
 
     """Status of the slideshow finite-state machine.
+
+    We're imagining three states (STOPPED, RUNNING and PAUSED) with the following
+    methods for the transitions:
+    * start() : STOPPED -> RUNNING
+    * stop()  : RUNNING -> STOPPED
+    * pause() : RUNNING -> PAUSED
+    * resume(): PAUSED  -> RUNNING
+
     """
 
-    STOPPED = 1
-    RUNNING = 2
-
+    STOPPED = auto()
+    RUNNING = auto()
+    PAUSED = auto()
 
 
 class SlideShow(WidgetBase):
@@ -313,28 +321,38 @@ class SlideShow(WidgetBase):
         self.start()
 
     def status(self):
-        """
+        """Return the Slideshow status.
         """
         return self.__status
 
     def running(self):
-        """
+        """Return True if the Slideshow is running.
         """
         return self.__status == SlideShowStatus.RUNNING
 
     def start(self):
-        """Start the slideshow.
+        """Start the slideshow, i.e., have the FSM transition from STOPPED -> RUNNING
         """
         self.__status = SlideShowStatus.RUNNING
         if not self.timer.isActive():
             self.timer.start(self.advance_interval)
 
     def stop(self):
-        """Stop the Slideshow.
+        """Stop the Slideshow, i.e., have the FSM transition from RUNNNG -> STOPPED
         """
         self.__status = SlideShowStatus.STOPPED
         if self.timer.isActive():
             self.timer.stop()
+
+    def pause(self):
+        """Pause the SlideShow, i.e., have the FSM transition from RUNNING -> PAUSED
+        """
+        pass
+
+    def resume(self):
+        """Resume the SlideShow, i.e., have the FSM transition from PAUSED -> RUNNNG
+        """
+        pass
 
     def display_poster(self, index: int = 0) -> None:
         """Display a given poster.
