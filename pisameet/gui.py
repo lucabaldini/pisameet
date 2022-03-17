@@ -17,15 +17,12 @@
 """Graphical user interface.
 """
 
-
-import argparse
 from enum import Enum, IntEnum, auto
 import os
-import sys
 
 # pylint: disable=no-name-in-module
-from PyQt5.QtWidgets import QApplication, QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect
-from PyQt5.QtGui import QPixmap, QKeyEvent
+from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect
+from PyQt5.QtGui import QKeyEvent
 from PyQt5.QtCore import Qt, QTimer
 
 from __init__ import logger, read_screen_id
@@ -117,9 +114,11 @@ class WidgetBase(QWidget):
     This is basically a QWidget with a built-in QGridLayout.
     """
 
-    def __init__(self, column_stretch: dict={}, **kwargs):
+    def __init__(self, column_stretch: dict=None, **kwargs):
         """Constructor.
         """
+        if column_stretch is None:
+            column_stretch = {}
         super().__init__()
         grid = QGridLayout()
         for col, stretch in column_stretch.items():
@@ -166,7 +165,7 @@ class Header(Banner):
         self.text_label.setMargin(10)
         self.text_label.setAlignment(Qt.AlignLeft)
         self.add_widget(self.text_label, 0, 2, 2, 1)
-        self.text_label.setStyleSheet("border: 1px solid gray; border-radius: 5px");
+        self.text_label.setStyleSheet("border: 1px solid gray; border-radius: 5px")
         self.portrait_label = QLabel()
         self.portrait_label.setFixedSize(portrait_height, portrait_height)
         self.portrait_label.setAlignment(Qt.AlignCenter)
@@ -317,6 +316,7 @@ class SlideShow(WidgetBase):
 
         # We're good to go!
         self.__status = SlideShowStatus.STOPPED
+        self.__current_index = 0
         self._load_session()
 
     def _show(self):
@@ -338,7 +338,7 @@ class SlideShow(WidgetBase):
         self.poster_roster = PosterRoster(self.config_file_path, folder_path, self.screen_id)
         self.poster_roster.load_poster_data(self.poster_width, self.portrait_height)
         self._show()
-        self.display_poster(0)
+        self.display_poster()
         self.start()
 
     def status(self):
@@ -396,21 +396,21 @@ class SlideShow(WidgetBase):
         """Return the message about the slideshow status to be displayed in the
         GUI footer
         """
+        # pylint: disable=invalid-name
         status = self.status()
         if status == SlideShowStatus.RUNNING:
             dt = self.remaining_time(self.advance_timer)
             return f'<font color="gray" size="2">{status}, {dt} s to the next poster...</font>'
-        elif status == SlideShowStatus.PAUSED:
+        if status == SlideShowStatus.PAUSED:
             dt = self.remaining_time(self.resume_timer)
             return f'<font color="gray" size="2">{status}, {dt} s to restart...</font>'
+        return ''
 
     def display_poster(self, index: int = 0) -> None:
         """Display a given poster.
         """
         self.__current_index = index % len(self.poster_roster)
         self.header.update(self.poster_roster, self.__current_index)
-        next_id = (self.__current_index + 1) % len(self.poster_roster)
-        next_poster = self.poster_roster[next_id]
         poster = self.poster_roster[self.__current_index]
         self.poster_label.setPixmap(poster.poster_pixmap)
         self.fading_effect.fade_in()
