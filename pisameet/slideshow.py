@@ -33,7 +33,7 @@ PARSER.add_argument('--advance', type=float, default=30.,
     help='the time interval for the slide show transition [s]')
 PARSER.add_argument('--pause', type=float, default=120.,
     help='the time interval for the slide show pause [s]')
-PARSER.add_argument('--geometry', type=str, default='default', choices=SlideShow.VALID_GEOMETRIES,
+PARSER.add_argument('--mode', type=str, default='default', choices=SlideShow.VALID_MODES,
     help='display geometry')
 PARSER.add_argument('--poster-width', type=int, default=600,
     help='width of the poster display')
@@ -50,5 +50,5 @@ PARSER.add_argument('--background', type=str, default='white',
 if __name__ == '__main__':
     args = PARSER.parse_args()
     app = QApplication(sys.argv)
-    slideshow = SlideShow('posters', **args.__dict__)
+    slideshow = SlideShow(**args.__dict__)
     sys.exit(app.exec_())

@@ -241,22 +241,27 @@ class KeyMap(IntEnum):
     RESUME = 4
 
 
+
 class SlideShowStatus(Enum):
 
     """Status of the slideshow finite-state machine.
-
-    We're imagining three states (STOPPED, RUNNING and PAUSED) with the following
-    methods for the transitions:
-    * start() : STOPPED -> RUNNING
-    * stop()  : RUNNING -> STOPPED
-    * pause() : RUNNING -> PAUSED
-    * resume(): PAUSED  -> RUNNING
-
     """
 
     STOPPED = auto()
     RUNNING = auto()
     PAUSED = auto()
+
+
+
+class SlideShowMode(Enum):
+
+    """Definition of the possible visualization modes for the slideshow.
+    """
+
+    DEFAULT = 'default'
+    MAXIMIZE = 'maximize'
+    FULLSCREEN = 'fullscreen'
+
 
 
 class SlideShow(WidgetBase):
@@ -265,55 +270,74 @@ class SlideShow(WidgetBase):
     """
 
     WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors'
-    VALID_GEOMETRIES = ('default', 'maximize', 'fullscreen')
-    VALID_KEYS = [str(int(val)) for val in KeyMap.__members__.values()]
+    VALID_MODES = [mode.value for mode in SlideShowMode]
+    VALID_KEYS = [str(key.value) for key in KeyMap]
 
-    def __init__(self, folder_path: str, **kwargs):
+    def __init__(self, **kwargs):
         """Constructor.
         """
-        self.__status = SlideShowStatus.STOPPED
         super().__init__(column_stretch={0: 1, 1: 100, 2: 1}, **kwargs)
-        self.folder_path = folder_path
         self.screen_id = read_screen_id()
+
         # Parse the command-line arguments.
-        advance_interval = kwargs.get('advance', 30.)
-        pause_interval = kwargs.get('pause', 120.)
-        geometry = kwargs.get('geometry')
-        assert geometry in self.VALID_GEOMETRIES
-        # Convert times from s to msec.
-        self.advance_interval = self.sec_to_msec(advance_interval)
-        self.pause_interval = self.sec_to_msec(pause_interval)
-        # Setup the widget.
+        self.config_file_path = kwargs.get('cfgfile')
+        self.advance_interval = self.sec_to_msec(kwargs.get('advance'))
+        self.pause_interval = self.sec_to_msec(kwargs.get('pause'))
+        self.display_mode = kwargs.get('mode')
+        assert self.display_mode in self.VALID_MODES
+        self.poster_width = kwargs.get('poster_width')
+        self.header_height = kwargs.get('header_height')
+        self.portrait_height = kwargs.get('portrait_height')
+        self.footer_height = kwargs.get('footer_height')
+
+        # Setup the widgets.
         self.poster_label = QLabel()
         self.poster_label.setAlignment(Qt.AlignHCenter or Qt.AlignTop)
-        self.header = Header(kwargs.get('header_height'), kwargs.get('portrait_height'))
-        self.footer = Footer(kwargs.get('footer_height'), self)
+        self.header = Header(self.header_height, kwargs.get('portrait_height'))
+        self.footer = Footer(self.footer_height, self)
         self.fading_effect = FadingEffect()
         self.poster_label.setGraphicsEffect(self.fading_effect)
         self.add_widget(self.header, 0, 1)
         self.add_widget(self.poster_label, 2, 1)
         self.add_widget(self.footer, 3, 1)
         self.setWindowTitle(self.WINDOW_TITLE)
+
+        # Setup the timers.
         self.advance_timer = QTimer()
         self.advance_timer.setInterval(self.advance_interval)
         self.advance_timer.timeout.connect(self.advance)
         self.footer_timer = QTimer()
+        self.footer_timer.setInterval(100)
         self.footer_timer.timeout.connect(self.footer.update)
-        self.footer_timer.start(100)
+        self.footer_timer.start()
         self.resume_timer = QTimer()
-        self.resume_timer.setSingleShot(True)
         self.resume_timer.setInterval(self.pause_interval)
+        self.resume_timer.setSingleShot(True)
         self.resume_timer.timeout.connect(self.resume)
-        if geometry == 'maximize':
+
+        # We're good to go!
+        self.__status = SlideShowStatus.STOPPED
+        self._load_session()
+
+    def _show(self):
+        """Small convenience hook to display the GUI in the proper visualization
+        mode, given the command-line options.
+        """
+        if self.display_mode == 'maximize':
             self.showMaximized()
-        elif geometry == 'fullscreen':
+        elif self.display_mode == 'fullscreen':
             self.showFullScreen()
         else:
             self.show()
-        config_file_path = kwargs.get('cfgfile')
-        root_folder_path = os.path.dirname(config_file_path)
-        self.poster_roster = PosterRoster(config_file_path, root_folder_path, self.screen_id)
-        self.poster_roster.load_poster_data(kwargs.get('poster_width'), kwargs.get('portrait_height'))
+
+    def _load_session(self):
+        """Load a given session from the underlying configuration file.
+        """
+        self.hide()
+        folder_path = os.path.dirname(self.config_file_path)
+        self.poster_roster = PosterRoster(self.config_file_path, folder_path, self.screen_id)
+        self.poster_roster.load_poster_data(self.poster_width, self.portrait_height)
+        self._show()
         self.display_poster(0)
         self.start()
 
@@ -328,21 +352,21 @@ class SlideShow(WidgetBase):
         return self.__status == SlideShowStatus.RUNNING
 
     def start(self):
-        """Start the slideshow, i.e., have the FSM transition from STOPPED -> RUNNING
+        """Start the slideshow.
         """
         self.__status = SlideShowStatus.RUNNING
         if not self.advance_timer.isActive():
             self.advance_timer.start()
 
     def stop(self):
-        """Stop the Slideshow, i.e., have the FSM transition from RUNNNG -> STOPPED
+        """Stop the slideshow.
         """
         self.__status = SlideShowStatus.STOPPED
         if self.advance_timer.isActive():
             self.advance_timer.stop()
 
     def pause(self):
-        """Pause the SlideShow, i.e., have the FSM transition from RUNNING -> PAUSED
+        """Pause the slideShow.
         """
         self.__status = SlideShowStatus.PAUSED
         if self.advance_timer.isActive():
@@ -350,8 +374,10 @@ class SlideShow(WidgetBase):
         self.resume_timer.start()
 
     def resume(self):
-        """Resume the SlideShow, i.e., have the FSM transition from PAUSED -> RUNNNG
+        """Resume the slideShow.
         """
+        if self.running():
+            return
         self.start()
         self.advance()
 
