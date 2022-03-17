@@ -226,13 +226,7 @@ class Footer(Banner):
     def update(self):
         """Update the footer.
         """
-        status = self.parent.status()
-        if self.parent.running():
-            dt = int(self.parent.timer.remainingTime() / 1000. + 0.9)
-            text = f'<font color="gray" size="2">Status: {status}, {dt} s to the next poster</font><br/>'
-        else:
-            text = f'<font color="gray" size="2">Status: {status}</font><br/>'
-        self.text_label.setText(text)
+        self.text_label.setText(self.parent.footer_message())
 
 
 
@@ -243,8 +237,8 @@ class KeyMap(IntEnum):
 
     ADVANCE = 1
     BACKUP = 2
-    STOP = 3
-    START = 4
+    PAUSE = 3
+    RESUME = 4
 
 
 class SlideShowStatus(Enum):
@@ -270,8 +264,6 @@ class SlideShow(WidgetBase):
     """Basic slideshow class.
     """
 
-    DEFAULT_ADVANCE_INTERVAL = 30.
-    DEFAULT_PAUSE_INTERVAL = 120.
     WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors'
     VALID_GEOMETRIES = ('default', 'maximize', 'fullscreen')
     VALID_KEYS = [str(int(val)) for val in KeyMap.__members__.values()]
@@ -284,8 +276,8 @@ class SlideShow(WidgetBase):
         self.folder_path = folder_path
         self.screen_id = read_screen_id()
         # Parse the command-line arguments.
-        advance_interval = kwargs.get('advance', self.DEFAULT_ADVANCE_INTERVAL)
-        pause_interval = kwargs.get('pause', self.DEFAULT_PAUSE_INTERVAL)
+        advance_interval = kwargs.get('advance', 30.)
+        pause_interval = kwargs.get('pause', 120.)
         geometry = kwargs.get('geometry')
         assert geometry in self.VALID_GEOMETRIES
         # Convert times from s to msec.
@@ -302,11 +294,16 @@ class SlideShow(WidgetBase):
         self.add_widget(self.poster_label, 2, 1)
         self.add_widget(self.footer, 3, 1)
         self.setWindowTitle(self.WINDOW_TITLE)
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.advance)
+        self.advance_timer = QTimer()
+        self.advance_timer.setInterval(self.advance_interval)
+        self.advance_timer.timeout.connect(self.advance)
         self.footer_timer = QTimer()
         self.footer_timer.timeout.connect(self.footer.update)
         self.footer_timer.start(100)
+        self.resume_timer = QTimer()
+        self.resume_timer.setSingleShot(True)
+        self.resume_timer.setInterval(self.pause_interval)
+        self.resume_timer.timeout.connect(self.resume)
         if geometry == 'maximize':
             self.showMaximized()
         elif geometry == 'fullscreen':
@@ -334,25 +331,52 @@ class SlideShow(WidgetBase):
         """Start the slideshow, i.e., have the FSM transition from STOPPED -> RUNNING
         """
         self.__status = SlideShowStatus.RUNNING
-        if not self.timer.isActive():
-            self.timer.start(self.advance_interval)
+        if not self.advance_timer.isActive():
+            self.advance_timer.start()
 
     def stop(self):
         """Stop the Slideshow, i.e., have the FSM transition from RUNNNG -> STOPPED
         """
         self.__status = SlideShowStatus.STOPPED
-        if self.timer.isActive():
-            self.timer.stop()
+        if self.advance_timer.isActive():
+            self.advance_timer.stop()
 
     def pause(self):
         """Pause the SlideShow, i.e., have the FSM transition from RUNNING -> PAUSED
         """
-        pass
+        self.__status = SlideShowStatus.PAUSED
+        if self.advance_timer.isActive():
+            self.advance_timer.stop()
+        self.resume_timer.start()
 
     def resume(self):
         """Resume the SlideShow, i.e., have the FSM transition from PAUSED -> RUNNNG
         """
-        pass
+        self.start()
+        self.advance()
+
+    @staticmethod
+    def remaining_time(timer):
+        """Return a proxy for the (integer) number of seconds remaining to the
+        next trigger of a given counter.
+
+        There is some heuristic involved, here, as we typically want this to
+        look good in a GUI field that is not refreshed too often---which is
+        why we convert ms to s and add a 0.9 s offset
+        """
+        return int(0.001 * timer.remainingTime() + 0.9)
+
+    def footer_message(self):
+        """Return the message about the slideshow status to be displayed in the
+        GUI footer
+        """
+        status = self.status()
+        if status == SlideShowStatus.RUNNING:
+            dt = self.remaining_time(self.advance_timer)
+            return f'<font color="gray" size="2">{status}, {dt} s to the next poster...</font>'
+        elif status == SlideShowStatus.PAUSED:
+            dt = self.remaining_time(self.resume_timer)
+            return f'<font color="gray" size="2">{status}, {dt} s to restart...</font>'
 
     def display_poster(self, index: int = 0) -> None:
         """Display a given poster.
@@ -400,19 +424,19 @@ class SlideShow(WidgetBase):
             return
         key = int(key)
         if key == KeyMap.ADVANCE:
-            logger.info('ADVANCE pressed.')
-            self.stop()
+            logger.info('%s pressed.', KeyMap.ADVANCE)
+            self.pause()
             self.advance()
         elif key == KeyMap.BACKUP:
-            logger.info('BACKUP pressed.')
-            self.stop()
+            logger.info('%s pressed.', KeyMap.BACKUP)
+            self.pause()
             self.backup()
-        elif key == KeyMap.STOP:
-            logger.info('STOP pressed.')
-            self.stop()
-        elif key == KeyMap.START:
-            logger.info('START pressed.')
-            self.start()
+        elif key == KeyMap.PAUSE:
+            logger.info('%s pressed.', KeyMap.PAUSE)
+            self.pause()
+        elif key == KeyMap.RESUME:
+            logger.info('%s pressed.', KeyMap.RESUME)
+            self.resume()
 
     #def keyReleaseEvent(self, event: QKeyEvent) -> None:
     #    """

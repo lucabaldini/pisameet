@@ -29,9 +29,9 @@ from gui import SlideShow
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument('cfgfile', type=str,
     help='path to the input excel configuration file')
-PARSER.add_argument('--advance', type=float, default=SlideShow.DEFAULT_ADVANCE_INTERVAL,
+PARSER.add_argument('--advance', type=float, default=30.,
     help='the time interval for the slide show transition [s]')
-PARSER.add_argument('--pause', type=float, default=SlideShow.DEFAULT_PAUSE_INTERVAL,
+PARSER.add_argument('--pause', type=float, default=120.,
     help='the time interval for the slide show pause [s]')
 PARSER.add_argument('--geometry', type=str, default='default', choices=SlideShow.VALID_GEOMETRIES,
     help='display geometry')
