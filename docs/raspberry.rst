@@ -96,6 +96,27 @@ by doing
    > ./pisameet/slideshow.py pm2018/pm2018.xlsx
 
 
+Unique Screen Identifier
+------------------------
+
+Each Raspberry PI should be assigned a unique screen identifier, in order for
+the slideshow code to be able to determine with posters should be added to the
+roster on any given machine. This is a achieved through a text configuration
+file living in the ``pisameet`` subfolder called ``screen.cfg``.
+
+.. note::
+
+   If the ``pisameet/screen.cfg`` files does not exist, a default one will
+   be created, using a copy of the ``pisameet/screen.cfg.sample`` included
+   in the distribution. (Note the actual configuration file is included in the
+   ``.gitignore`` file). In any event, the file should be edited by hand.
+
+   (And it would be a good thing to have a physical label on the board matching
+   the screen identifier of each device.)
+
+.. seealso:: :ref:`program`
+
+
 Automatic slideshow start
 -------------------------
 

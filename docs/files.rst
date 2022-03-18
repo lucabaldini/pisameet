@@ -1,9 +1,10 @@
+.. _program:
 
 Program Description
 ===================
 
 ``pisameet`` is entirely driven through an excel configuration file, and this
-section describes the structure of the configuration file.
+section describes its structure.
 
 
 Main Configuration File
