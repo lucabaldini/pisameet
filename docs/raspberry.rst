@@ -87,3 +87,34 @@ In order to clone the repository just do
 
    > git clone https://github.com/lucabaldini/pisameet.git
 
+This should come up with a small fictional session from the last edition of the
+Pisa Meeting (i.e., the one in 2018). You should be able to run the slideshow
+by doing
+
+.. code-block::
+
+   > ./pisameet/slideshow.py pm2018/pm2018.xlsx
+
+
+Automatic slideshow start
+-------------------------
+
+The raspberry PIs should be configured in such a way that they will
+automatically start the slideshow at login, and the quickest way to achieve that
+is through a .Desktop file to along the lines of
+
+.. code-block::
+
+   [Desktop Entry]
+   Type=Application
+   Name=Pisa Meeting Slideshow
+   Exec=/usr/bin/python3 /home/pi/pisameet/pisameet/slideshow.py /home/pi/pisameet/pm2018/pm2018.xlsx
+
+The ``pisameet`` distribution comes with a ``pisameet.desktop`` sample file
+that you can adapt and copy into the ``/home/pi/.config/autostart`` folder
+(which, most likely, you will have to create first):
+
+.. code-block::
+
+   > mkdir /home/pi/.config/autostart
+   > cp pisameet.desktop /home/pi/.config/autostart

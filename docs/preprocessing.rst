@@ -1,3 +1,4 @@
+.. _preproc:
 
 Pre-Processing
 ==============
@@ -12,7 +13,7 @@ transitions.
 Poster images
 -------------
 
-All the posters need to be converted to a 
+All the posters need to be converted to a
 
 
 QR codes
