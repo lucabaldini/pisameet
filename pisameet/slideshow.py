@@ -25,6 +25,7 @@ import sys
 from PyQt5.QtWidgets import QApplication
 
 from gui import SlideShow
+from __init__ import logger
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument('cfgfile', type=str,
@@ -35,8 +36,8 @@ PARSER.add_argument('--pause', type=float, default=120.,
     help='the time interval for the slide show pause [s]')
 PARSER.add_argument('--mode', type=str, default='default', choices=SlideShow.VALID_MODES,
     help='display geometry')
-PARSER.add_argument('--poster-width', type=int, default=600,
-    help='width of the poster display')
+PARSER.add_argument('--poster-width', type=int, default=None,
+    help='width of the poster display (taken from the screen size by default)')
 PARSER.add_argument('--header-height', type=int, default=200,
     help='height of the poster header')
 PARSER.add_argument('--portrait-height', type=int, default=120,
@@ -50,5 +51,12 @@ PARSER.add_argument('--background', type=str, default='white',
 if __name__ == '__main__':
     args = PARSER.parse_args()
     app = QApplication(sys.argv)
-    slideshow = SlideShow(**args.__dict__)
+    kwargs = args.__dict__
+    # Determine the appropriate poster width from the screen size unless this is
+    # explicitly overridden via command-line options.
+    if kwargs.get('poster_width') is None:
+        poster_width = app.screens()[0].size().width() - 20
+        logger.info('Setting posted width to %d (based on the screen size)', poster_width)
+        kwargs['poster_width'] = poster_width
+    slideshow = SlideShow(**kwargs)
     sys.exit(app.exec_())
