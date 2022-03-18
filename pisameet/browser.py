@@ -122,10 +122,16 @@ class Browser(WidgetBase):
         self.tree_widget.insertTopLevelItems(0, items)
         self.showMaximized()
 
+    def keyPressEvent(self, event):
+        """
+        """
+        print(event)
+        print(self.tree_widget.currentItem().data(0, 0))
+
     def display_poster(self, *args):
         """
         """
-        print('Display')
+        print('Display poster!')
         print(args)
 
 
