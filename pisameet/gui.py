@@ -136,20 +136,6 @@ class WidgetBase(QWidget):
 
 
 
-class Banner(WidgetBase):
-
-    """Base class for a banner.
-    """
-
-    def __init__(self, height):
-        """Constructor.
-        """
-        super().__init__(column_stretch={1: 1}, background='white')
-        self.setFixedHeight(height)
-        self.layout().setContentsMargins(0, 0, 0, 0)
-
-
-
 class RosterTable(QTableWidget):
 
     """Custom QTableWidget to display a poster roster.
@@ -168,7 +154,7 @@ class RosterTable(QTableWidget):
         (i.e., not highlighted) color.
     """
 
-    def __init__(self, row_height: int = 20, default_rgb: int = 175):
+    def __init__(self, row_height: int = 25, default_rgb: int = 175):
         """Constructor,
         """
         super().__init__()
@@ -176,7 +162,9 @@ class RosterTable(QTableWidget):
         self.horizontalHeader().hide()
         self.verticalHeader().hide()
         self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        self.verticalHeader().setMinimumSectionSize(row_height)
         self.verticalHeader().setDefaultSectionSize(row_height)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setShowGrid(False)
         self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.setStyleSheet("border: 0px")
@@ -249,50 +237,54 @@ class RosterTable(QTableWidget):
 
 
 
-class Header(Banner):
+class Header(QWidget):
 
     """Poster header.
     """
 
-    def __init__(self, parent, height, portrait_height):
+    def __init__(self, height, portrait_height):
         """Constructor.
         """
-        super().__init__(height)
-        self.parent = parent
-        self.setStyleSheet('margin-left: 15px')
+        self._roster = None
+        super().__init__()
+        self.setFixedHeight(height)
+        self.setLayout(QGridLayout())
+        self.layout().setHorizontalSpacing(30)
+        self.layout().setVerticalSpacing(15)
+        self.layout().setContentsMargins(0, 0, 0, 0)
+        # Create all the necessary widgets
         self.session_label = QLabel()
-        self.session_label.setText('Session')
-        self.add_widget(self.session_label, 0, 2)
-        self.table = RosterTable()
-        self.add_widget(self.table, 1, 2, 2, 1)
+        font = self.session_label.font()
+        font.setPointSize(30)
+        self.session_label.setFont(font)
         self.portrait_label = QLabel()
         self.portrait_label.setFixedSize(portrait_height, portrait_height)
-        self.portrait_label.setAlignment(Qt.AlignCenter)
+        self.portrait_label.setAlignment(Qt.AlignLeft)
         self.qrcode_label = QLabel()
-        # Why do we need the extra 20 here?
-        self.qrcode_label.setFixedSize(portrait_height + 20, portrait_height)
+        self.qrcode_label.setFixedSize(portrait_height, portrait_height)
         self.qrcode_label.setAlignment(Qt.AlignCenter)
-        self.add_widget(self.portrait_label, 1, 0)
-        self.add_widget(self.qrcode_label, 1, 1)
         self.presenter_label = QLabel()
-        self.presenter_label.setFixedWidth(height)
         self.presenter_label.setWordWrap(True)
-        #self.presenter_label.setIndent(20)
-        self.add_widget(self.presenter_label, 2, 0, 1, 2)
+        self.table = RosterTable()
         self.info_label = QLabel()
-        self.add_widget(self.info_label, 3, 2)
-        self._roster = None
+        # Add the widgets to the layout.
+        self.layout().addWidget(self.session_label, 0, 2)
+        self.layout().addWidget(self.portrait_label, 1, 0)
+        self.layout().addWidget(self.qrcode_label, 1, 1)
+        self.layout().addWidget(self.presenter_label, 3, 0, 1, 2)
+        self.layout().addWidget(self.table, 1, 2, 2, 2)
+        self.layout().addWidget(self.info_label, 3, 2)
 
     def set_roster(self, roster):
-        """
+        """Set the poster roster for the table.
         """
         self._roster = roster
         self.session_label.setText(str(self._roster.session))
 
-    def update(self, roster, current_poster_id):
+    def update(self, current_poster_id):
         """Update the header based on the roster information and the current poster.
         """
-        poster = roster[current_poster_id]
+        poster = self._roster[current_poster_id]
         try:
             self.portrait_label.setPixmap(poster.presenter_pixmap)
         except TypeError:
@@ -306,70 +298,6 @@ class Header(Banner):
                f'<font color="gray" size="2">{presenter.affiliation}</font><br/>'
         self.presenter_label.setText(text)
         self.table.set_current_row(current_poster_id)
-
-    def update_info(self):
-        """
-        """
-        self.info_label.setText(self.parent.footer_message())
-
-
-
-
-class HeaderOld(Banner):
-
-    """Poster header.
-    """
-
-    def __init__(self, height, portrait_height):
-        """Constructor.
-        """
-        super().__init__(height)
-        self.text_label = QLabel()
-        self.text_label.setFixedHeight(height)
-        self.text_label.setWordWrap(True)
-        self.text_label.setIndent(10)
-        self.text_label.setMargin(10)
-        self.text_label.setAlignment(Qt.AlignLeft)
-        self.add_widget(self.text_label, 0, 2, 2, 1)
-        self.text_label.setStyleSheet("border: 1px solid gray; border-radius: 5px")
-        self.portrait_label = QLabel()
-        self.portrait_label.setFixedSize(portrait_height, portrait_height)
-        self.portrait_label.setAlignment(Qt.AlignCenter)
-        self.qrcode_label = QLabel()
-        self.qrcode_label.setFixedSize(portrait_height, portrait_height)
-        self.qrcode_label.setAlignment(Qt.AlignCenter)
-        self.add_widget(self.portrait_label, 0, 0)
-        self.add_widget(self.qrcode_label, 0, 1)
-        self.presenter_label = QLabel()
-        self.presenter_label.setFixedWidth(height)
-        self.presenter_label.setWordWrap(True)
-        self.presenter_label.setIndent(20)
-        self.add_widget(self.presenter_label, 1, 0, 1, 2)
-
-    def update(self, roster, current_poster_id):
-        """Update the header based on the roster information and the current poster.
-        """
-        text = f'<font color="black" size="4">{roster.session}</font><br/><br/>'
-        for i, poster in enumerate(roster):
-            poster_text = poster.pretty_print(70)
-            if i == current_poster_id:
-                text += f'<font color="black" size="2">{poster_text}</font><br/>'
-            else:
-                text += f'<font color="gray" size="2">{poster_text}</font><br/>'
-        self.text_label.setText(text)
-        poster = roster[current_poster_id]
-        try:
-            self.portrait_label.setPixmap(poster.presenter_pixmap)
-        except TypeError:
-            self.portrait_label.clear()
-        try:
-            self.qrcode_label.setPixmap(poster.qrcode_pixmap)
-        except TypeError:
-            self.qrcode_label.clear()
-        presenter = poster.presenter
-        text = f'<font color="black" size="4">{presenter.full_name()}</font><br/>'\
-               f'<font color="gray" size="2">{presenter.affiliation}</font><br/>'
-        self.presenter_label.setText(text)
 
 
 
@@ -437,7 +365,7 @@ class SlideShow(WidgetBase):
         # Setup the widgets.
         self.poster_label = QLabel()
         self.poster_label.setAlignment(Qt.AlignHCenter or Qt.AlignTop)
-        self.header = Header(self, self.header_height, kwargs.get('portrait_height'))
+        self.header = Header(self.header_height, kwargs.get('portrait_height'))
         self.fading_effect = FadingEffect()
         self.poster_label.setGraphicsEffect(self.fading_effect)
         self.add_widget(self.header, 0, 1)
@@ -450,7 +378,7 @@ class SlideShow(WidgetBase):
         self.advance_timer.timeout.connect(self.advance)
         self.info_timer = QTimer()
         self.info_timer.setInterval(100)
-        self.info_timer.timeout.connect(self.header.update_info)
+        self.info_timer.timeout.connect(self.update_header_info)
         self.info_timer.start()
         self.resume_timer = QTimer()
         self.resume_timer.setInterval(self.pause_interval)
@@ -459,6 +387,12 @@ class SlideShow(WidgetBase):
 
         # We're good to go!
         self._load_session()
+
+    def update_header_info(self):
+        """
+        """
+        self.header.info_label.setText(self.footer_message())
+
 
     def _show(self):
         """Small convenience hook to display the GUI in the proper visualization
@@ -553,7 +487,7 @@ class SlideShow(WidgetBase):
         """Display a given poster.
         """
         self.__current_index = index % len(self.poster_roster)
-        self.header.update(self.poster_roster, self.__current_index)
+        self.header.update(self.__current_index)
         poster = self.poster_roster[self.__current_index]
         self.poster_label.setPixmap(poster.poster_pixmap)
         self.fading_effect.fade_in()
