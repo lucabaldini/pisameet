@@ -21,12 +21,13 @@ from enum import Enum, IntEnum, auto
 import os
 
 # pylint: disable=no-name-in-module
-from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect
-from PyQt5.QtGui import QKeyEvent
+from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect,\
+    QTableWidget, QTableWidgetItem, QFrame, QHeaderView, QAbstractItemView
+from PyQt5.QtGui import QKeyEvent, QColor
 from PyQt5.QtCore import Qt, QTimer
 
 from __init__ import logger, read_screen_id
-from program import PosterRoster
+from program import Poster, PosterRoster
 
 
 
@@ -149,7 +150,172 @@ class Banner(WidgetBase):
 
 
 
+class RosterTable(QTableWidget):
+
+    """Custom QTableWidget to display a poster roster.
+
+    In addition to the basic functionality of the base class, this is designed
+    to highlight one row at a time (e.g., by setting a different color) in
+    order to visually indicate the poster being displayed at any given time.
+
+    Arguments
+    ---------
+    row_height : int
+        The height of each row in the table.
+
+    default_rgb : int
+        The default value of the three RGB channels for the default
+        (i.e., not highlighted) color.
+    """
+
+    def __init__(self, row_height: int = 20, default_rgb: int = 175):
+        """Constructor,
+        """
+        super().__init__()
+        self.setColumnCount(3)
+        self.horizontalHeader().hide()
+        self.verticalHeader().hide()
+        self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        self.verticalHeader().setDefaultSectionSize(row_height)
+        self.setShowGrid(False)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.setStyleSheet("border: 0px")
+        self.setEnabled(False)
+        self._default_color = QColor(default_rgb, default_rgb, default_rgb)
+        self._highlight_color = QColor(0, 0, 0)
+        self._highlighted_row = None
+
+    def set_text(self, row: int, col: int, text: str):
+        """Set the text for a given cell.
+
+        Note the item is rendered with the default foreground color upon insertion.
+
+        Arguments
+        ---------
+        row : int
+            The row identifier.
+
+        col : int
+            The column identifier.
+
+        text : str
+            The text to be displayed.
+        """
+        item = QTableWidgetItem(text)
+        item.setForeground(self._default_color)
+        self.setItem(row, col, item)
+
+    def set_poster(self, row: int, poster: Poster):
+        """Populate a given row with the poster information.
+
+        Arguments
+        ---------
+        row : int
+            The row identifier.
+
+        poster : program.Poster object
+            The poster to be displayed on a given row.
+        """
+        self.set_text(row, 0, f'[{poster.unique_id}]')
+        self.set_text(row, 1, f'{poster.title}')
+        self.set_text(row, 2, f'{poster.presenter}')
+
+    def set_roster(self, roster: PosterRoster):
+        """Populate the entire table with a poster roster.
+
+        Arguments
+        ---------
+        roster : PosterRoster
+            The poster roster to be displayed in the table.
+        """
+        self.clear()
+        self.setRowCount(len(roster))
+        for row, poster in enumerate(roster):
+            self.set_poster(row, poster)
+
+    def set_current_row(self, row: int):
+        """Highlight a given row.
+
+        Arguments
+        ---------
+        row : int
+            The row identifier.
+        """
+        for col in range(self.columnCount()):
+            if self._highlighted_row is not None:
+                self.item(self._highlighted_row, col).setForeground(self._default_color)
+            self.item(row, col).setForeground(self._highlight_color)
+        self._highlighted_row = row
+
+
+
 class Header(Banner):
+
+    """Poster header.
+    """
+
+    def __init__(self, parent, height, portrait_height):
+        """Constructor.
+        """
+        super().__init__(height)
+        self.parent = parent
+        self.setStyleSheet('margin-left: 15px')
+        self.session_label = QLabel()
+        self.session_label.setText('Session')
+        self.add_widget(self.session_label, 0, 2)
+        self.table = RosterTable()
+        self.add_widget(self.table, 1, 2, 2, 1)
+        self.portrait_label = QLabel()
+        self.portrait_label.setFixedSize(portrait_height, portrait_height)
+        self.portrait_label.setAlignment(Qt.AlignCenter)
+        self.qrcode_label = QLabel()
+        # Why do we need the extra 20 here?
+        self.qrcode_label.setFixedSize(portrait_height + 20, portrait_height)
+        self.qrcode_label.setAlignment(Qt.AlignCenter)
+        self.add_widget(self.portrait_label, 1, 0)
+        self.add_widget(self.qrcode_label, 1, 1)
+        self.presenter_label = QLabel()
+        self.presenter_label.setFixedWidth(height)
+        self.presenter_label.setWordWrap(True)
+        #self.presenter_label.setIndent(20)
+        self.add_widget(self.presenter_label, 2, 0, 1, 2)
+        self.info_label = QLabel()
+        self.add_widget(self.info_label, 3, 2)
+        self._roster = None
+
+    def set_roster(self, roster):
+        """
+        """
+        self._roster = roster
+        self.session_label.setText(str(self._roster.session))
+
+    def update(self, roster, current_poster_id):
+        """Update the header based on the roster information and the current poster.
+        """
+        poster = roster[current_poster_id]
+        try:
+            self.portrait_label.setPixmap(poster.presenter_pixmap)
+        except TypeError:
+            self.portrait_label.clear()
+        try:
+            self.qrcode_label.setPixmap(poster.qrcode_pixmap)
+        except TypeError:
+            self.qrcode_label.clear()
+        presenter = poster.presenter
+        text = f'<font color="black" size="4">{presenter.full_name()}</font><br/>'\
+               f'<font color="gray" size="2">{presenter.affiliation}</font><br/>'
+        self.presenter_label.setText(text)
+        self.table.set_current_row(current_poster_id)
+
+    def update_info(self):
+        """
+        """
+        self.info_label.setText(self.parent.footer_message())
+
+
+
+
+class HeaderOld(Banner):
 
     """Poster header.
     """
@@ -207,28 +373,6 @@ class Header(Banner):
 
 
 
-class Footer(Banner):
-
-    """Class describing the footer for the slideshow.
-    """
-
-    def __init__(self, height, parent=None):
-        """Constructor.
-        """
-        super().__init__(height)
-        self.parent = parent
-        self.text_label = QLabel()
-        self.text_label.setFixedHeight(height)
-        self.text_label.setMargin(10)
-        self.add_widget(self.text_label, 0, 1)
-
-    def update(self):
-        """Update the footer.
-        """
-        self.text_label.setText(self.parent.footer_message())
-
-
-
 class KeyMap(IntEnum):
 
     """Basic mapping of the four-key keyboard.
@@ -277,6 +421,8 @@ class SlideShow(WidgetBase):
         """
         super().__init__(column_stretch={0: 1, 1: 100, 2: 1}, **kwargs)
         self.screen_id = read_screen_id()
+        self.__status = SlideShowStatus.STOPPED
+        self.__current_index = 0
 
         # Parse the command-line arguments.
         self.config_file_path = kwargs.get('cfgfile')
@@ -287,36 +433,31 @@ class SlideShow(WidgetBase):
         self.poster_width = kwargs.get('poster_width')
         self.header_height = kwargs.get('header_height')
         self.portrait_height = kwargs.get('portrait_height')
-        self.footer_height = kwargs.get('footer_height')
 
         # Setup the widgets.
         self.poster_label = QLabel()
         self.poster_label.setAlignment(Qt.AlignHCenter or Qt.AlignTop)
-        self.header = Header(self.header_height, kwargs.get('portrait_height'))
-        self.footer = Footer(self.footer_height, self)
+        self.header = Header(self, self.header_height, kwargs.get('portrait_height'))
         self.fading_effect = FadingEffect()
         self.poster_label.setGraphicsEffect(self.fading_effect)
         self.add_widget(self.header, 0, 1)
         self.add_widget(self.poster_label, 2, 1)
-        self.add_widget(self.footer, 3, 1)
         self.setWindowTitle(self.WINDOW_TITLE)
 
         # Setup the timers.
         self.advance_timer = QTimer()
         self.advance_timer.setInterval(self.advance_interval)
         self.advance_timer.timeout.connect(self.advance)
-        self.footer_timer = QTimer()
-        self.footer_timer.setInterval(100)
-        self.footer_timer.timeout.connect(self.footer.update)
-        self.footer_timer.start()
+        self.info_timer = QTimer()
+        self.info_timer.setInterval(100)
+        self.info_timer.timeout.connect(self.header.update_info)
+        self.info_timer.start()
         self.resume_timer = QTimer()
         self.resume_timer.setInterval(self.pause_interval)
         self.resume_timer.setSingleShot(True)
         self.resume_timer.timeout.connect(self.resume)
 
         # We're good to go!
-        self.__status = SlideShowStatus.STOPPED
-        self.__current_index = 0
         self._load_session()
 
     def _show(self):
@@ -337,6 +478,8 @@ class SlideShow(WidgetBase):
         folder_path = os.path.dirname(self.config_file_path)
         self.poster_roster = PosterRoster(self.config_file_path, folder_path, self.screen_id)
         self.poster_roster.load_poster_data(self.poster_width, self.portrait_height)
+        self.header.set_roster(self.poster_roster)
+        self.header.table.set_roster(self.poster_roster)
         self._show()
         self.display_poster()
         self.start()
