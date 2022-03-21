@@ -22,7 +22,7 @@ import os
 
 # pylint: disable=no-name-in-module
 from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect,\
-    QTableWidget, QTableWidgetItem, QFrame, QHeaderView, QAbstractItemView
+    QTableWidget, QTableWidgetItem, QHeaderView
 from PyQt5.QtGui import QKeyEvent, QColor
 from PyQt5.QtCore import Qt, QTimer
 
@@ -265,8 +265,10 @@ class Header(QWidget):
         self.qrcode_label.setAlignment(Qt.AlignCenter)
         self.presenter_label = QLabel()
         self.presenter_label.setWordWrap(True)
+        self.presenter_label.setAlignment(Qt.AlignTop)
         self.table = RosterTable()
         self.info_label = QLabel()
+        self.info_label.setAlignment(Qt.AlignTop)
         # Add the widgets to the layout.
         self.layout().addWidget(self.session_label, 0, 2)
         self.layout().addWidget(self.portrait_label, 1, 0)
@@ -308,8 +310,7 @@ class KeyMap(IntEnum):
 
     ADVANCE = 1
     BACKUP = 2
-    PAUSE = 3
-    RESUME = 4
+    PAUSE_RESUME = 3
 
 
 
@@ -389,10 +390,9 @@ class SlideShow(WidgetBase):
         self._load_session()
 
     def update_header_info(self):
-        """
+        """Update the header information.
         """
         self.header.info_label.setText(self.footer_message())
-
 
     def _show(self):
         """Small convenience hook to display the GUI in the proper visualization
@@ -534,14 +534,9 @@ class SlideShow(WidgetBase):
             logger.info('%s pressed.', KeyMap.BACKUP)
             self.pause()
             self.backup()
-        elif key == KeyMap.PAUSE:
-            logger.info('%s pressed.', KeyMap.PAUSE)
-            self.pause()
-        elif key == KeyMap.RESUME:
-            logger.info('%s pressed.', KeyMap.RESUME)
-            self.resume()
-
-    #def keyReleaseEvent(self, event: QKeyEvent) -> None:
-    #    """
-    #    """
-    #    print(event)
+        elif key == KeyMap.PAUSE_RESUME:
+            logger.info('%s pressed.', KeyMap.PAUSE_RESUME)
+            if self.running():
+                self.pause()
+            else:
+                self.resume()
