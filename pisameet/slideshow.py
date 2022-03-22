@@ -34,7 +34,7 @@ PARSER.add_argument('--advance', type=float, default=30.,
     help='the time interval for the slide show transition [s]')
 PARSER.add_argument('--pause', type=float, default=120.,
     help='the time interval for the slide show pause [s]')
-PARSER.add_argument('--mode', type=str, default='default', choices=SlideShow.VALID_MODES,
+PARSER.add_argument('--mode', type=str, default='maximize', choices=SlideShow.VALID_MODES,
     help='display geometry')
 PARSER.add_argument('--poster-width', type=int, default=None,
     help='width of the poster display (taken from the screen size by default)')
