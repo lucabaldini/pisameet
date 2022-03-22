@@ -177,8 +177,8 @@ class RosterTable(QTableWidget):
             The poster to be displayed on a given row.
         """
         self.set_text(row, 0, f'[{poster.unique_id}]')
-        self.set_text(row, 1, f'{poster.title}')
-        self.set_text(row, 2, f'{poster.presenter}')
+        self.set_text(row, 1, f'{poster.short_title(60)}')
+        self.set_text(row, 2, f'{poster.presenter.full_name()}')
 
     def set_roster(self, roster: PosterRoster):
         """Populate the entire table with a poster roster.
@@ -227,7 +227,7 @@ class Header(QWidget):
         # Create all the necessary widgets
         self.session_label = QLabel()
         font = self.session_label.font()
-        font.setPointSize(30)
+        font.setPointSize(20)
         self.session_label.setFont(font)
         self.portrait_label = QLabel()
         self.portrait_label.setFixedSize(portrait_height, portrait_height)
@@ -242,7 +242,7 @@ class Header(QWidget):
         self.info_label = QLabel()
         self.info_label.setAlignment(Qt.AlignTop)
         # Add the widgets to the layout.
-        self.layout().addWidget(self.session_label, 0, 2)
+        self.layout().addWidget(self.session_label, 0, 0, 1, 3)
         self.layout().addWidget(self.portrait_label, 1, 0)
         self.layout().addWidget(self.qrcode_label, 1, 1)
         self.layout().addWidget(self.presenter_label, 3, 0, 1, 2)
@@ -343,8 +343,8 @@ class SlideShow(QWidget):
         self.header = Header(self.header_height, kwargs.get('portrait_height'))
         self.fading_effect = FadingEffect()
         self.poster_label.setGraphicsEffect(self.fading_effect)
-        self.layout().addWidget(self.header, 0, 1)
-        self.layout().addWidget(self.poster_label, 2, 1)
+        self.layout().addWidget(self.header, 0, 0, 1, 3)
+        self.layout().addWidget(self.poster_label, 1, 0, 1, 3)
         # Setup the timers.
         self.advance_timer = QTimer()
         self.advance_timer.setInterval(self.advance_interval)
