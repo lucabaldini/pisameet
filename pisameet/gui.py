@@ -20,7 +20,7 @@
 from enum import Enum, IntEnum, auto
 import os
 
-# pylint: disable=no-name-in-module
+# pylint: disable=no-name-in-module, too-many-instance-attributes
 from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect,\
     QTableWidget, QTableWidgetItem, QHeaderView
 from PyQt5.QtGui import QKeyEvent, QColor
@@ -105,34 +105,6 @@ class FadingEffect(QGraphicsOpacityEffect):
         if start_from_one:
             self.setOpacity(1.)
         self._timer.timeout.connect(self._decrease_opacity)
-
-
-
-class WidgetBase(QWidget):
-
-    """Base class for the slideshow widgets.
-
-    This is basically a QWidget with a built-in QGridLayout.
-    """
-
-    def __init__(self, column_stretch: dict=None, **kwargs):
-        """Constructor.
-        """
-        if column_stretch is None:
-            column_stretch = {}
-        super().__init__()
-        grid = QGridLayout()
-        for col, stretch in column_stretch.items():
-            grid.setColumnStretch(col, stretch)
-        self.setLayout(grid)
-        background_color = kwargs.get('background')
-        if background_color is not None:
-            self.setStyleSheet(f'background-color: {background_color}')
-
-    def add_widget(self, widget, row, col, row_span=1, col_span=1):
-        """Add a widget to the underlying grid layout.
-        """
-        self.layout().addWidget(widget, row, col, row_span, col_span)
 
 
 
@@ -336,7 +308,7 @@ class SlideShowMode(Enum):
 
 
 
-class SlideShow(WidgetBase):
+class SlideShow(QWidget):
 
     """Basic slideshow class.
     """
@@ -348,11 +320,14 @@ class SlideShow(WidgetBase):
     def __init__(self, **kwargs):
         """Constructor.
         """
-        super().__init__(column_stretch={0: 1, 1: 100, 2: 1}, **kwargs)
+        super().__init__()
+        self.setStyleSheet('background-color: "white"')
+        self.setWindowTitle(self.WINDOW_TITLE)
+        self.setLayout(QGridLayout())
+        #
         self.screen_id = read_screen_id()
         self.__status = SlideShowStatus.STOPPED
         self.__current_index = 0
-
         # Parse the command-line arguments.
         self.config_file_path = kwargs.get('cfgfile')
         self.advance_interval = self.sec_to_msec(kwargs.get('advance'))
@@ -362,17 +337,14 @@ class SlideShow(WidgetBase):
         self.poster_width = kwargs.get('poster_width')
         self.header_height = kwargs.get('header_height')
         self.portrait_height = kwargs.get('portrait_height')
-
         # Setup the widgets.
         self.poster_label = QLabel()
         self.poster_label.setAlignment(Qt.AlignHCenter or Qt.AlignTop)
         self.header = Header(self.header_height, kwargs.get('portrait_height'))
         self.fading_effect = FadingEffect()
         self.poster_label.setGraphicsEffect(self.fading_effect)
-        self.add_widget(self.header, 0, 1)
-        self.add_widget(self.poster_label, 2, 1)
-        self.setWindowTitle(self.WINDOW_TITLE)
-
+        self.layout().addWidget(self.header, 0, 1)
+        self.layout().addWidget(self.poster_label, 2, 1)
         # Setup the timers.
         self.advance_timer = QTimer()
         self.advance_timer.setInterval(self.advance_interval)
@@ -385,7 +357,6 @@ class SlideShow(WidgetBase):
         self.resume_timer.setInterval(self.pause_interval)
         self.resume_timer.setSingleShot(True)
         self.resume_timer.timeout.connect(self.resume)
-
         # We're good to go!
         self._load_session()
 
