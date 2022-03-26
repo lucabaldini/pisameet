@@ -24,9 +24,8 @@ import os
 import sys
 
 import pandas as pd
-from PyQt5.QtWidgets import QApplication, QTreeWidget, QTreeWidgetItem
+from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QTreeWidget, QTreeWidgetItem
 
-from gui import WidgetBase
 from program import Poster, PosterSession
 from __init__ import logger
 
@@ -65,7 +64,7 @@ class PosterProgram(dict):
             session = PosterSession.from_df_row(program_row)
             self[session] = []
             try:
-                session_df = pd.read_excel(self.config_file_path, session.name)
+                session_df = pd.read_excel(self.config_file_path, str(session.name))
                 for _, session_row in session_df.iterrows():
                     poster = Poster.from_df_row(session_row)
                     print(poster)
@@ -92,7 +91,7 @@ class ProgramTreeWidget(QTreeWidget):
 
 
 
-class Browser(WidgetBase):
+class Browser(QWidget):
 
     """
     """
@@ -103,11 +102,14 @@ class Browser(WidgetBase):
         """Constructor.
         """
         super().__init__()
+        self.setStyleSheet('background-color: "white"')
+        self.setWindowTitle(self.WINDOW_TITLE)
+        self.setLayout(QGridLayout())
+
         poster_width = kwargs.get('poster_width')
         self.layout().setColumnMinimumWidth(0, poster_width)
-        self.setWindowTitle(self.WINDOW_TITLE)
         self.tree_widget = ProgramTreeWidget(poster_width)
-        self.add_widget(self.tree_widget, 0, 0)
+        self.layout().addWidget(self.tree_widget, 0, 0)
         self.tree_widget.itemPressed.connect(self.display_poster)
         self.program = PosterProgram(kwargs.get('cfgfile'))
         items = []
@@ -115,7 +117,10 @@ class Browser(WidgetBase):
             item = QTreeWidgetItem([session.title])
             for poster in posters:
                 presenter = poster.presenter
-                values = [poster.title, presenter.full_name(), presenter.affiliation]
+                affiliation = presenter.affiliation
+                if pd.isna(affiliation):
+                    affiliation = 'N/A'
+                values = [poster.title, presenter.full_name(), affiliation]
                 child = QTreeWidgetItem(values)
                 item.addChild(child)
             items.append(item)
