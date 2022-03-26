@@ -22,6 +22,7 @@ https://docs.getindico.io/en/stable/
 
 import datetime
 import json
+import os
 
 import pandas as pd
 import requests
@@ -133,12 +134,6 @@ class ConferenceInfo(dict):
             self[session['title']] = session
 
     @staticmethod
-    def attachment_urls(contribution):
-        """
-        """
-        return [item['download_url'] for item in contribution['folders'][0]['attachments']]
-
-    @staticmethod
     def pretty_print(contribution):
         """
         """
@@ -214,6 +209,64 @@ class ConferenceInfo(dict):
         writer.save()
         logger.info('Done.')
 
+    @staticmethod
+    def download_urls(contribution, filters=('pdf', 'ppt', 'pptx')):
+        """Return the list of all download urls and fellow timestamp for
+        a given contribution.
+
+        This is looping over all the folders and all the files in the folders, and
+        filtering by file type.
+
+        Arguments
+        ---------
+        contribution : dict
+            The conference contribution.
+
+        filters : tuple of str
+            The allowed file types.
+        """
+        urls = []
+        for folder in contribution['folders']:
+            for attachment in folder['attachments']:
+                url = attachment['download_url']
+                if url.split('.')[-1] in filters:
+                    timestamp = attachment['modified_dt']
+                    urls.append((url, timestamp))
+        if len(urls) == 0:
+            logger.warning(f'No attachment for {contribution["title"]}')
+        return urls
+
+    def download_files(self, folder_path: str, separator: str = '-',
+        filters=('pdf', 'ppt', 'pptx'), dry_run: bool = False):
+        """Download all the files attached to the given conference program.
+        """
+        logger.info('Downloading files...')
+        for session in self.values():
+            logger.info(f'Processing session "{session["title"]}"')
+            for contribution in session['contributions']:
+                for url, timestamp in self.download_urls(contribution):
+                    file_name = f'{int(contribution["id"]):03d}{separator}{os.path.basename(url)}'
+                    file_path = os.path.join(folder_path, file_name)
+                    tstamp_file_path = f'{file_path}.tstamp'
+                    # If we have the file locally, and we have track of the
+                    # timestamp, and that matches the one in the .json file,
+                    # thers is no point in downloading another identical copy.
+                    if os.path.exists(file_path) and os.path.exists(tstamp_file_path) \
+                        and open(tstamp_file_path).read() == timestamp:
+                        logger.debug('%s up to date, skipping...', file_path)
+                        continue
+                    # Otherwise we're good to go.
+                    logger.info('Downloading %s -> %s...', url, file_path)
+                    if not dry_run:
+                        response = requests.get(url)
+                        with open(file_path, 'wb') as f:
+                            f.write(response.content)
+                    # And, of course, we need to write the timestamp, as well.
+                    logger.info('Writing file timestamp to %s...', file_path)
+                    if not dry_run:
+                        with open(tstamp_file_path, 'w') as f:
+                            f.write(timestamp)
+
     def __str__(self):
         """String formatting.
         """
@@ -232,3 +285,4 @@ if __name__ == '__main__':
     info = ConferenceInfo(file_path)
     print(info)
     info.dump_excel('pm2015/pm2015.xlsx')
+    info.download_files('pm2015/indico_attachments')
