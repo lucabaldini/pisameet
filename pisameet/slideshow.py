@@ -42,8 +42,6 @@ PARSER.add_argument('--header-height', type=int, default=250,
     help='height of the poster header')
 PARSER.add_argument('--portrait-height', type=int, default=120,
     help='height of the presenter portraits and QR codes')
-PARSER.add_argument('--footer-height', type=int, default=40,
-    help='height of the poster footer')
 PARSER.add_argument('--background', type=str, default='white',
     help='background color')
 

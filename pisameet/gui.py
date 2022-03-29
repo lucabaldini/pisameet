@@ -363,7 +363,7 @@ class SlideShow(QWidget):
     def update_header_info(self):
         """Update the header information.
         """
-        self.header.info_label.setText(self.footer_message())
+        self.header.info_label.setText(self.status_message())
 
     def _show(self):
         """Small convenience hook to display the GUI in the proper visualization
@@ -440,9 +440,9 @@ class SlideShow(QWidget):
         """
         return int(0.001 * timer.remainingTime() + 0.9)
 
-    def footer_message(self):
+    def status_message(self):
         """Return the message about the slideshow status to be displayed in the
-        GUI footer
+        GUI header.
         """
         # pylint: disable=invalid-name
         status = self.status()
