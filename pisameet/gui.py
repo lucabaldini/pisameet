@@ -214,7 +214,7 @@ class Header(QWidget):
     """Poster header.
     """
 
-    def __init__(self, height, portrait_height):
+    def __init__(self, conference_text, height, portrait_height):
         """Constructor.
         """
         self._roster = None
@@ -225,6 +225,11 @@ class Header(QWidget):
         self.layout().setVerticalSpacing(15)
         self.layout().setContentsMargins(0, 0, 0, 0)
         # Create all the necessary widgets
+        self.conference_label = QLabel()
+        font = self.conference_label.font()
+        font.setPointSize(20)
+        self.conference_label.setText(conference_text)
+        self.conference_label.setFont(font)
         self.session_label = QLabel()
         font = self.session_label.font()
         font.setPointSize(20)
@@ -242,12 +247,13 @@ class Header(QWidget):
         self.info_label = QLabel()
         self.info_label.setAlignment(Qt.AlignTop)
         # Add the widgets to the layout.
-        self.layout().addWidget(self.session_label, 0, 0, 1, 3)
-        self.layout().addWidget(self.portrait_label, 1, 0)
-        self.layout().addWidget(self.qrcode_label, 1, 1)
-        self.layout().addWidget(self.presenter_label, 3, 0, 1, 2)
-        self.layout().addWidget(self.table, 1, 2, 2, 2)
-        self.layout().addWidget(self.info_label, 3, 2)
+        self.layout().addWidget(self.conference_label, 0, 0, 1, 3)
+        self.layout().addWidget(self.session_label, 1, 0, 1, 3)
+        self.layout().addWidget(self.portrait_label, 2, 0)
+        self.layout().addWidget(self.qrcode_label, 2, 1)
+        self.layout().addWidget(self.presenter_label, 4, 0, 1, 2)
+        self.layout().addWidget(self.table, 2, 2, 2, 2)
+        self.layout().addWidget(self.info_label, 4, 2)
 
     def set_roster(self, roster):
         """Set the poster roster for the table.
@@ -313,7 +319,7 @@ class SlideShow(QWidget):
     """Basic slideshow class.
     """
 
-    WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors'
+    WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors - La Biodola, Isola d\'Elba, May 22-28 2022'
     VALID_MODES = [mode.value for mode in SlideShowMode]
     VALID_KEYS = [str(key.value) for key in KeyMap]
 
@@ -340,7 +346,7 @@ class SlideShow(QWidget):
         # Setup the widgets.
         self.poster_label = QLabel()
         self.poster_label.setAlignment(Qt.AlignHCenter or Qt.AlignTop)
-        self.header = Header(self.header_height, kwargs.get('portrait_height'))
+        self.header = Header(self.WINDOW_TITLE, self.header_height, kwargs.get('portrait_height'))
         self.fading_effect = FadingEffect()
         if kwargs.get('fading'):
             self.poster_label.setGraphicsEffect(self.fading_effect)
