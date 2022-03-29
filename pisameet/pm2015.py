@@ -59,9 +59,15 @@ def dump_config_file():
     """
     CONFERENCE_INFO.dump_excel(CONFIG_FILE_PATH)
 
+def dispatch_files():
+    """
+    """
+    ids = CONFERENCE_INFO.contribution_ids()
+
 
 
 if __name__ == '__main__':
-    donwload_info()
-    download_attachments()
-    dump_config_file()
+    #donwload_info()
+    #download_attachments()
+    #dump_config_file()
+    dispatch_files()

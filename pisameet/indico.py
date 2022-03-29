@@ -140,6 +140,11 @@ class ConferenceInfo(dict):
         for session in sessions:
             self[session['title']] = session
 
+    def contribution_ids(self):
+        """Return all the contribution ids.
+        """
+        return [c['id'] for c in session for session in self.values()]
+
     @staticmethod
     def pretty_print(contribution):
         """
