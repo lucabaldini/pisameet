@@ -143,7 +143,14 @@ class ConferenceInfo(dict):
     def contribution_ids(self):
         """Return all the contribution ids.
         """
-        return [c['id'] for c in session for session in self.values()]
+        logger.info('Retrieving all the contribution identifiers...')
+        ids = []
+        for session in self.values():
+            for contribution in session['contributions']:
+                ids.append(int(contribution['id']))
+        logger.info('Done, %d contribution(s) found.', len(ids))
+        ids.sort()
+        return ids
 
     @staticmethod
     def pretty_print(contribution):
