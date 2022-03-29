@@ -286,9 +286,9 @@ class KeyMap(IntEnum):
     """Basic mapping of the four-key keyboard.
     """
 
-    ADVANCE = 1
-    BACKUP = 2
-    PAUSE_RESUME = 3
+    BACKUP = 1
+    PAUSE_RESUME = 2
+    ADVANCE = 3
 
 
 
@@ -410,15 +410,13 @@ class SlideShow(QWidget):
         """Start the slideshow.
         """
         self.__status = SlideShowStatus.RUNNING
-        if not self.advance_timer.isActive():
-            self.advance_timer.start()
+        self.advance_timer.start()
 
     def stop(self):
         """Stop the slideshow.
         """
         self.__status = SlideShowStatus.STOPPED
-        if self.advance_timer.isActive():
-            self.advance_timer.stop()
+        self.advance_timer.stop()
 
     def pause(self):
         """Pause the slideShow.
@@ -506,11 +504,11 @@ class SlideShow(QWidget):
         key = int(key)
         if key == KeyMap.ADVANCE:
             logger.info('%s pressed.', KeyMap.ADVANCE)
-            self.pause()
+            self.start()
             self.advance()
         elif key == KeyMap.BACKUP:
             logger.info('%s pressed.', KeyMap.BACKUP)
-            self.pause()
+            self.start()
             self.backup()
         elif key == KeyMap.PAUSE_RESUME:
             logger.info('%s pressed.', KeyMap.PAUSE_RESUME)
