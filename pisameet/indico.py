@@ -113,7 +113,7 @@ class ConferenceInfo(dict):
         The path to the .json file containing all the contributions.
     """
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, session_dict: dict = None):
         """Constructor.
         """
         super().__init__()
@@ -124,6 +124,13 @@ class ConferenceInfo(dict):
         results = data['results'][0]
         sessions = results['sessions']
         logger.info(f'{len(sessions)} session (s) found')
+        if session_dict is not None:
+            logger.info('Filtering sessions...')
+            sessions = [session for session in sessions if session['id'] in session_dict]
+            logger.info('Done, %d session(s) remaining...', len(sessions))
+            # And, since we're at it,
+            for session in sessions:
+                session['title'] = session_dict[session['id']]
         contributions = results['contributions']
         if len(contributions):
             logger.warning(f'{len(contributions)} orphan contribution(s) found...')
@@ -236,7 +243,7 @@ class ConferenceInfo(dict):
             logger.warning(f'No attachment for {contribution["title"]}')
         return urls
 
-    def download_files(self, folder_path: str, separator: str = '-',
+    def download_attachments(self, folder_path: str, separator: str = '-',
         filters=('pdf', 'ppt', 'pptx'), dry_run: bool = False):
         """Download all the files attached to the given conference program.
         """
@@ -272,17 +279,3 @@ class ConferenceInfo(dict):
         """
         return '\n'.join([f'- {key} ({len(val["contributions"])} contributions)' \
             for key, val in self.items()])
-
-
-
-
-
-
-if __name__ == '__main__':
-    url = 'https://agenda.infn.it/export/event/8397.json'
-    file_path = 'pm2015/pm2015.json'
-    #retrieve_info(url, file_path)
-    info = ConferenceInfo(file_path)
-    print(info)
-    info.dump_excel('pm2015/pm2015.xlsx')
-    info.download_files('pm2015/indico_attachments')
