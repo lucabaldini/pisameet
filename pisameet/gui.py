@@ -342,7 +342,8 @@ class SlideShow(QWidget):
         self.poster_label.setAlignment(Qt.AlignHCenter or Qt.AlignTop)
         self.header = Header(self.header_height, kwargs.get('portrait_height'))
         self.fading_effect = FadingEffect()
-        self.poster_label.setGraphicsEffect(self.fading_effect)
+        if kwargs.get('fading'):
+            self.poster_label.setGraphicsEffect(self.fading_effect)
         self.layout().addWidget(self.header, 0, 0, 1, 3)
         self.layout().addWidget(self.poster_label, 1, 0, 1, 3)
         # Setup the timers.
