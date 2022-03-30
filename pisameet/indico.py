@@ -31,6 +31,9 @@ from __init__ import logger
 from program import PosterRoster
 
 
+# pylint: disable=invalid-name
+
+
 
 def retrieve_info(url: str, file_path: str , detail: str = 'sessions'):
     """Retrieve the contributions, grouped by session for a given conference,
@@ -263,7 +266,7 @@ class ConferenceInfo(dict):
         for session in self.values():
             logger.info(f'Processing session "{session["title"]}"')
             for contribution in session['contributions']:
-                for url, timestamp in self.download_urls(contribution):
+                for url, timestamp in self.download_urls(contribution, filters):
                     file_name = f'{int(contribution["id"]):03d}{separator}{os.path.basename(url)}'
                     file_path = os.path.join(folder_path, file_name)
                     tstamp_file_path = f'{file_path}.tstamp'
