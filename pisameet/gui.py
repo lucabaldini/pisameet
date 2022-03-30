@@ -26,8 +26,8 @@ from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect
 from PyQt5.QtGui import QKeyEvent, QColor
 from PyQt5.QtCore import Qt, QTimer
 
-from __init__ import logger, read_screen_id
-from program import Poster, PosterRoster
+from . import logger, read_screen_id
+from .program import Poster, PosterRoster
 
 
 

@@ -22,9 +22,9 @@ import shutil
 
 import pdfrw
 
-from __init__ import logger
-from indico import retrieve_info, ConferenceInfo
-from dispatch import dispatch_posters
+from . import logger
+from .indico import retrieve_info, ConferenceInfo
+from .dispatch import dispatch_posters
 
 BASE_NAME = 'pm2015'
 LOCAL_ROOT = os.path.join('/data/work/', BASE_NAME)

@@ -25,7 +25,7 @@ import pandas as pd
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 
-from __init__ import logger
+from . import logger
 
 
 

@@ -27,8 +27,8 @@ import os
 import pandas as pd
 import requests
 
-from __init__ import logger
-from program import PosterRoster
+from . import logger
+from .program import PosterRoster
 
 
 # pylint: disable=invalid-name

@@ -26,8 +26,9 @@ import sys
 import pandas as pd
 from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QTreeWidget, QTreeWidgetItem
 
-from program import Poster, PosterSession
-from __init__ import logger
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from pisameet.program import Poster, PosterSession
+from pisameet import logger
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument('cfgfile', type=str,

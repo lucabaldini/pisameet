@@ -20,12 +20,14 @@
 """
 
 import argparse
+import os
 import sys
 
 from PyQt5.QtWidgets import QApplication
 
-from gui import SlideShow
-from __init__ import logger
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from pisameet.gui import SlideShow
+from pisameet import logger
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument('cfgfile', type=str,

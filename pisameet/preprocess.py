@@ -23,8 +23,8 @@ import glob
 import os
 import subprocess
 
-from __init__ import logger
-from qrcode_ import generate_qrcode
+from . import logger
+from .qrcode_ import generate_qrcode
 
 
 def crawl(folder_path: str, file_type: str = '.pdf', filter_pattern: str = None) -> list:
