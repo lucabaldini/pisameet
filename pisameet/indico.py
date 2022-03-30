@@ -126,7 +126,7 @@ class ConferenceInfo(dict):
         # Parse the json hierarchy.
         results = data['results'][0]
         sessions = results['sessions']
-        logger.info(f'{len(sessions)} session (s) found')
+        logger.info('%d session (s) found', len(sessions))
         if session_dict is not None:
             logger.info('Filtering sessions...')
             sessions = [session for session in sessions if session['id'] in session_dict]
@@ -136,7 +136,7 @@ class ConferenceInfo(dict):
                 session['title'] = session_dict[session['id']]
         contributions = results['contributions']
         if len(contributions):
-            logger.warning(f'{len(contributions)} orphan contribution(s) found...')
+            logger.warning('%d orphan contribution(s) found...', len(contributions))
         else:
             logger.info('No orphan contributions found...')
         # Populate the underlying dictionary.
@@ -157,7 +157,7 @@ class ConferenceInfo(dict):
 
     @staticmethod
     def pretty_print(contribution):
-        """
+        """Pretty print.
         """
         identifier = contribution['friendly_id']
         try:
@@ -184,7 +184,7 @@ class ConferenceInfo(dict):
     def dump_excel(self, file_path):
         """Dump the contribution list as an excel file.
         """
-        logger.info(f'Dumping conference info to {file_path}...')
+        logger.info('Dumping conference info to %s...', file_path)
         writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
 
         # Create the master sheet with the session data.
@@ -217,7 +217,8 @@ class ConferenceInfo(dict):
             return [contrib[key] for contrib in session['contributions']]
 
         for session in self.values():
-            data = [_contrib_data(session, key) for key in ('id', 'title', 'first_name', 'last_name', 'affiliation')]
+            data = [_contrib_data(session, key) for key in \
+                ('id', 'title', 'first_name', 'last_name', 'affiliation')]
             data.insert(1, [''] * len(session['contributions']))
             df = pd.DataFrame({key: val for key, val in zip(PosterRoster.SESSION_COL_NAMES, data)})
             sheet_name = str(session['id'])
@@ -255,7 +256,7 @@ class ConferenceInfo(dict):
                     timestamp = attachment['modified_dt']
                     urls.append((url, timestamp))
         if len(urls) == 0:
-            logger.warning(f'No attachment for {contribution["title"]}')
+            logger.warning('No attachment for "%s"', contribution["title"])
         return urls
 
     def download_attachments(self, folder_path: str, separator: str = '-',
@@ -264,7 +265,7 @@ class ConferenceInfo(dict):
         """
         logger.info('Downloading files...')
         for session in self.values():
-            logger.info(f'Processing session "{session["title"]}"')
+            logger.info('Processing session "%s"', session["title"])
             for contribution in session['contributions']:
                 for url, timestamp in self.download_urls(contribution, filters):
                     file_name = f'{int(contribution["id"]):03d}{separator}{os.path.basename(url)}'

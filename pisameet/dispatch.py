@@ -15,13 +15,15 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 """Dispatching facilities.
+
+This module contains the facilities to dispatch all the relevant files from the
+dump of the indico attachments to the folder structure in use by the slideshow.
 """
 
 import os
 import shutil
 
 import pdfrw
-
 
 from . import logger
 
@@ -35,11 +37,12 @@ def pdf_info(file_path: str):
     file_path : str
         Path to the input pdf file.
     """
+    # pylint: disable=broad-except
     assert file_path.endswith('.pdf')
     try:
         pdf = pdfrw.PdfReader(file_path)
-    except Exception as e:
-        logger.error('Parsing error for %s: %s', file_path, e)
+    except Exception as exception:
+        logger.error('Parsing error for %s: %s', file_path, exception)
         return None, None
     num_pages = len(pdf.pages)
     box = pdf.pages[0].MediaBox

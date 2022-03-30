@@ -22,6 +22,7 @@ import os
 import pathlib
 
 import pandas as pd
+#pylint: disable=no-name-in-module
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 
@@ -107,17 +108,18 @@ class Poster:
         """
         if len(self.title) <= max_chars:
             return self.title.ljust(max_chars)
-        else:
-            return f'{self.title[:max_chars - 3]}...'
+        return f'{self.title[:max_chars - 3]}...'
 
-    def load_pixmap_w(self, file_path : str, width : int):
-        """
+    @staticmethod
+    def load_pixmap_w(file_path : str, width : int):
+        """Load the underlying pixmap with a fixed width.
         """
         logger.debug('Loading image data from %s...', file_path)
         return QPixmap(file_path).scaledToWidth(width, Qt.SmoothTransformation)
 
-    def load_pixmap_h(self, file_path : str, height : int):
-        """
+    @staticmethod
+    def load_pixmap_h(file_path : str, height : int):
+        """Load the underlying pixmap with a fixed height.
         """
         logger.debug('Loading image data from %s...', file_path)
         return QPixmap(file_path).scaledToHeight(height, Qt.SmoothTransformation)
@@ -126,6 +128,7 @@ class Poster:
         poster_width, portrait_height):
         """Load all the necessary poster data.
         """
+        #pylint: disable=too-many-arguments
         logger.info('Loading data for poster %s...', self)
         if poster_file_path is None:
             logger.error('Poster file path undefined for %s', self)
@@ -141,7 +144,7 @@ class Poster:
             self.qrcode_pixmap = self.load_pixmap_h(qrcode_file_path, portrait_height)
 
     def pretty_print(self, max_chars=40):
-        """
+        """Poster pretty print.
         """
         return f'[{self.unique_id:03}] {self.short_title(max_chars)} ({self.presenter.full_name()})'
 
@@ -168,10 +171,11 @@ class PosterSession:
     def parse_datetime(self, text):
         """Parse a datetime string in the proper format.
         """
+        # pylint: disable=broad-except
         try:
             return datetime.datetime.strptime(text, PosterRoster.DATETIME_FORMAT)
-        except Exception as e:
-            logger.warning('Invalid date and/or time for session %s (%s).', self.name, e)
+        except Exception as exception:
+            logger.warning('Invalid date and/or time for session %s (%s).', self.name, exception)
             return None
 
     @classmethod
@@ -215,7 +219,8 @@ class PosterRoster(list):
     PROGRAM_SHEET_NAME = 'Program'
     DATETIME_FORMAT = '%d/%m/%Y %H:%M'
     PROGRAM_COL_NAMES = ('Session ID', 'Session Name', 'Start Date', 'End Date')
-    SESSION_COL_NAMES = ('Poster ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation')
+    SESSION_COL_NAMES = ('Poster ID', 'Screen ID', 'Title', 'First Name',
+        'Last Name', 'Affiliation')
     POSTER_FOLDER_NAME = 'poster_images'
     PRESENTER_FOLDER_NAME = 'presenters'
     QRCODE_FOLDER_NAME = 'qrcodes'
@@ -244,8 +249,8 @@ class PosterRoster(list):
                     poster = Poster.from_df_row(session_row)
                     if poster.screen_id == self.screen_id:
                         self.append(poster)
-            except ValueError as e:
-                logger.warning('Data not available for session %s: %s', session.name, e)
+            except ValueError as exception:
+                logger.warning('Data not available for session %s: %s', session.name, exception)
             self.session = session
             break
 
@@ -266,8 +271,8 @@ class PosterRoster(list):
         """
         try:
             return int(file_path.name.split(separator)[0])
-        except ValueError as e:
-            logger.error('Invalid file name %s (%s)', file_path, e)
+        except ValueError as exception:
+            logger.error('Invalid file name %s (%s)', file_path, exception)
             return None
 
     def _file_dict(self, folder_path, poster_ids, *extensions):
@@ -303,10 +308,12 @@ class PosterRoster(list):
         logger.info('Loading poster data...')
         poster_ids = [poster.unique_id for poster in self]
         poster_file_dict = self._file_dict(self.poster_folder_path, poster_ids, '.png')
-        presenter_file_dict = self._file_dict(self.presenter_folder_path, poster_ids, '.png', '.jpg', '.jpeg')
+        presenter_file_dict = self._file_dict(self.presenter_folder_path, poster_ids,
+            '.png', '.jpg', '.jpeg')
         qrcode_file_dict = self._file_dict(self.qrcode_folder_path, poster_ids, '.png')
         for poster in self:
-            args = [d.get(poster.unique_id) for d in (poster_file_dict, presenter_file_dict, qrcode_file_dict)]
+            args = [d.get(poster.unique_id) for d in \
+                (poster_file_dict, presenter_file_dict, qrcode_file_dict)]
             args += [poster_size, header_height]
             poster.load_data(*args)
 
@@ -314,12 +321,3 @@ class PosterRoster(list):
         """String formatting.
         """
         return f'Roster for screen {self.screen_id}\n' + '\n'.join([str(poster) for poster in self])
-
-
-
-if __name__ == '__main__':
-    config_file_path = '/data/work/pisameet/pisameet/config/pm2018_sample.xlsx'
-    root_folder_path = '/data/work/pm18/'
-    screen_id = 1
-    roster = PosterRoster(config_file_path, root_folder_path, screen_id)
-    print(roster)

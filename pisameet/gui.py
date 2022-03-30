@@ -15,6 +15,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 """Graphical user interface.
+
+This module contains all the widgets that are relevant for the slideshow.
 """
 
 from enum import Enum, IntEnum, auto
@@ -319,7 +321,8 @@ class SlideShow(QWidget):
     """Basic slideshow class.
     """
 
-    WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors - La Biodola, Isola d\'Elba, May 22-28 2022'
+    WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors'\
+        ' - La Biodola, Isola d\'Elba, May 22-28 2022'
     VALID_MODES = [mode.value for mode in SlideShowMode]
     VALID_KEYS = [str(key.value) for key in KeyMap]
 

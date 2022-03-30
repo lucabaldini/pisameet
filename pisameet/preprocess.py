@@ -18,8 +18,6 @@
 """Pre-processing tools.
 """
 
-
-import glob
 import os
 import subprocess
 
@@ -48,11 +46,12 @@ def crawl(folder_path: str, file_type: str = '.pdf', filter_pattern: str = None)
     A list of absolute file paths.
     """
     file_list = []
-    for root, subdirs, files in os.walk(folder_path):
+    for root, _, files in os.walk(folder_path):
         file_list += [os.path.join(root, file) for file in files if file.endswith(file_type)]
     file_list.sort()
     if filter_pattern is not None:
-        file_list = [file_path for file_path in file_list if filter_pattern in os.path.basename(file_path)]
+        file_list = [file_path for file_path in file_list \
+            if filter_pattern in os.path.basename(file_path)]
     return file_list
 
 
@@ -63,11 +62,11 @@ def pdf_to_png(input_file_path: str, output_folder_path) -> str:
     file_name = os.path.basename(input_file_path).replace('.pdf', '.png')
     output_file_path = os.path.join(output_folder_path, file_name)
     print('Converting %s to %s...' % (input_file_path, output_file_path))
-    subprocess.run(['convert', input_file_path, output_file_path])
+    subprocess.run(['convert', input_file_path, output_file_path], check=True)
     return output_file_path
 
 def generate_qr_codes(folder_path : str, output_folder_path : str):
-    """
+    """Generate all the QR codes.
     """
     for file_path in crawl(folder_path):
         poster_id = os.path.basename(file_path).split('-')[0]
