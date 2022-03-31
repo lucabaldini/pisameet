@@ -291,6 +291,7 @@ class KeyMap(IntEnum):
     BACKUP = 1
     PAUSE_RESUME = 2
     ADVANCE = 3
+    RELOAD = 5
 
 
 
@@ -368,7 +369,7 @@ class SlideShow(QWidget):
         self.resume_timer.setSingleShot(True)
         self.resume_timer.timeout.connect(self.resume)
         # We're good to go!
-        self._load_session()
+        self._load_roster()
 
     def update_header_info(self):
         """Update the header information.
@@ -386,9 +387,10 @@ class SlideShow(QWidget):
         else:
             self.show()
 
-    def _load_session(self):
+    def _load_roster(self):
         """Load a given session from the underlying configuration file.
         """
+        logger.info('Loading poster roster...')
         self.hide()
         folder_path = os.path.dirname(self.config_file_path)
         self.poster_roster = PosterRoster(self.config_file_path, folder_path, self.screen_id)
@@ -506,16 +508,15 @@ class SlideShow(QWidget):
             return
         key = int(key)
         if key == KeyMap.ADVANCE:
-            logger.info('%s pressed.', KeyMap.ADVANCE)
             self.start()
             self.advance()
         elif key == KeyMap.BACKUP:
-            logger.info('%s pressed.', KeyMap.BACKUP)
             self.start()
             self.backup()
         elif key == KeyMap.PAUSE_RESUME:
-            logger.info('%s pressed.', KeyMap.PAUSE_RESUME)
             if self.running():
                 self.pause()
             else:
                 self.resume()
+        elif key == KeyMap.RELOAD:
+            self._load_roster()
