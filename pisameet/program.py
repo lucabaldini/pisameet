@@ -26,7 +26,7 @@ import pandas as pd
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 
-from . import logger
+from . import logger, MISSING_PIC_PATH
 
 
 
@@ -136,6 +136,7 @@ class Poster:
             self.poster_pixmap = self.load_pixmap_w(poster_file_path, poster_width)
         if presenter_file_path is None:
             logger.warning('Presenter file path undefined for %s', self)
+            self.presenter_pixmap = self.load_pixmap_h(MISSING_PIC_PATH, portrait_height)
         else:
             self.presenter_pixmap = self.load_pixmap_h(presenter_file_path, portrait_height)
         if qrcode_file_path is None:

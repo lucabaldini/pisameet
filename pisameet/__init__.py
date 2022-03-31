@@ -31,7 +31,7 @@ PACKAGE_NAME = 'pisameet'
 PISAMEET_ROOT = os.path.abspath(os.path.dirname(__file__))
 PISAMEET_BASE = os.path.abspath(os.path.join(PISAMEET_ROOT, os.pardir))
 
-
+MISSING_PIC_PATH = os.path.join(PISAMEET_BASE, 'graphics', 'unknown_female.png')
 
 class TerminalColors:
 
