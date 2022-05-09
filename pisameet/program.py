@@ -199,6 +199,43 @@ class PosterSession:
 
 
 
+
+class PosterCollectionBase:
+
+    """Base class for a poster collection.
+
+    Arguments
+    ---------
+    config_file_path : str
+        The path to the excel config file with the poster program.
+
+    root_folder_path : str
+        The path to the root folder containing the session material.
+    """
+
+    PROGRAM_SHEET_NAME = 'Program'
+    DATETIME_FORMAT = '%d/%m/%Y %H:%M'
+    PROGRAM_COL_NAMES = ('Session ID', 'Session Name', 'Start Date', 'End Date')
+    SESSION_COL_NAMES = ('Poster ID', 'Indico ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation')
+    POSTER_FOLDER_NAME = 'poster_images'
+    PRESENTER_FOLDER_NAME = 'presenters'
+    QRCODE_FOLDER_NAME = 'qrcodes'
+
+    def __init__(self, config_file_path : str, root_folder_path : str = None) -> None:
+        """Constructor.
+        """
+        self.config_file_path = config_file_path
+        if root_folder_path is None:
+            root_folder_path = os.path.dirname(config_file_path)
+        self.root_folder_path = root_folder_path
+        self.poster_folder_path = os.path.join(self.root_folder_path, self.POSTER_FOLDER_NAME)
+        self.presenter_folder_path = os.path.join(self.root_folder_path, self.PRESENTER_FOLDER_NAME)
+        self.qrcode_folder_path = os.path.join(self.root_folder_path, self.QRCODE_FOLDER_NAME)
+        logger.debug('Reading %s sheet from %s...', self.PROGRAM_SHEET_NAME, config_file_path)
+        self._df = pd.read_excel(config_file_path, self.PROGRAM_SHEET_NAME)
+
+
+
 class PosterRoster(list):
 
     """Poster roster description.
@@ -326,32 +363,17 @@ class PosterRoster(list):
 
 
 
-class PosterProgram(dict):
+class PosterProgram(PosterCollectionBase, dict):
 
+    """Full description of a poster program.
     """
-    """
 
-    PROGRAM_SHEET_NAME = 'Program'
-    DATETIME_FORMAT = '%d/%m/%Y %H:%M'
-    PROGRAM_COL_NAMES = ('Session ID', 'Session Name', 'Start Date', 'End Date')
-    SESSION_COL_NAMES = ('Poster ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation')
-    POSTER_FOLDER_NAME = 'poster_images'
-    PRESENTER_FOLDER_NAME = 'presenters'
-    QRCODE_FOLDER_NAME = 'qrcodes'
-
-    def __init__(self, file_path : str) -> None:
+    def __init__(self, config_file_path : str, root_folder_path : str = None) -> None:
         """Constructor
         """
-        super().__init__()
-        self.config_file_path = file_path
-        self.root_folder_path = os.path.dirname(file_path)
-        self.poster_folder_path = os.path.join(self.root_folder_path, self.POSTER_FOLDER_NAME)
-        self.presenter_folder_path = os.path.join(self.root_folder_path, self.PRESENTER_FOLDER_NAME)
-        self.qrcode_folder_path = os.path.join(self.root_folder_path, self.QRCODE_FOLDER_NAME)
-        logger.info('Populating program...')
-        logger.debug('Reading %s sheet from %s...', self.PROGRAM_SHEET_NAME, self.config_file_path)
-        program_df = pd.read_excel(self.config_file_path, self.PROGRAM_SHEET_NAME)
-        for _, program_row in program_df.iterrows():
+        PosterCollectionBase.__init__(self, config_file_path, root_folder_path)
+        dict.__init__(self)
+        for _, program_row in self._df.iterrows():
             session = PosterSession.from_df_row(program_row)
             self[session] = []
             try:
