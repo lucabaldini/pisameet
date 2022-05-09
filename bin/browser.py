@@ -19,7 +19,6 @@
 """Main slideshow application.
 """
 
-import argparse
 import os
 import sys
 
@@ -27,13 +26,15 @@ from PyQt5.QtWidgets import QApplication
 
 from pisameet import logger
 from pisameet.gui import ProgramBrowser
+from pisameet.options import ArgumentParser
 
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-PARSER = argparse.ArgumentParser()
-PARSER.add_argument('cfgfile', type=str,
-    help='path to the input excel configuration file')
+PARSER = ArgumentParser()
+PARSER.add_geometry()
+PARSER.add_pause()
+
 
 
 if __name__ == '__main__':

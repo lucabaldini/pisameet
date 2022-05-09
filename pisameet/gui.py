@@ -212,12 +212,12 @@ class RosterTable(QTableWidget):
 
 
 
-class Header(QWidget):
+class ScreenHeader(QWidget):
 
     """Poster header.
     """
 
-    def __init__(self, conference_text, height, portrait_height):
+    def __init__(self, title, height, portrait_height):
         """Constructor.
         """
         self._roster = None
@@ -231,7 +231,7 @@ class Header(QWidget):
         self.conference_label = QLabel()
         font = self.conference_label.font()
         font.setPointSize(20)
-        self.conference_label.setText(conference_text)
+        self.conference_label.setText(title)
         self.conference_label.setFont(font)
         self.session_label = QLabel()
         font = self.session_label.font()
@@ -323,25 +323,11 @@ class SlideShowStatus(Enum):
 
 
 
-class SlideShowMode(Enum):
-
-    """Definition of the possible visualization modes for the slideshow.
-    """
-
-    DEFAULT = 'default'
-    MAXIMIZE = 'maximize'
-    FULLSCREEN = 'fullscreen'
-
-
-
 class SlideShow(QWidget):
 
     """Basic slideshow class.
     """
 
-    WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors'\
-        ' - La Biodola, Isola d\'Elba, May 22-28 2022'
-    VALID_MODES = [mode.value for mode in SlideShowMode]
     VALID_KEYS = [str(key.value) for key in KeyMap]
 
     def __init__(self, **kwargs):
@@ -349,7 +335,7 @@ class SlideShow(QWidget):
         """
         super().__init__()
         self.setStyleSheet('background-color: "white"')
-        self.setWindowTitle(self.WINDOW_TITLE)
+        self.setWindowTitle(f'{kwargs["conference-name"]}')
         self.setLayout(QGridLayout())
         #
         self.screen_id = read_screen_id()
@@ -360,14 +346,14 @@ class SlideShow(QWidget):
         self.advance_interval = self.sec_to_msec(kwargs.get('advance'))
         self.pause_interval = self.sec_to_msec(kwargs.get('pause'))
         self.display_mode = kwargs.get('mode')
-        assert self.display_mode in self.VALID_MODES
+        assert self.display_mode in self.VALID_DISPLAY_MODES
         self.poster_width = kwargs.get('poster_width')
         self.header_height = kwargs.get('header_height')
         self.portrait_height = kwargs.get('portrait_height')
         # Setup the widgets.
         self.poster_label = QLabel()
         self.poster_label.setAlignment(Qt.AlignHCenter or Qt.AlignTop)
-        self.header = Header(self.WINDOW_TITLE, self.header_height, kwargs.get('portrait_height'))
+        self.header = ScreenHeader(self.WINDOW_TITLE, self.header_height, kwargs.get('portrait_height'))
         self.fading_effect = FadingEffect()
         if kwargs.get('fading'):
             self.poster_label.setGraphicsEffect(self.fading_effect)
@@ -542,7 +528,7 @@ class SlideShow(QWidget):
 
 class ProgramTreeWidget(QTreeWidget):
 
-    """
+    """Light wrapper over the QTreeWidget class.
     """
 
     def __init__(self, width):
@@ -565,49 +551,76 @@ class ProgramTreeWidget(QTreeWidget):
 
 class BrowserStatus(Enum):
 
-    """Status of the slideshow finite-state machine.
+    """Status of the browser finite-state machine.
     """
 
-    TREE = auto()
-    POSTER = auto()
-
-
-class BrowserPosterWidget(QWidget):
-
-    """
-    """
-
-    pass
+    TREE_VIEW = auto()
+    POSTER_VIEW = auto()
 
 
 
 class ProgramBrowser(QWidget):
 
+    """Poster browser.
     """
-    """
-
-    WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors -- Poster Browser'
 
     def __init__(self, **kwargs):
         """Constructor.
         """
         super().__init__()
         self.setStyleSheet('background-color: "white"')
-        self.setWindowTitle(self.WINDOW_TITLE)
+        self.setWindowTitle(f'{kwargs["conference_name"]} -- Poster Browser')
         self.setLayout(QGridLayout())
-
-        self.poster_width = kwargs.get('poster_width')
-        self.layout().setColumnMinimumWidth(0, self.poster_width)
-        self.tree_widget = ProgramTreeWidget(self.poster_width)
+        poster_width = kwargs.get('poster_width')
+        self.layout().setColumnMinimumWidth(0, poster_width)
+        self.tree_widget = ProgramTreeWidget(poster_width)
         self.poster_widget = QLabel()
         self.poster_widget.hide()
-        self.poster_header = Header(SlideShow.WINDOW_TITLE, 275, 120)
+        title = f'{kwargs["conference_name"]} - {kwargs["conference_location"]}, {kwargs["conference_dates"]}'
+        self.poster_header = ScreenHeader(title, kwargs['header_height'], kwargs['portrait_height'])
         self.poster_header.hide()
         self.layout().addWidget(self.tree_widget, 0, 0)
         self.layout().addWidget(self.poster_header, 0, 0)
         self.layout().addWidget(self.poster_widget, 1, 0)
-        self.tree_widget.itemPressed.connect(self.display_poster)
         self.program = PosterProgram(kwargs.get('cfgfile'))
+        self._load_program()
+        self.__status = BrowserStatus.TREE_VIEW
+        self.showMaximized()
+        self.timer = QTimer()
+        pause_interval = int(1000. * kwargs['pause_interval'])
+        self.timer.setInterval(pause_interval)
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.display_tree)
+        self.info_timer = QTimer()
+        self.info_timer.setInterval(100)
+        self.info_timer.timeout.connect(self.update_header_info)
+
+    def update_header_info(self):
+        """Update the header information.
+        """
+        self.poster_header.info_label.setText(self.status_message())
+
+    @staticmethod
+    def remaining_time(timer):
+        """Return a proxy for the (integer) number of seconds remaining to the
+        next trigger of a given counter.
+
+        There is some heuristic involved, here, as we typically want this to
+        look good in a GUI field that is not refreshed too often---which is
+        why we convert ms to s and add a 0.9 s offset
+        """
+        return int(0.001 * timer.remainingTime() + 0.9)
+
+    def status_message(self):
+        """Return the message about the slideshow status to be displayed in the
+        GUI header.
+        """
+        dt = self.remaining_time(self.timer)
+        return f'<font color="gray" size="2">Closing poster in, {dt} s...</font>'
+
+    def _load_program(self):
+        """Load the program into the tree viewer.
+        """
         items = []
         for session, posters in self.program.items():
             item = QTreeWidgetItem([session.title])
@@ -622,40 +635,41 @@ class ProgramBrowser(QWidget):
                 item.addChild(child)
             items.append(item)
         self.tree_widget.insertTopLevelItems(0, items)
-        self.__status = BrowserStatus.TREE
-        self.showMaximized()
 
     def display_current_poster(self):
+        """Display the poster corresponding to the current item.
         """
-        """
+        self.tree_widget.hide()
         poster = self.tree_widget.currentItem().poster
         self.program.load_poster_pixmaps(poster)
         self.poster_widget.setPixmap(poster.poster_pixmap)
         self.poster_header.set_poster(poster)
+        self.poster_widget.show()
+        self.poster_header.show()
+        self.__status = BrowserStatus.POSTER_VIEW
+        self.timer.start()
+        self.info_timer.start()
+
+    def display_tree(self):
+        """Display the tree view.
+        """
+        self.info_timer.stop()
+        self.poster_widget.clear()
+        self.poster_widget.hide()
+        self.poster_header.hide()
+        self.tree_widget.show()
+        self.tree_widget.collapseAll()
+        self.__status = BrowserStatus.TREE_VIEW
 
     def keyPressEvent(self, event):
-        """
+        """Handle the return key button press.
         """
         if event.key() == Qt.Key_Return:
             # If the selected items has children we are not in a leaf and
             # there is nothing to do.
             if self.tree_widget.currentItem().childCount() > 0:
                 return
-            if self.__status == BrowserStatus.TREE:
-                self.tree_widget.hide()
-                self.poster_widget.show()
-                self.poster_header.show()
+            if self.__status == BrowserStatus.TREE_VIEW:
                 self.display_current_poster()
-                self.__status = BrowserStatus.POSTER
-            elif self.__status == BrowserStatus.POSTER:
-                self.poster_widget.clear()
-                self.poster_widget.hide()
-                self.poster_header.hide()
-                self.tree_widget.show()
-                self.__status = BrowserStatus.TREE
-
-    def display_poster(self, *args):
-        """
-        """
-        print('Display poster!')
-        print(args)
+            elif self.__status == BrowserStatus.POSTER_VIEW:
+                self.display_tree()
