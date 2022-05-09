@@ -216,7 +216,7 @@ class ConferenceInfo(dict):
         def _warning_message(msg, contribution, max_title_length=30):
             """Small nested function to provide useful diagnostics in case of missing data.
             """
-            logger.warning('%s for contribution %s (%s)...', msg, contribution['id'],
+            logger.warning('%s for contribution %s (%s...)', msg, contribution['id'],
                 contribution['title'][:max_title_length])
 
         # Loop over all the contributions in the session and retrieve the data.
