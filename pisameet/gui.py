@@ -620,7 +620,7 @@ class ProgramTreeWidget(QTreeWidget):
     """
 
     def __init__(self, width):
-        """
+        """Constructor.
         """
         super().__init__()
         self.setColumnCount(3)
@@ -628,12 +628,19 @@ class ProgramTreeWidget(QTreeWidget):
         self.setColumnWidth(0, int(0.6 * width))
         self.setColumnWidth(1, int(0.2 * width))
         self.header().setStretchLastSection(True)
-        self.expanded.connect(self.collapse_unused)
+        self.itemExpanded.connect(self.collapse_unused)
 
-    def collapse_unused(self):
+    def collapse_unused(self, currentItem):
+        """Small hook to collapse all the expanded items that are different from
+        the current item.
+
+        This effectively prevents the user from being able to expand more than
+        one top-level item at a time.
         """
-        """
-        pass
+        for index in range(self.topLevelItemCount()):
+            item = self.topLevelItem(index)
+            if item != currentItem and item.isExpanded():
+                item.setExpanded(False)
 
 
 
