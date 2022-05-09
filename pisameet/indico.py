@@ -224,10 +224,12 @@ class ConferenceInfo(dict):
         # contribution), the basic idea being that we can provide more granular
         # diagnostics if data are missing, at the expense of code beauty.
         for session in self.values():
-            data = [[], [], [], [], []]
+            data = [[], [], [], [], [], []]
             for contrib in session['contributions']:
                 _id = contrib['id']
                 _title = contrib['title']
+                _url = contrib['url']
+                _db_id = contrib['db_id']
                 try:
                     first_speaker = contrib['speakers'][0]
                 except IndexError as e:
@@ -245,7 +247,7 @@ class ConferenceInfo(dict):
                         _warning_message('No affiliation', contrib)
                 else:
                     _first_name, _last_name, _affiliation = 'N/A', 'N/A', 'N/A'
-                for col, val in zip(data, (_id, _title, _first_name, _last_name, _affiliation)):
+                for col, val in zip(data, (_id, _title, _first_name, _last_name, _affiliation, _db_id)):
                     col.append(val)
 
             # Placeholder for the screen id.
@@ -254,10 +256,10 @@ class ConferenceInfo(dict):
             sheet_name = str(session['id'])
             df.to_excel(writer, sheet_name=sheet_name, index=False)
             sheet = writer.sheets[sheet_name]
-            sheet.set_column(2, 2, 125)
+            sheet.set_column(2, 2, 80)
             sheet.set_column(3, 4, 20)
             sheet.set_column(5, 5, 35)
-
+            sheet.set_column(6, 6, 20)
         logger.info('Writing output file...')
         writer.save()
         logger.info('Done.')
