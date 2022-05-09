@@ -19,12 +19,14 @@
 """Main slideshow application.
 """
 
+from enum import Enum, IntEnum, auto
 import argparse
 import os
 import sys
 
 import pandas as pd
-from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QTreeWidget, QTreeWidgetItem
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QGridLayout, QTreeWidget, QTreeWidgetItem
+from PyQt5.QtCore import Qt
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from pisameet.program import Poster, PosterSession
@@ -92,6 +94,16 @@ class ProgramTreeWidget(QTreeWidget):
 
 
 
+class BrowserStatus(Enum):
+
+    """Status of the slideshow finite-state machine.
+    """
+
+    TREE = auto()
+    POSTER = auto()
+
+
+
 class Browser(QWidget):
 
     """
@@ -110,7 +122,10 @@ class Browser(QWidget):
         poster_width = kwargs.get('poster_width')
         self.layout().setColumnMinimumWidth(0, poster_width)
         self.tree_widget = ProgramTreeWidget(poster_width)
+        self.poster_widget = QLabel()
+        self.poster_widget.hide()
         self.layout().addWidget(self.tree_widget, 0, 0)
+        self.layout().addWidget(self.poster_widget, 0, 0)
         self.tree_widget.itemPressed.connect(self.display_poster)
         self.program = PosterProgram(kwargs.get('cfgfile'))
         items = []
@@ -126,13 +141,24 @@ class Browser(QWidget):
                 item.addChild(child)
             items.append(item)
         self.tree_widget.insertTopLevelItems(0, items)
+        self.__status = BrowserStatus.TREE
         self.showMaximized()
 
     def keyPressEvent(self, event):
         """
         """
-        print(event)
-        print(self.tree_widget.currentItem().data(0, 0))
+        if event.key() == Qt.Key_Return:
+            #print('RETURN pressed')
+            #print(self.tree_widget.currentItem().data(0, 0))
+            if self.__status == BrowserStatus.TREE:
+                self.tree_widget.hide()
+                self.poster_widget.show()
+                self.poster_widget.setText(self.tree_widget.currentItem().data(0, 0))
+                self.__status = BrowserStatus.POSTER
+            elif self.__status == BrowserStatus.POSTER:
+                self.poster_widget.hide()
+                self.tree_widget.show()
+                self.__status = BrowserStatus.TREE
 
     def display_poster(self, *args):
         """
