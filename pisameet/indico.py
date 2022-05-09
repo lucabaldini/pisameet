@@ -35,7 +35,7 @@ from .program import PosterRoster
 
 
 
-def retrieve_info(url: str, file_path: str , detail: str = 'sessions'):
+def retrieve_info(url: str, file_path: str , detail: str = 'sessions', overwrite: bool = False):
     """Retrieve the contributions, grouped by session for a given conference,
     following the instructions at
     https://docs.getindico.io/en/stable/http-api/exporters/event/#sessions
@@ -43,7 +43,8 @@ def retrieve_info(url: str, file_path: str , detail: str = 'sessions'):
     According to the documentation, this setting details to "sessions" includes
     details about the different sessions and groups contributions by sessions.
     The top-level contributions list only contains contributions which are not
-    assigned to any session. Subcontributions are included in this details level, too.
+    assigned to any session. Subcontributions are included in this details level,
+    too.
 
     Arguments
     ---------
@@ -56,8 +57,14 @@ def retrieve_info(url: str, file_path: str , detail: str = 'sessions'):
     detail : str
         The level of detail for the dump, see
         https://docs.getindico.io/en/stable/http-api/exporters/event
+
+    overwrite : bool
+        Overwrite the output file.
     """
     assert file_path.endswith('.json')
+    if os.path.exists(file_path) and overwrite is False:
+        logger.info('File %s exists, skipping (delete it or set overwrite=False)...', file_path)
+        return
     logger.info('Retrieving program from %s...', url)
     resp = requests.get(f'{url}?detail={detail}&pretty=yes')
     data = resp.json()
@@ -127,6 +134,8 @@ class ConferenceInfo(dict):
         results = data['results'][0]
         sessions = results['sessions']
         logger.info('%d session (s) found', len(sessions))
+        for session in sessions:
+            print(session['id'], session['title'])
         if session_dict is not None:
             logger.info('Filtering sessions...')
             sessions = [session for session in sessions if session['id'] in session_dict]
@@ -209,16 +218,37 @@ class ConferenceInfo(dict):
         def _contrib_data(session, key):
             """Small nested function to facilitate the session data retrival.
             """
+            data = []
             if key in ('first_name', 'last_name', 'affiliation'):
-                try:
-                    return [contrib['speakers'][0][key] for contrib in session['contributions']]
-                except:
-                    return 'N/A'
+                for contrib in session['contributions']:
+                    try:
+                        data.append(contrib['speakers'][0][key])
+                    except Exception as e:
+                        logger.warning('%s for contribution %s', e, contrib['id'])
+                        data.append('N/A')
+                return data
             return [contrib[key] for contrib in session['contributions']]
 
         for session in self.values():
-            data = [_contrib_data(session, key) for key in \
-                ('id', 'title', 'first_name', 'last_name', 'affiliation')]
+            # Loop over all the contributions in the session and retrieve the data.
+            data = [[], [], [], [], []]
+            for contrib in session['contributions']:
+                data[0].append(contrib['id'])
+                data[1].append(contrib['title'])
+                try:
+                    first_speaker = contrib['speakers'][0]
+                except IndexError as e:
+                    logger.warning('%s for contribution %s', e, contrib['id'])
+                    first_speaker = None
+                if first_speaker is not None:
+                    data[2].append(first_speaker['first_name'])
+                    data[3].append(first_speaker['last_name'])
+                    data[4].append(first_speaker['affiliation'])
+                else:
+                    data[2].append('N/A')
+                    data[3].append('N/A')
+                    data[4].append('N/A')
+            # Placeholder for the screen id.
             data.insert(1, [''] * len(session['contributions']))
             df = pd.DataFrame({key: val for key, val in zip(PosterRoster.SESSION_COL_NAMES, data)})
             sheet_name = str(session['id'])

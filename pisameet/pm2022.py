@@ -23,46 +23,68 @@ import sys
 
 import pdfrw
 
-from pisameet import logger
+from pisameet import logger, PISAMEET_BASE
 from pisameet.indico import retrieve_info, ConferenceInfo
 from pisameet.dispatch import dispatch_posters
 
+
+# Basic conference info.
 BASE_NAME = 'pm2022'
-LOCAL_ROOT = os.path.join('/data/work/', BASE_NAME)
+LOCAL_ROOT = os.path.join(PISAMEET_BASE, BASE_NAME)
 INDICO_URL = 'https://agenda.infn.it/export/event/22092.json'
 INFO_FILE_PATH = os.path.join(LOCAL_ROOT, f'{BASE_NAME}.json')
 CONFIG_FILE_PATH = INFO_FILE_PATH.replace('.json', '.xlsx')
 ATTACH_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'indico_attachments')
 POSTER_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_original')
 
+
 # Definition of the posted program---mind this has to be compiled by hand.
 POSTER_PROGRAM = {
-    26823: 'Photo Detectors and PID',
-    26931: 'Cryogenic, Supeconductive and Quantum Devices',
-    26826: 'Calorimetry',
+    # Monday: S8P and S2P.
     26822: 'Detector Systems and Future accelerators',
-    26824: 'Solid State Detectors',
-    26831: 'Front End, Trigger, DAQ and Data Mangement',
-    26830: 'Gas Detectors'
+    26961: 'Photo Detectors and PID',
+    # Tuesday: S3P and S5P.
+    26950: 'Solid State Detectors',
+    26955: 'Application to life sciences and other societal challanges',
+    # Wednesday: S4P.
+    26956: 'Calorimetry',
+    # Thursday: S9P and S1P.
+    26957: 'Cryogenic, Supeconductive and Quantum Devices',
+    26958: 'Detectors Techniques for Cosmology and Astroparticle Physics',
+    # Friday: S6P and S7P.
+    26959: 'Gas Detectors',
+    26960: 'Front End, Trigger, DAQ and Data Mangement'
     }
+
+
+def donwload_info(overwrite=False):
+    """Download the json file with the conference program.
+    """
+    retrieve_info(INDICO_URL, INFO_FILE_PATH, overwrite=overwrite)
+
+
+# If the json file does not exists, we create one on the fly.
+if not os.path.exists(INFO_FILE_PATH):
+    donwload_info()
+
 
 CONFERENCE_INFO = ConferenceInfo(INFO_FILE_PATH, POSTER_PROGRAM)
 
 
-def donwload_info():
+def dump_config_file():
+    """Parse the json file and dump and excel file with the conference program.
     """
-    """
-    retrieve_info(INDICO_URL, INFO_FILE_PATH)
+    CONFERENCE_INFO.dump_excel(CONFIG_FILE_PATH)
+
+
+
+
 
 def download_attachments():
     """
     """
     CONFERENCE_INFO.download_attachments(ATTACH_FOLDER_PATH)
 
-def dump_config_file():
-    """
-    """
-    CONFERENCE_INFO.dump_excel(CONFIG_FILE_PATH)
 
 def dispatch_files():
     """
@@ -73,7 +95,6 @@ def dispatch_files():
 
 
 if __name__ == '__main__':
-    #donwload_info()
-    #download_attachments()
     dump_config_file()
+    #download_attachments()
     #dispatch_files()
