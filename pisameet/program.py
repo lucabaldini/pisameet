@@ -162,22 +162,22 @@ class PosterSession:
     """Poster session descriptor.
     """
 
-    def __init__(self, name, title, start, end):
+    def __init__(self, id_: int, title: str, start: str , end: str):
         """Constructor
         """
-        self.name = name
+        self.id_ = id_
         self.title = title
         self.start = self.parse_datetime(start)
         self.end = self.parse_datetime(end)
 
-    def parse_datetime(self, text):
+    def parse_datetime(self, text: str):
         """Parse a datetime string in the proper format.
         """
         # pylint: disable=broad-except
         try:
             return datetime.datetime.strptime(text, PosterRoster.DATETIME_FORMAT)
         except Exception as exception:
-            logger.warning('Invalid date and/or time for session %s (%s).', self.name, exception)
+            logger.warning('Invalid date and/or time for session %s (%s).', self.id_, exception)
             return None
 
     @classmethod
@@ -195,7 +195,7 @@ class PosterSession:
     def __str__(self):
         """String formatting.
         """
-        return f'Session {self.name} ({self.title})'
+        return f'Session {self.id_} ({self.title})'
 
 
 
@@ -247,15 +247,34 @@ class PosterCollectionBase:
         self._program_df = pd.read_excel(config_file_path, self.PROGRAM_SHEET_NAME)
         logger.debug('Done, %d row(s) found.', len(self._program_df))
 
-    def session_data_frame(self, session_name : str):
+    def session_list(self):
+        """Return a list with all the PosterSession objects.
+        """
+        return [PosterSession.from_df_row(row) for _, row in self._program_df.iterrows()]
+
+    def session_data_frame(self, session_id):
         """Return a pandas data frame with all the data for a given session.
         """
-        logger.info('Reading data for session %s...', session_name)
+        logger.info('Reading data for session %d...', session_id)
         try:
-            return pd.read_excel(self.config_file_path, session_name)
+            return pd.read_excel(self.config_file_path, str(session_id))
         except Exception as e:
-            logger.warning('Data not available for session %s: %s', session.name, e)
+            logger.warning('Data not available for session %s: %s', session_id, e)
             return None
+
+    def session_poster_list(self, session_id):
+        """Return a list of Poster objects for a given session data frame.
+        """
+        df = self.session_data_frame(session_id)
+        if df is None:
+            return []
+        return [Poster.from_df_row(row) for _, row in df.iterrows()]
+
+    def poster_dict(self):
+        """Return a dictionary of lists of Poster objects, indexed by session.
+        """
+        return {session: self.session_poster_list(session.id_) for session in self.session_list()}
+
 
 
 
@@ -305,13 +324,13 @@ class PosterRoster(list):
                 continue
             logger.info('Parsing ongoing %s...', session)
             try:
-                session_df = pd.read_excel(config_file_path, session.name)
+                session_df = pd.read_excel(config_file_path, session.id_)
                 for _, session_row in session_df.iterrows():
                     poster = Poster.from_df_row(session_row)
                     if poster.screen_id == self.screen_id:
                         self.append(poster)
             except ValueError as exception:
-                logger.warning('Data not available for session %s: %s', session.name, exception)
+                logger.warning('Data not available for session %s: %s', session.id_, exception)
             self.session = session
             break
 
@@ -398,14 +417,4 @@ class PosterProgram(PosterCollectionBase, dict):
         """Constructor
         """
         PosterCollectionBase.__init__(self, config_file_path, root_folder_path)
-        dict.__init__(self)
-        for _, program_row in self._program_df.iterrows():
-            session = PosterSession.from_df_row(program_row)
-            self[session] = []
-            try:
-                session_df = pd.read_excel(self.config_file_path, str(session.name))
-                for _, session_row in session_df.iterrows():
-                    poster = Poster.from_df_row(session_row)
-                    self[session].append(poster)
-            except Exception as e:
-                logger.warning('Data not available for session %s: %s', session.name, e)
+        dict.__init__(self, self.poster_dict())
