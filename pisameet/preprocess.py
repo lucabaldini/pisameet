@@ -21,8 +21,8 @@
 import os
 import subprocess
 
-from . import logger
-from .qrcode_ import generate_qrcode
+from pisameet import logger
+from pisameet.qrcode_ import generate_qrcode
 
 
 def crawl(folder_path: str, file_type: str = '.pdf', filter_pattern: str = None) -> list:
@@ -84,5 +84,5 @@ def preprocess_posters(folder_path : str, output_folder_path : str):
 
 
 if __name__ == '__main__':
-    #preprocess_posters('pm2018/poster_original', 'pm2018/poster_images')
-    generate_qr_codes('pm2018/poster_original', 'pm2018/qrcodes')
+    preprocess_posters('pm2022/poster_original', 'pm2022/poster_images')
+    generate_qr_codes('pm2022/poster_original', 'pm2022/qrcodes')
