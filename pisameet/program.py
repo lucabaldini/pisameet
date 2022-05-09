@@ -458,7 +458,6 @@ class PosterRoster(PosterCollectionBase, list):
 
 
 
-
 class PosterProgram(PosterCollectionBase, dict):
 
     """Full description of a poster program.
