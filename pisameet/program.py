@@ -46,7 +46,7 @@ class Presenter:
         The presenter affiliation.
     """
 
-    def __init__(self, first_name : str, last_name : str, affiliation: str) -> None:
+    def __init__(self, first_name: str, last_name: str, affiliation: str) -> None:
         """Constructor
         """
         self.first_name = first_name
@@ -88,8 +88,10 @@ class Poster:
         The poster presenter.
     """
 
-    def __init__(self, friendly_id : int, db_id: int, screen_id : int,
-        title : str, presenter) -> None:
+    #pylint: disable=too-many-instance-attributes, too-many-arguments
+
+    def __init__(self, friendly_id: int, db_id: int, screen_id: int,
+        title: str, presenter) -> None:
         """Constructor.
         """
         self.friendly_id = friendly_id
@@ -116,7 +118,31 @@ class Poster:
             return self.title.ljust(max_chars)
         return f'{self.title[:max_chars - 3]}...'
 
-    def unset_pixmaps(self):
+    @staticmethod
+    def _load_pixmap_w(file_path: str, width: int):
+        """Load the underlying pixmap with a fixed width.
+        """
+        logger.debug('Loading image data from %s...', file_path)
+        return QPixmap(file_path).scaledToWidth(width, Qt.SmoothTransformation)
+
+    @staticmethod
+    def _load_pixmap_h(file_path: str, height: int):
+        """Load the underlying pixmap with a fixed height.
+        """
+        logger.debug('Loading image data from %s...', file_path)
+        return QPixmap(file_path).scaledToHeight(height, Qt.SmoothTransformation)
+
+    def load_pixmaps(self, poster_file_path, presenter_file_path, qrcode_file_path,
+        poster_width, portrait_height):
+        """Load all the necessary poster data.
+        """
+        #pylint: disable=too-many-arguments
+        logger.info('Loading data for poster %s...', self)
+        self.poster_pixmap = self._load_pixmap_w(poster_file_path, poster_width)
+        self.presenter_pixmap = self._load_pixmap_h(presenter_file_path, portrait_height)
+        self.qrcode_pixmap = self._load_pixmap_h(qrcode_file_path, portrait_height)
+
+    def unload_pixmaps(self):
         """Delete the references to the pixaps, so that the Python garbage collector
         can free the memory at the next round.
 
@@ -126,40 +152,6 @@ class Poster:
         self.poster_pixmap = None
         self.presenter_pixmap = None
         self.qrcode_pixmap = None
-
-    @staticmethod
-    def load_pixmap_w(file_path : str, width : int):
-        """Load the underlying pixmap with a fixed width.
-        """
-        logger.debug('Loading image data from %s...', file_path)
-        return QPixmap(file_path).scaledToWidth(width, Qt.SmoothTransformation)
-
-    @staticmethod
-    def load_pixmap_h(file_path : str, height : int):
-        """Load the underlying pixmap with a fixed height.
-        """
-        logger.debug('Loading image data from %s...', file_path)
-        return QPixmap(file_path).scaledToHeight(height, Qt.SmoothTransformation)
-
-    def load_data(self, poster_file_path, presenter_file_path, qrcode_file_path,
-        poster_width, portrait_height):
-        """Load all the necessary poster data.
-        """
-        #pylint: disable=too-many-arguments
-        logger.info('Loading data for poster %s...', self)
-        if poster_file_path is None:
-            logger.error('Poster file path undefined for %s', self)
-        else:
-            self.poster_pixmap = self.load_pixmap_w(poster_file_path, poster_width)
-        if presenter_file_path is None:
-            logger.warning('Presenter file path undefined for %s', self)
-            self.presenter_pixmap = self.load_pixmap_h(MISSING_PICTURE_PATH, portrait_height)
-        else:
-            self.presenter_pixmap = self.load_pixmap_h(presenter_file_path, portrait_height)
-        if qrcode_file_path is None:
-            logger.warning('QR-code file path undefined for %s', self)
-        else:
-            self.qrcode_pixmap = self.load_pixmap_h(qrcode_file_path, portrait_height)
 
     def pretty_print(self, max_chars=40):
         """Poster pretty print.
@@ -250,7 +242,7 @@ class PosterCollectionBase:
     PRESENTER_FOLDER_NAME = 'presenters'
     QRCODE_FOLDER_NAME = 'qrcodes'
 
-    def __init__(self, config_file_path : str, root_folder_path : str = None) -> None:
+    def __init__(self, config_file_path: str, root_folder_path: str = None) -> None:
         """Constructor.
         """
         self.config_file_path = config_file_path
@@ -344,7 +336,7 @@ class PosterCollectionBase:
         poster_file_path = self.poster_image_path(poster_id)
         presenter_file_path = self.presenter_image_path(poster_id)
         qrcode_file_path = self.qrcode_image_path(poster_id)
-        poster.load_data(poster_file_path, presenter_file_path, qrcode_file_path, 1900, 120)
+        poster.load_pixmaps(poster_file_path, presenter_file_path, qrcode_file_path, 1900, 120)
 
 
 
@@ -367,10 +359,10 @@ class PosterRoster(PosterCollectionBase, list):
     on the raspberry PI.
     """
 
-    def __init__(self, config_file_path : str, root_folder_path : str, screen_id : int) -> None:
+    def __init__(self, config_file_path: str, root_folder_path: str, screen_id: int) -> None:
         """Constructor
         """
-        super().__init__()
+        super().__init__(config_file_path)
         self.config_file_path = config_file_path
         self.root_folder_path = root_folder_path
         self.poster_folder_path = os.path.join(self.root_folder_path, self.POSTER_FOLDER_NAME)
@@ -457,7 +449,7 @@ class PosterRoster(PosterCollectionBase, list):
             args = [d.get(poster.friendly_id) for d in \
                 (poster_file_dict, presenter_file_dict, qrcode_file_dict)]
             args += [poster_size, header_height]
-            poster.load_data(*args)
+            poster.load_pixmaps(*args)
 
     def __str__(self):
         """String formatting.
@@ -475,7 +467,7 @@ class PosterProgram(PosterCollectionBase, dict):
     values are Poster objects.
     """
 
-    def __init__(self, config_file_path : str, root_folder_path : str = None) -> None:
+    def __init__(self, config_file_path: str, root_folder_path: str = None) -> None:
         """Constructor
         """
         PosterCollectionBase.__init__(self, config_file_path, root_folder_path)
