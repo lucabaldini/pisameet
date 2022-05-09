@@ -77,11 +77,8 @@ def dump_config_file():
     CONFERENCE_INFO.dump_excel(CONFIG_FILE_PATH)
 
 
-
-
-
 def download_attachments():
-    """
+    """Download all the attachments.
     """
     CONFERENCE_INFO.download_attachments(ATTACH_FOLDER_PATH)
 
@@ -95,6 +92,6 @@ def dispatch_files():
 
 
 if __name__ == '__main__':
-    dump_config_file()
+    #dump_config_file()
     #download_attachments()
     #dispatch_files()
