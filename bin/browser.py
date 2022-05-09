@@ -91,6 +91,12 @@ class ProgramTreeWidget(QTreeWidget):
         self.setColumnWidth(0, int(0.6 * width))
         self.setColumnWidth(1, int(0.2 * width))
         self.header().setStretchLastSection(True)
+        self.expanded.connect(self.collapse_unused)
+
+    def collapse_unused(self):
+        """
+        """
+        pass
 
 
 
@@ -143,6 +149,11 @@ class Browser(QWidget):
         self.tree_widget.insertTopLevelItems(0, items)
         self.__status = BrowserStatus.TREE
         self.showMaximized()
+
+    def test(self, index):
+        """
+        """
+        print('Test')
 
     def keyPressEvent(self, event):
         """
