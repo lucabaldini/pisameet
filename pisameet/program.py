@@ -199,10 +199,17 @@ class PosterSession:
 
 
 
-
 class PosterCollectionBase:
 
     """Base class for a poster collection.
+
+    This base class has all the pointers to the relevant directory structure, as
+    well as a reference to the underlying pandas data frame containing the
+    program (and read from the first sheet of the excel configuration file).
+    Note that parsing the session sheets of the excel file is delegated to the
+    sub-classes.
+
+    See the PosterRoster and PosterProgram for concrete examples of sub-classes.
 
     Arguments
     ---------
@@ -210,13 +217,18 @@ class PosterCollectionBase:
         The path to the excel config file with the poster program.
 
     root_folder_path : str
-        The path to the root folder containing the session material.
+        The path to the root folder containing the session material---if None
+        defaults to the directory in which the configuration file is placed.
     """
 
     PROGRAM_SHEET_NAME = 'Program'
     DATETIME_FORMAT = '%d/%m/%Y %H:%M'
-    PROGRAM_COL_NAMES = ('Session ID', 'Session Name', 'Start Date', 'End Date')
-    SESSION_COL_NAMES = ('Poster ID', 'Indico ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation')
+    PROGRAM_COL_NAMES = (
+        'Session ID', 'Session Name', 'Start Date', 'End Date'
+        )
+    SESSION_COL_NAMES = (
+        'Poster ID', 'Indico ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation'
+        )
     POSTER_FOLDER_NAME = 'poster_images'
     PRESENTER_FOLDER_NAME = 'presenters'
     QRCODE_FOLDER_NAME = 'qrcodes'
@@ -232,7 +244,18 @@ class PosterCollectionBase:
         self.presenter_folder_path = os.path.join(self.root_folder_path, self.PRESENTER_FOLDER_NAME)
         self.qrcode_folder_path = os.path.join(self.root_folder_path, self.QRCODE_FOLDER_NAME)
         logger.debug('Reading %s sheet from %s...', self.PROGRAM_SHEET_NAME, config_file_path)
-        self._df = pd.read_excel(config_file_path, self.PROGRAM_SHEET_NAME)
+        self._program_df = pd.read_excel(config_file_path, self.PROGRAM_SHEET_NAME)
+        logger.debug('Done, %d row(s) found.', len(self._program_df))
+
+    def session_data_frame(self, session_name : str):
+        """Return a pandas data frame with all the data for a given session.
+        """
+        logger.info('Reading data for session %s...', session_name)
+        try:
+            return pd.read_excel(self.config_file_path, session_name)
+        except Exception as e:
+            logger.warning('Data not available for session %s: %s', session.name, e)
+            return None
 
 
 
@@ -366,6 +389,9 @@ class PosterRoster(list):
 class PosterProgram(PosterCollectionBase, dict):
 
     """Full description of a poster program.
+
+    The program is organized as dictionary indexed by PosterSession and whose
+    values are Poster objects.
     """
 
     def __init__(self, config_file_path : str, root_folder_path : str = None) -> None:
@@ -373,14 +399,13 @@ class PosterProgram(PosterCollectionBase, dict):
         """
         PosterCollectionBase.__init__(self, config_file_path, root_folder_path)
         dict.__init__(self)
-        for _, program_row in self._df.iterrows():
+        for _, program_row in self._program_df.iterrows():
             session = PosterSession.from_df_row(program_row)
             self[session] = []
             try:
                 session_df = pd.read_excel(self.config_file_path, str(session.name))
                 for _, session_row in session_df.iterrows():
                     poster = Poster.from_df_row(session_row)
-                    print(poster)
                     self[session].append(poster)
             except Exception as e:
                 logger.warning('Data not available for session %s: %s', session.name, e)
