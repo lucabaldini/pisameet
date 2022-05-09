@@ -259,7 +259,7 @@ class ConferenceInfo(dict):
             sheet.set_column(2, 2, 80)
             sheet.set_column(3, 4, 20)
             sheet.set_column(5, 5, 35)
-            sheet.set_column(6, 6, 20)
+            sheet.set_column(6, 6, 15)
         logger.info('Writing output file...')
         writer.save()
         logger.info('Done.')
