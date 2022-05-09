@@ -88,7 +88,8 @@ class Poster:
         The poster presenter.
     """
 
-    def __init__(self, friendly_id : int, db_id: int, screen_id : int, title : str, presenter) -> None:
+    def __init__(self, friendly_id : int, db_id: int, screen_id : int,
+        title : str, presenter) -> None:
         """Constructor.
         """
         self.friendly_id = friendly_id
@@ -152,7 +153,7 @@ class Poster:
             self.poster_pixmap = self.load_pixmap_w(poster_file_path, poster_width)
         if presenter_file_path is None:
             logger.warning('Presenter file path undefined for %s', self)
-            self.presenter_pixmap = self.load_pixmap_h(MISSING_PIC_PATH, portrait_height)
+            self.presenter_pixmap = self.load_pixmap_h(MISSING_PICTURE_PATH, portrait_height)
         else:
             self.presenter_pixmap = self.load_pixmap_h(presenter_file_path, portrait_height)
         if qrcode_file_path is None:
@@ -163,7 +164,8 @@ class Poster:
     def pretty_print(self, max_chars=40):
         """Poster pretty print.
         """
-        return f'[{self.friendly_id:03}] {self.short_title(max_chars)} ({self.presenter.full_name()})'
+        title = self.short_title(max_chars)
+        return f'[{self.friendly_id:03}] {title} ({self.presenter.full_name()})'
 
     def __str__(self):
         """String formatting.
@@ -273,17 +275,17 @@ class PosterCollectionBase:
         logger.info('Reading data for session %d...', session_id)
         try:
             return pd.read_excel(self.config_file_path, str(session_id))
-        except Exception as e:
-            logger.warning('Data not available for session %s: %s', session_id, e)
+        except Exception as exception:
+            logger.warning('Data not available for session %s: %s', session_id, exception)
             return None
 
     def session_poster_list(self, session_id):
         """Return a list of Poster objects for a given session data frame.
         """
-        df = self.session_data_frame(session_id)
-        if df is None:
+        data_frame = self.session_data_frame(session_id)
+        if data_frame is None:
             return []
-        return [Poster.from_df_row(row) for _, row in df.iterrows()]
+        return [Poster.from_df_row(row) for _, row in data_frame.iterrows()]
 
     def poster_dict(self):
         """Return a dictionary of lists of Poster objects, indexed by session.
@@ -292,12 +294,26 @@ class PosterCollectionBase:
 
     @staticmethod
     def _image_file_name(poster_id: int):
-        """
+        """Return the file name for any of the pixmaps for a given poster.
+
+        The rule, here, is that all the pixmpas share the same file name
+        (e.g., 003.png) and live in different folders.
         """
         return f'{poster_id:03d}.png'
 
     def _image_path_base(self, poster_id: int, folder_name: str, default: str):
-        """
+        """Generic function to build the path to the actual pixmap file for a given poster.
+
+        Arguments
+        ---------
+        poster_id : int
+            The poster friendly ID.
+
+        folder_name : str
+            The name of the folder containing the pixmaps, relative to the root folder.
+
+        default : str
+            The path to the default pixmap, in case the proper one does not exist.
         """
         file_name = self._image_file_name(poster_id)
         file_path = os.path.join(self.root_folder_path, folder_name, file_name)
@@ -307,22 +323,22 @@ class PosterCollectionBase:
         return file_path
 
     def poster_image_path(self, poster_id):
-        """
+        """Return the path to the poster image.
         """
         return self._image_path_base(poster_id, self.POSTER_FOLDER_NAME, MISSING_POSTER_PATH)
 
     def presenter_image_path(self, poster_id):
-        """
+        """Return the path to the presenter image.
         """
         return self._image_path_base(poster_id, self.PRESENTER_FOLDER_NAME, MISSING_PICTURE_PATH)
 
     def qrcode_image_path(self, poster_id):
-        """
+        """Return the path to the qrcode image.
         """
         return self._image_path_base(poster_id, self.QRCODE_FOLDER_NAME, MISSING_QRCODE_PATH)
 
     def load_poster_pixmaps(self, poster):
-        """
+        """Load all the necessary pixmaps for a given poster.
         """
         poster_id = poster.friendly_id
         poster_file_path = self.poster_image_path(poster_id)
@@ -332,7 +348,7 @@ class PosterCollectionBase:
 
 
 
-class PosterRoster(list):
+class PosterRoster(PosterCollectionBase, list):
 
     """Poster roster description.
 
@@ -350,14 +366,6 @@ class PosterRoster(list):
     Note this is streamlined for speed, as we don't have very many resources
     on the raspberry PI.
     """
-
-    PROGRAM_SHEET_NAME = 'Program'
-    DATETIME_FORMAT = '%d/%m/%Y %H:%M'
-    PROGRAM_COL_NAMES = ('Session ID', 'Session Name', 'Start Date', 'End Date')
-    SESSION_COL_NAMES = ('Poster ID', 'Indico ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation')
-    POSTER_FOLDER_NAME = 'poster_images'
-    PRESENTER_FOLDER_NAME = 'presenters'
-    QRCODE_FOLDER_NAME = 'qrcodes'
 
     def __init__(self, config_file_path : str, root_folder_path : str, screen_id : int) -> None:
         """Constructor
