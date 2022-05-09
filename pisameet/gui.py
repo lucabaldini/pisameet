@@ -179,7 +179,7 @@ class RosterTable(QTableWidget):
         poster : program.Poster object
             The poster to be displayed on a given row.
         """
-        self.set_text(row, 0, f'[{poster.unique_id}]')
+        self.set_text(row, 0, f'[{poster.friendly_id}]')
         self.set_text(row, 1, f'{poster.short_title(60)}')
         self.set_text(row, 2, f'{poster.presenter.full_name()}')
 
@@ -659,4 +659,3 @@ class ProgramBrowser(QWidget):
         """
         print('Display poster!')
         print(args)
-

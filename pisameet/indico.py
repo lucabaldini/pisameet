@@ -28,7 +28,7 @@ import pandas as pd
 import requests
 
 from . import logger
-from .program import PosterRoster
+from .program import PosterCollectionBase
 
 
 # pylint: disable=invalid-name
@@ -181,7 +181,7 @@ class ConferenceInfo(dict):
         return f'[{identifier}] {full_name}: "{title}"'
 
     @staticmethod
-    def _format_date(date_dict: str, fmt: str = PosterRoster.DATETIME_FORMAT):
+    def _format_date(date_dict: str, fmt: str = PosterCollectionBase.DATETIME_FORMAT):
         """Format a date in the .json file according to the date format in use
         for the excel configuration file.
 
@@ -207,10 +207,10 @@ class ConferenceInfo(dict):
             return [str(session[key]) for session in self.values()]
 
         data = [_session_data(key) for key in ('id', 'title', 'startDate', 'endDate')]
-        df = pd.DataFrame({key: val for key, val in zip(PosterRoster.PROGRAM_COL_NAMES, data)})
-        df.to_excel(writer, sheet_name=PosterRoster.PROGRAM_SHEET_NAME, index=False)
-        sheet = writer.sheets[PosterRoster.PROGRAM_SHEET_NAME]
-        sheet.set_column(0, 0, 10)
+        df = pd.DataFrame({key: val for key, val in zip(PosterCollectionBase.PROGRAM_COL_NAMES, data)})
+        df.to_excel(writer, sheet_name=PosterCollectionBase.PROGRAM_SHEET_NAME, index=False)
+        sheet = writer.sheets[PosterCollectionBase.PROGRAM_SHEET_NAME]
+        sheet.set_column(0, 0, 15)
         sheet.set_column(1, 1, 100)
         sheet.set_column(2, 3, 20)
 
@@ -254,10 +254,11 @@ class ConferenceInfo(dict):
 
             # Placeholder for the screen id.
             data.insert(2, [''] * len(session['contributions']))
-            df = pd.DataFrame({key: val for key, val in zip(PosterRoster.SESSION_COL_NAMES, data)})
+            df = pd.DataFrame({key: val for key, val in zip(PosterCollectionBase.SESSION_COL_NAMES, data)})
             sheet_name = str(session['id'])
             df.to_excel(writer, sheet_name=sheet_name, index=False)
             sheet = writer.sheets[sheet_name]
+            sheet.set_column(0, 2, 12)
             sheet.set_column(3, 3, 100)
             sheet.set_column(4, 5, 20)
             sheet.set_column(6, 6, 60)

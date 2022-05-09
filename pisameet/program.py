@@ -71,12 +71,12 @@ class Poster:
 
     Arguments
     ---------
-    unique_id : int
-        The unique identifier assigned to the poster.
+    friedly_id : int
+        The human-readable identifier assigned to the poster by indico.
 
-    indico_id : int
-        The unique identifier assigned by indico that can be used to retrieve the
-        material online.
+    db_id : int
+        The unique identifier assigned by indico (this can be used to retrieve the
+        material online).
 
     screen_id :  int
         The identifier of the screen the poster needs to be projected on.
@@ -88,11 +88,11 @@ class Poster:
         The poster presenter.
     """
 
-    def __init__(self, unique_id : int, indico_id: int, screen_id : int, title : str, presenter) -> None:
+    def __init__(self, friendly_id : int, db_id: int, screen_id : int, title : str, presenter) -> None:
         """Constructor.
         """
-        self.unique_id = unique_id
-        self.indico_id = indico_id
+        self.friendly_id = friendly_id
+        self.db_id = db_id
         self.screen_id = screen_id
         self.title = title
         self.presenter = presenter
@@ -114,6 +114,17 @@ class Poster:
         if len(self.title) <= max_chars:
             return self.title.ljust(max_chars)
         return f'{self.title[:max_chars - 3]}...'
+
+    def unset_pixmaps(self):
+        """Delete the references to the pixaps, so that the Python garbage collector
+        can free the memory at the next round.
+
+        This can be used, e.g., in the poster browser so that we do not put
+        too many pixmaps in memory as we browse the program.
+        """
+        self.poster_pixmap = None
+        self.presenter_pixmap = None
+        self.qrcode_pixmap = None
 
     @staticmethod
     def load_pixmap_w(file_path : str, width : int):
@@ -152,7 +163,7 @@ class Poster:
     def pretty_print(self, max_chars=40):
         """Poster pretty print.
         """
-        return f'[{self.unique_id:03}] {self.short_title(max_chars)} ({self.presenter.full_name()})'
+        return f'[{self.friendly_id:03}] {self.short_title(max_chars)} ({self.presenter.full_name()})'
 
     def __str__(self):
         """String formatting.
@@ -231,7 +242,7 @@ class PosterCollectionBase:
         'Session ID', 'Session Name', 'Start Date', 'End Date'
         )
     SESSION_COL_NAMES = (
-        'Poster ID', 'Indico ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation'
+        'Friendly ID', 'DB ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation'
         )
     POSTER_FOLDER_NAME = 'poster_images'
     PRESENTER_FOLDER_NAME = 'presenters'
@@ -313,7 +324,7 @@ class PosterCollectionBase:
     def load_poster_pixmaps(self, poster):
         """
         """
-        poster_id = poster.unique_id
+        poster_id = poster.friendly_id
         poster_file_path = self.poster_image_path(poster_id)
         presenter_file_path = self.presenter_image_path(poster_id)
         qrcode_file_path = self.qrcode_image_path(poster_id)
@@ -429,13 +440,13 @@ class PosterRoster(list):
         multiple listings of the same folder, which we'd rather avoid.
         """
         logger.info('Loading poster data...')
-        poster_ids = [poster.unique_id for poster in self]
+        poster_ids = [poster.friendly_id for poster in self]
         poster_file_dict = self._file_dict(self.poster_folder_path, poster_ids, '.png')
         presenter_file_dict = self._file_dict(self.presenter_folder_path, poster_ids,
             '.png', '.jpg', '.jpeg')
         qrcode_file_dict = self._file_dict(self.qrcode_folder_path, poster_ids, '.png')
         for poster in self:
-            args = [d.get(poster.unique_id) for d in \
+            args = [d.get(poster.friendly_id) for d in \
                 (poster_file_dict, presenter_file_dict, qrcode_file_dict)]
             args += [poster_size, header_height]
             poster.load_data(*args)
