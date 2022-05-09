@@ -26,7 +26,7 @@ import pandas as pd
 # pylint: disable=no-name-in-module, too-many-instance-attributes
 from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect,\
     QTableWidget, QTableWidgetItem, QHeaderView, QTreeWidget, QTreeWidgetItem
-from PyQt5.QtGui import QKeyEvent, QColor
+from PyQt5.QtGui import QKeyEvent, QColor, QPixmap
 from PyQt5.QtCore import Qt, QTimer
 
 from pisameet import logger, read_screen_id
@@ -595,6 +595,7 @@ class ProgramBrowser(QWidget):
                     affiliation = 'N/A'
                 values = [poster.title, presenter.full_name(), affiliation]
                 child = QTreeWidgetItem(values)
+                child.poster = poster
                 item.addChild(child)
             items.append(item)
         self.tree_widget.insertTopLevelItems(0, items)
@@ -615,7 +616,9 @@ class ProgramBrowser(QWidget):
             if self.__status == BrowserStatus.TREE:
                 self.tree_widget.hide()
                 self.poster_widget.show()
-                self.poster_widget.setText(self.tree_widget.currentItem().data(0, 0))
+                poster_id = self.tree_widget.currentItem().poster.unique_id
+                pixmap = QPixmap(self.program.poster_image_path(poster_id))
+                self.poster_widget.setPixmap(pixmap)
                 self.__status = BrowserStatus.POSTER
             elif self.__status == BrowserStatus.POSTER:
                 self.poster_widget.hide()

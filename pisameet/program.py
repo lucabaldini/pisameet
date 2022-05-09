@@ -26,7 +26,7 @@ import pandas as pd
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 
-from . import logger, MISSING_PIC_PATH
+from pisameet import logger, MISSING_PICTURE_PATH, MISSING_POSTER_PATH
 
 
 
@@ -73,6 +73,10 @@ class Poster:
     ---------
     unique_id : int
         The unique identifier assigned to the poster.
+
+    indico_id : int
+        The unique identifier assigned by indico that can be used to retrieve the
+        material online.
 
     screen_id :  int
         The identifier of the screen the poster needs to be projected on.
@@ -239,7 +243,7 @@ class PosterCollectionBase:
         self.config_file_path = config_file_path
         if root_folder_path is None:
             root_folder_path = os.path.dirname(config_file_path)
-        self.root_folder_path = root_folder_path
+        self.root_folder_path = os.path.abspath(root_folder_path)
         self.poster_folder_path = os.path.join(self.root_folder_path, self.POSTER_FOLDER_NAME)
         self.presenter_folder_path = os.path.join(self.root_folder_path, self.PRESENTER_FOLDER_NAME)
         self.qrcode_folder_path = os.path.join(self.root_folder_path, self.QRCODE_FOLDER_NAME)
@@ -275,6 +279,36 @@ class PosterCollectionBase:
         """
         return {session: self.session_poster_list(session.id_) for session in self.session_list()}
 
+    @staticmethod
+    def _image_file_name(poster_id: int):
+        """
+        """
+        return f'{poster_id:03d}.png'
+
+    def _image_path_base(self, poster_id: int, folder_name: str, default: str):
+        """
+        """
+        file_name = self._image_file_name(poster_id)
+        file_path = os.path.join(self.root_folder_path, folder_name, file_name)
+        if not os.path.exists(file_path):
+            logger.warning('Could not find %s...', file_path)
+            return default
+        return file_path
+
+    def poster_image_path(self, poster_id):
+        """
+        """
+        return self._image_path_base(poster_id, self.POSTER_FOLDER_NAME, MISSING_POSTER_PATH)
+
+    def presenter_image_path(self, poster_id):
+        """
+        """
+        return self._image_path_base(poster_id, self.PRESENTER_FOLDER_NAME, MISSING_PICTURE_PATH)
+
+    def qrcode_image_path(self, poster_id):
+        """
+        """
+        return self._image_path_base(poster_id, self.QRCODE_FOLDER_NAME, '')
 
 
 
@@ -418,3 +452,4 @@ class PosterProgram(PosterCollectionBase, dict):
         """
         PosterCollectionBase.__init__(self, config_file_path, root_folder_path)
         dict.__init__(self, self.poster_dict())
+        print(self.poster_image_path(23))
