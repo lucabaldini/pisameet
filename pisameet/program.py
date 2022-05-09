@@ -220,7 +220,7 @@ class PosterRoster(list):
     PROGRAM_SHEET_NAME = 'Program'
     DATETIME_FORMAT = '%d/%m/%Y %H:%M'
     PROGRAM_COL_NAMES = ('Session ID', 'Session Name', 'Start Date', 'End Date')
-    SESSION_COL_NAMES = ('Poster ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation', 'Indico ID')
+    SESSION_COL_NAMES = ('Poster ID', 'Indico ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation')
     POSTER_FOLDER_NAME = 'poster_images'
     PRESENTER_FOLDER_NAME = 'presenters'
     QRCODE_FOLDER_NAME = 'qrcodes'

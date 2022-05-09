@@ -247,19 +247,18 @@ class ConferenceInfo(dict):
                         _warning_message('No affiliation', contrib)
                 else:
                     _first_name, _last_name, _affiliation = 'N/A', 'N/A', 'N/A'
-                for col, val in zip(data, (_id, _title, _first_name, _last_name, _affiliation, _db_id)):
+                for col, val in zip(data, (_id, _db_id, _title, _first_name, _last_name, _affiliation)):
                     col.append(val)
 
             # Placeholder for the screen id.
-            data.insert(1, [''] * len(session['contributions']))
+            data.insert(2, [''] * len(session['contributions']))
             df = pd.DataFrame({key: val for key, val in zip(PosterRoster.SESSION_COL_NAMES, data)})
             sheet_name = str(session['id'])
             df.to_excel(writer, sheet_name=sheet_name, index=False)
             sheet = writer.sheets[sheet_name]
-            sheet.set_column(2, 2, 80)
-            sheet.set_column(3, 4, 20)
-            sheet.set_column(5, 5, 35)
-            sheet.set_column(6, 6, 15)
+            sheet.set_column(3, 3, 100)
+            sheet.set_column(4, 5, 20)
+            sheet.set_column(6, 6, 60)
         logger.info('Writing output file...')
         writer.save()
         logger.info('Done.')
