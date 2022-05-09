@@ -96,6 +96,6 @@ def dispatch_files():
 
 
 if __name__ == '__main__':
-    #dump_config_file()
+    dump_config_file()
     #download_attachments()
     #dispatch_files()

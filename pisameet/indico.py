@@ -136,21 +136,23 @@ class ConferenceInfo(dict):
         logger.info('%d session (s) found', len(sessions))
         for session in sessions:
             print(session['id'], session['title'])
+        # If we are passing a section dictionary of the form {session_id: session_title},
+        # we want to do a few things:
+        # * filter the sessions in the input json file and ;
+        # * sort the sessions by id in the dictionary;
+        # * tweak the session title is necessary.
         if session_dict is not None:
             logger.info('Filtering sessions...')
-            sessions = [session for session in sessions if session['id'] in session_dict]
-            logger.info('Done, %d session(s) remaining...', len(sessions))
-            # And, since we're at it,
-            for session in sessions:
-                session['title'] = session_dict[session['id']]
+            for _id, _title in session_dict.items():
+                for session in sessions:
+                    if session['id'] == _id:
+                        session['title'] = _title
+                        self[_title] = session
         contributions = results['contributions']
         if len(contributions):
             logger.warning('%d orphan contribution(s) found...', len(contributions))
         else:
             logger.info('No orphan contributions found...')
-        # Populate the underlying dictionary.
-        for session in sessions:
-            self[session['title']] = session
 
     def contribution_ids(self):
         """Return all the contribution ids.
