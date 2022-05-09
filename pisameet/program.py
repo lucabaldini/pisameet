@@ -322,3 +322,43 @@ class PosterRoster(list):
         """String formatting.
         """
         return f'Roster for screen {self.screen_id}\n' + '\n'.join([str(poster) for poster in self])
+
+
+
+
+class PosterProgram(dict):
+
+    """
+    """
+
+    PROGRAM_SHEET_NAME = 'Program'
+    DATETIME_FORMAT = '%d/%m/%Y %H:%M'
+    PROGRAM_COL_NAMES = ('Session ID', 'Session Name', 'Start Date', 'End Date')
+    SESSION_COL_NAMES = ('Poster ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation')
+    POSTER_FOLDER_NAME = 'poster_images'
+    PRESENTER_FOLDER_NAME = 'presenters'
+    QRCODE_FOLDER_NAME = 'qrcodes'
+
+    def __init__(self, file_path : str) -> None:
+        """Constructor
+        """
+        super().__init__()
+        self.config_file_path = file_path
+        self.root_folder_path = os.path.dirname(file_path)
+        self.poster_folder_path = os.path.join(self.root_folder_path, self.POSTER_FOLDER_NAME)
+        self.presenter_folder_path = os.path.join(self.root_folder_path, self.PRESENTER_FOLDER_NAME)
+        self.qrcode_folder_path = os.path.join(self.root_folder_path, self.QRCODE_FOLDER_NAME)
+        logger.info('Populating program...')
+        logger.debug('Reading %s sheet from %s...', self.PROGRAM_SHEET_NAME, self.config_file_path)
+        program_df = pd.read_excel(self.config_file_path, self.PROGRAM_SHEET_NAME)
+        for _, program_row in program_df.iterrows():
+            session = PosterSession.from_df_row(program_row)
+            self[session] = []
+            try:
+                session_df = pd.read_excel(self.config_file_path, str(session.name))
+                for _, session_row in session_df.iterrows():
+                    poster = Poster.from_df_row(session_row)
+                    print(poster)
+                    self[session].append(poster)
+            except Exception as e:
+                logger.warning('Data not available for session %s: %s', session.name, e)

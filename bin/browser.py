@@ -19,164 +19,21 @@
 """Main slideshow application.
 """
 
-from enum import Enum, IntEnum, auto
 import argparse
 import os
 import sys
 
-import pandas as pd
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QGridLayout, QTreeWidget, QTreeWidgetItem
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication
+
+from pisameet import logger
+from pisameet.gui import ProgramBrowser
+
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from pisameet.program import Poster, PosterSession
-from pisameet import logger
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument('cfgfile', type=str,
     help='path to the input excel configuration file')
-
-
-
-class PosterProgram(dict):
-
-    """
-    """
-
-    PROGRAM_SHEET_NAME = 'Program'
-    DATETIME_FORMAT = '%d/%m/%Y %H:%M'
-    PROGRAM_COL_NAMES = ('Session ID', 'Session Name', 'Start Date', 'End Date')
-    SESSION_COL_NAMES = ('Poster ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation')
-    POSTER_FOLDER_NAME = 'poster_images'
-    PRESENTER_FOLDER_NAME = 'presenters'
-    QRCODE_FOLDER_NAME = 'qrcodes'
-
-    def __init__(self, file_path : str) -> None:
-        """Constructor
-        """
-        super().__init__()
-        self.config_file_path = file_path
-        self.root_folder_path = os.path.dirname(file_path)
-        self.poster_folder_path = os.path.join(self.root_folder_path, self.POSTER_FOLDER_NAME)
-        self.presenter_folder_path = os.path.join(self.root_folder_path, self.PRESENTER_FOLDER_NAME)
-        self.qrcode_folder_path = os.path.join(self.root_folder_path, self.QRCODE_FOLDER_NAME)
-        logger.info('Populating program...')
-        logger.debug('Reading %s sheet from %s...', self.PROGRAM_SHEET_NAME, self.config_file_path)
-        program_df = pd.read_excel(self.config_file_path, self.PROGRAM_SHEET_NAME)
-        for _, program_row in program_df.iterrows():
-            session = PosterSession.from_df_row(program_row)
-            self[session] = []
-            try:
-                session_df = pd.read_excel(self.config_file_path, str(session.name))
-                for _, session_row in session_df.iterrows():
-                    poster = Poster.from_df_row(session_row)
-                    print(poster)
-                    self[session].append(poster)
-            except Exception as e:
-                logger.warning('Data not available for session %s: %s', session.name, e)
-
-
-
-class ProgramTreeWidget(QTreeWidget):
-
-    """
-    """
-
-    def __init__(self, width):
-        """
-        """
-        super().__init__()
-        self.setColumnCount(3)
-        self.setHeaderLabels(['Session/Poster', 'Presenter', 'Affiliation'])
-        self.setColumnWidth(0, int(0.6 * width))
-        self.setColumnWidth(1, int(0.2 * width))
-        self.header().setStretchLastSection(True)
-        self.expanded.connect(self.collapse_unused)
-
-    def collapse_unused(self):
-        """
-        """
-        pass
-
-
-
-class BrowserStatus(Enum):
-
-    """Status of the slideshow finite-state machine.
-    """
-
-    TREE = auto()
-    POSTER = auto()
-
-
-
-class Browser(QWidget):
-
-    """
-    """
-
-    WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors -- Poster Browser'
-
-    def __init__(self, **kwargs):
-        """Constructor.
-        """
-        super().__init__()
-        self.setStyleSheet('background-color: "white"')
-        self.setWindowTitle(self.WINDOW_TITLE)
-        self.setLayout(QGridLayout())
-
-        poster_width = kwargs.get('poster_width')
-        self.layout().setColumnMinimumWidth(0, poster_width)
-        self.tree_widget = ProgramTreeWidget(poster_width)
-        self.poster_widget = QLabel()
-        self.poster_widget.hide()
-        self.layout().addWidget(self.tree_widget, 0, 0)
-        self.layout().addWidget(self.poster_widget, 0, 0)
-        self.tree_widget.itemPressed.connect(self.display_poster)
-        self.program = PosterProgram(kwargs.get('cfgfile'))
-        items = []
-        for session, posters in self.program.items():
-            item = QTreeWidgetItem([session.title])
-            for poster in posters:
-                presenter = poster.presenter
-                affiliation = presenter.affiliation
-                if pd.isna(affiliation):
-                    affiliation = 'N/A'
-                values = [poster.title, presenter.full_name(), affiliation]
-                child = QTreeWidgetItem(values)
-                item.addChild(child)
-            items.append(item)
-        self.tree_widget.insertTopLevelItems(0, items)
-        self.__status = BrowserStatus.TREE
-        self.showMaximized()
-
-    def test(self, index):
-        """
-        """
-        print('Test')
-
-    def keyPressEvent(self, event):
-        """
-        """
-        if event.key() == Qt.Key_Return:
-            #print('RETURN pressed')
-            #print(self.tree_widget.currentItem().data(0, 0))
-            if self.__status == BrowserStatus.TREE:
-                self.tree_widget.hide()
-                self.poster_widget.show()
-                self.poster_widget.setText(self.tree_widget.currentItem().data(0, 0))
-                self.__status = BrowserStatus.POSTER
-            elif self.__status == BrowserStatus.POSTER:
-                self.poster_widget.hide()
-                self.tree_widget.show()
-                self.__status = BrowserStatus.TREE
-
-    def display_poster(self, *args):
-        """
-        """
-        print('Display poster!')
-        print(args)
-
 
 
 if __name__ == '__main__':
@@ -189,5 +46,5 @@ if __name__ == '__main__':
         poster_width = app.screens()[0].size().width() - 20
         logger.info('Setting posted width to %d (based on the screen size)', poster_width)
         kwargs['poster_width'] = poster_width
-    browser = Browser(**kwargs)
+    browser = ProgramBrowser(**kwargs)
     sys.exit(app.exec_())

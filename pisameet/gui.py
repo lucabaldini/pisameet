@@ -22,14 +22,15 @@ This module contains all the widgets that are relevant for the slideshow.
 from enum import Enum, IntEnum, auto
 import os
 
+import pandas as pd
 # pylint: disable=no-name-in-module, too-many-instance-attributes
 from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect,\
-    QTableWidget, QTableWidgetItem, QHeaderView
+    QTableWidget, QTableWidgetItem, QHeaderView, QTreeWidget, QTreeWidgetItem
 from PyQt5.QtGui import QKeyEvent, QColor
 from PyQt5.QtCore import Qt, QTimer
 
-from . import logger, read_screen_id
-from .program import Poster, PosterRoster
+from pisameet import logger, read_screen_id
+from pisameet.program import Poster, PosterRoster, PosterProgram
 
 
 
@@ -520,3 +521,110 @@ class SlideShow(QWidget):
                 self.resume()
         elif key == KeyMap.RELOAD:
             self._load_roster()
+
+
+
+class ProgramTreeWidget(QTreeWidget):
+
+    """
+    """
+
+    def __init__(self, width):
+        """
+        """
+        super().__init__()
+        self.setColumnCount(3)
+        self.setHeaderLabels(['Session/Poster', 'Presenter', 'Affiliation'])
+        self.setColumnWidth(0, int(0.6 * width))
+        self.setColumnWidth(1, int(0.2 * width))
+        self.header().setStretchLastSection(True)
+        self.expanded.connect(self.collapse_unused)
+
+    def collapse_unused(self):
+        """
+        """
+        pass
+
+
+
+class BrowserStatus(Enum):
+
+    """Status of the slideshow finite-state machine.
+    """
+
+    TREE = auto()
+    POSTER = auto()
+
+
+
+
+
+
+
+class ProgramBrowser(QWidget):
+
+    """
+    """
+
+    WINDOW_TITLE = '15th Pisa Meeting on Advanced Detectors -- Poster Browser'
+
+    def __init__(self, **kwargs):
+        """Constructor.
+        """
+        super().__init__()
+        self.setStyleSheet('background-color: "white"')
+        self.setWindowTitle(self.WINDOW_TITLE)
+        self.setLayout(QGridLayout())
+
+        poster_width = kwargs.get('poster_width')
+        self.layout().setColumnMinimumWidth(0, poster_width)
+        self.tree_widget = ProgramTreeWidget(poster_width)
+        self.poster_widget = QLabel()
+        self.poster_widget.hide()
+        self.layout().addWidget(self.tree_widget, 0, 0)
+        self.layout().addWidget(self.poster_widget, 0, 0)
+        self.tree_widget.itemPressed.connect(self.display_poster)
+        self.program = PosterProgram(kwargs.get('cfgfile'))
+        items = []
+        for session, posters in self.program.items():
+            item = QTreeWidgetItem([session.title])
+            for poster in posters:
+                presenter = poster.presenter
+                affiliation = presenter.affiliation
+                if pd.isna(affiliation):
+                    affiliation = 'N/A'
+                values = [poster.title, presenter.full_name(), affiliation]
+                child = QTreeWidgetItem(values)
+                item.addChild(child)
+            items.append(item)
+        self.tree_widget.insertTopLevelItems(0, items)
+        self.__status = BrowserStatus.TREE
+        self.showMaximized()
+
+    def test(self, index):
+        """
+        """
+        print('Test')
+
+    def keyPressEvent(self, event):
+        """
+        """
+        if event.key() == Qt.Key_Return:
+            #print('RETURN pressed')
+            #print(self.tree_widget.currentItem().data(0, 0))
+            if self.__status == BrowserStatus.TREE:
+                self.tree_widget.hide()
+                self.poster_widget.show()
+                self.poster_widget.setText(self.tree_widget.currentItem().data(0, 0))
+                self.__status = BrowserStatus.POSTER
+            elif self.__status == BrowserStatus.POSTER:
+                self.poster_widget.hide()
+                self.tree_widget.show()
+                self.__status = BrowserStatus.TREE
+
+    def display_poster(self, *args):
+        """
+        """
+        print('Display poster!')
+        print(args)
+
