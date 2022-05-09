@@ -576,9 +576,9 @@ class ProgramBrowser(QWidget):
         self.setWindowTitle(self.WINDOW_TITLE)
         self.setLayout(QGridLayout())
 
-        poster_width = kwargs.get('poster_width')
-        self.layout().setColumnMinimumWidth(0, poster_width)
-        self.tree_widget = ProgramTreeWidget(poster_width)
+        self.poster_width = kwargs.get('poster_width')
+        self.layout().setColumnMinimumWidth(0, self.poster_width)
+        self.tree_widget = ProgramTreeWidget(self.poster_width)
         self.poster_widget = QLabel()
         self.poster_widget.hide()
         self.layout().addWidget(self.tree_widget, 0, 0)
@@ -618,6 +618,7 @@ class ProgramBrowser(QWidget):
                 self.poster_widget.show()
                 poster_id = self.tree_widget.currentItem().poster.unique_id
                 pixmap = QPixmap(self.program.poster_image_path(poster_id))
+                pixmap = pixmap.scaledToWidth(self.poster_width, Qt.SmoothTransformation)
                 self.poster_widget.setPixmap(pixmap)
                 self.__status = BrowserStatus.POSTER
             elif self.__status == BrowserStatus.POSTER:
