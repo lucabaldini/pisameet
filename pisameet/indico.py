@@ -197,7 +197,6 @@ class ConferenceInfo(dict):
         writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
 
         # Create the master sheet with the session data.
-
         def _session_data(key):
             """Small nested function to facilitate the session data retrival.
             """
@@ -214,40 +213,41 @@ class ConferenceInfo(dict):
         sheet.set_column(2, 3, 20)
 
         # Create the ancillary sheets with the actual contributions.
-
-        def _contrib_data(session, key):
-            """Small nested function to facilitate the session data retrival.
+        def _warning_message(msg, contribution, max_title_length=30):
+            """Small nested function to provide useful diagnostics in case of missing data.
             """
-            data = []
-            if key in ('first_name', 'last_name', 'affiliation'):
-                for contrib in session['contributions']:
-                    try:
-                        data.append(contrib['speakers'][0][key])
-                    except Exception as e:
-                        logger.warning('%s for contribution %s', e, contrib['id'])
-                        data.append('N/A')
-                return data
-            return [contrib[key] for contrib in session['contributions']]
+            logger.warning('%s for contribution %s (%s)...', msg, contribution['id'],
+                contribution['title'][:max_title_length])
 
+        # Loop over all the contributions in the session and retrieve the data.
+        # Note that, rather than doing this by column, we do it by row (i.e., by
+        # contribution), the basic idea being that we can provide more granular
+        # diagnostics if data are missing, at the expense of code beauty.
         for session in self.values():
-            # Loop over all the contributions in the session and retrieve the data.
             data = [[], [], [], [], []]
             for contrib in session['contributions']:
-                data[0].append(contrib['id'])
-                data[1].append(contrib['title'])
+                _id = contrib['id']
+                _title = contrib['title']
                 try:
                     first_speaker = contrib['speakers'][0]
                 except IndexError as e:
-                    logger.warning('%s for contribution %s', e, contrib['id'])
+                    _warning_message('No speaker(s)', contrib)
                     first_speaker = None
                 if first_speaker is not None:
-                    data[2].append(first_speaker['first_name'])
-                    data[3].append(first_speaker['last_name'])
-                    data[4].append(first_speaker['affiliation'])
+                    _first_name = first_speaker['first_name']
+                    _last_name = first_speaker['last_name']
+                    _affiliation = first_speaker['affiliation']
+                    if _first_name == '':
+                        _warning_message('No first name', contrib)
+                    if _last_name == '':
+                        _warning_message('No last name', contrib)
+                    if _affiliation == '':
+                        _warning_message('No affiliation', contrib)
                 else:
-                    data[2].append('N/A')
-                    data[3].append('N/A')
-                    data[4].append('N/A')
+                    _first_name, _last_name, _affiliation = 'N/A', 'N/A', 'N/A'
+                for col, val in zip(data, (_id, _title, _first_name, _last_name, _affiliation)):
+                    col.append(val)
+
             # Placeholder for the screen id.
             data.insert(1, [''] * len(session['contributions']))
             df = pd.DataFrame({key: val for key, val in zip(PosterRoster.SESSION_COL_NAMES, data)})
