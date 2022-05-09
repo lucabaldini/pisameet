@@ -264,6 +264,22 @@ class Header(QWidget):
         self._roster = roster
         self.session_label.setText(str(self._roster.session))
 
+    def set_poster(self, poster):
+        """
+        """
+        try:
+            self.portrait_label.setPixmap(poster.presenter_pixmap)
+        except TypeError:
+            self.portrait_label.clear()
+        try:
+            self.qrcode_label.setPixmap(poster.qrcode_pixmap)
+        except TypeError:
+            self.qrcode_label.clear()
+        presenter = poster.presenter
+        text = f'<font color="black" size="4">{presenter.full_name()}</font><br/>'\
+               f'<font color="gray" size="2">{presenter.affiliation}</font><br/>'
+        self.presenter_label.setText(text)
+
     def update(self, current_poster_id):
         """Update the header based on the roster information and the current poster.
         """
@@ -556,8 +572,12 @@ class BrowserStatus(Enum):
     POSTER = auto()
 
 
+class BrowserPosterWidget(QWidget):
 
+    """
+    """
 
+    pass
 
 
 
@@ -581,8 +601,11 @@ class ProgramBrowser(QWidget):
         self.tree_widget = ProgramTreeWidget(self.poster_width)
         self.poster_widget = QLabel()
         self.poster_widget.hide()
+        self.poster_header = Header(SlideShow.WINDOW_TITLE, 275, 120)
+        self.poster_header.hide()
         self.layout().addWidget(self.tree_widget, 0, 0)
-        self.layout().addWidget(self.poster_widget, 0, 0)
+        self.layout().addWidget(self.poster_header, 0, 0)
+        self.layout().addWidget(self.poster_widget, 1, 0)
         self.tree_widget.itemPressed.connect(self.display_poster)
         self.program = PosterProgram(kwargs.get('cfgfile'))
         items = []
@@ -602,27 +625,32 @@ class ProgramBrowser(QWidget):
         self.__status = BrowserStatus.TREE
         self.showMaximized()
 
-    def test(self, index):
+    def display_current_poster(self):
         """
         """
-        print('Test')
+        poster = self.tree_widget.currentItem().poster
+        self.program.load_poster_pixmaps(poster)
+        self.poster_widget.setPixmap(poster.poster_pixmap)
+        self.poster_header.set_poster(poster)
 
     def keyPressEvent(self, event):
         """
         """
         if event.key() == Qt.Key_Return:
-            #print('RETURN pressed')
-            #print(self.tree_widget.currentItem().data(0, 0))
+            # If the selected items has children we are not in a leaf and
+            # there is nothing to do.
+            if self.tree_widget.currentItem().childCount() > 0:
+                return
             if self.__status == BrowserStatus.TREE:
                 self.tree_widget.hide()
                 self.poster_widget.show()
-                poster_id = self.tree_widget.currentItem().poster.unique_id
-                pixmap = QPixmap(self.program.poster_image_path(poster_id))
-                pixmap = pixmap.scaledToWidth(self.poster_width, Qt.SmoothTransformation)
-                self.poster_widget.setPixmap(pixmap)
+                self.poster_header.show()
+                self.display_current_poster()
                 self.__status = BrowserStatus.POSTER
             elif self.__status == BrowserStatus.POSTER:
+                self.poster_widget.clear()
                 self.poster_widget.hide()
+                self.poster_header.hide()
                 self.tree_widget.show()
                 self.__status = BrowserStatus.TREE
 

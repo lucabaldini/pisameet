@@ -34,6 +34,8 @@ PISAMEET_GRAPHICS = os.path.join(PISAMEET_BASE, 'graphics')
 
 MISSING_PICTURE_PATH = os.path.join(PISAMEET_GRAPHICS, 'unknown_female.png')
 MISSING_POSTER_PATH = os.path.join(PISAMEET_GRAPHICS, 'pisameet.png')
+MISSING_QRCODE_PATH = os.path.join(PISAMEET_GRAPHICS, 'unknown_qrcode.png')
+
 
 
 class TerminalColors:

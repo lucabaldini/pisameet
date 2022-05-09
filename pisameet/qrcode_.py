@@ -19,6 +19,8 @@
 
 import qrcode
 
+from pisameet import MISSING_QRCODE_PATH
+
 
 def generate_qrcode(data, file_path):
     """Generate a qrcode for a given input data.
@@ -29,3 +31,8 @@ def generate_qrcode(data, file_path):
     qr.make(fit=True)
     img = qr.make_image(fill='black', back_color='white')
     img.save(file_path)
+
+
+
+if __name__ == '__main__':
+    generate_qrcode('Ops... something went wrong?', MISSING_QRCODE_PATH)

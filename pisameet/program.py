@@ -26,7 +26,7 @@ import pandas as pd
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 
-from pisameet import logger, MISSING_PICTURE_PATH, MISSING_POSTER_PATH
+from pisameet import logger, MISSING_PICTURE_PATH, MISSING_POSTER_PATH, MISSING_QRCODE_PATH
 
 
 
@@ -308,7 +308,16 @@ class PosterCollectionBase:
     def qrcode_image_path(self, poster_id):
         """
         """
-        return self._image_path_base(poster_id, self.QRCODE_FOLDER_NAME, '')
+        return self._image_path_base(poster_id, self.QRCODE_FOLDER_NAME, MISSING_QRCODE_PATH)
+
+    def load_poster_pixmaps(self, poster):
+        """
+        """
+        poster_id = poster.unique_id
+        poster_file_path = self.poster_image_path(poster_id)
+        presenter_file_path = self.presenter_image_path(poster_id)
+        qrcode_file_path = self.qrcode_image_path(poster_id)
+        poster.load_data(poster_file_path, presenter_file_path, qrcode_file_path, 1900, 120)
 
 
 
