@@ -264,42 +264,40 @@ class ScreenHeader(QWidget):
         self._roster = roster
         self.session_label.setText(str(self._roster.session))
 
-    def set_poster(self, poster):
+    def _update_pixmaps(self, poster):
+        """Update the two pixmaps.
         """
+        self.portrait_label.setPixmap(poster.presenter_pixmap)
+        self.qrcode_label.setPixmap(poster.qrcode_pixmap)
+
+    def _update_presenter(self, poster):
+        """Update the presenter name and affiliation.
         """
-        try:
-            self.portrait_label.setPixmap(poster.presenter_pixmap)
-        except TypeError:
-            self.portrait_label.clear()
-        try:
-            self.qrcode_label.setPixmap(poster.qrcode_pixmap)
-        except TypeError:
-            self.qrcode_label.clear()
         presenter = poster.presenter
         text = f'<font color="black" size="4">{presenter.full_name()}</font><br/>'\
                f'<font color="gray" size="2">{presenter.affiliation}</font><br/>'
         self.presenter_label.setText(text)
+
+    def set_poster(self, poster):
+        """Set the poster for the header.
+        """
+        self._update_pixmaps(poster)
+        self._update_presenter(poster)
+        self.table.clear()
+        self.table.setRowCount(1)
+        self.table.set_poster(0, poster)
+        self.table.set_current_row(0)
 
     def update(self, current_poster_id):
         """Update the header based on the roster information and the current poster.
         """
         poster = self._roster[current_poster_id]
-        try:
-            self.portrait_label.setPixmap(poster.presenter_pixmap)
-        except TypeError:
-            self.portrait_label.clear()
-        try:
-            self.qrcode_label.setPixmap(poster.qrcode_pixmap)
-        except TypeError:
-            self.qrcode_label.clear()
-        presenter = poster.presenter
-        text = f'<font color="black" size="4">{presenter.full_name()}</font><br/>'\
-               f'<font color="gray" size="2">{presenter.affiliation}</font><br/>'
-        self.presenter_label.setText(text)
+        self._update_pixmaps(poster)
+        self._update_presenter(poster)
         self.table.set_current_row(current_poster_id)
 
     def update_info(self, text):
-        """
+        """Update the info label.
         """
         self.info_label.setText(f'<font color="gray" size="2">{text}</font>')
 
@@ -697,7 +695,7 @@ class ProgramBrowser(DisplaWindowBase):
     def status_message(self):
         """Overloaded method.
         """
-        return f'Closing poster in, {self.remaining_time(self.poster_timer)} s...'
+        return f'Poster closing in, {self.remaining_time(self.poster_timer)} s...'
 
     def display_current_poster(self):
         """Display the poster corresponding to the current item.
