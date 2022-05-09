@@ -84,10 +84,11 @@ class Poster:
         The poster presenter.
     """
 
-    def __init__(self, unique_id : int, screen_id : int, title : str, presenter) -> None:
+    def __init__(self, unique_id : int, indico_id: int, screen_id : int, title : str, presenter) -> None:
         """Constructor.
         """
         self.unique_id = unique_id
+        self.indico_id = indico_id
         self.screen_id = screen_id
         self.title = title
         self.presenter = presenter

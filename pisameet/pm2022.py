@@ -79,12 +79,16 @@ def dump_config_file():
 
 def download_attachments():
     """Download all the attachments.
+
+    This is downloading *all* the material for the relevant contributions for the
+    specified contributions.
     """
     CONFERENCE_INFO.download_attachments(ATTACH_FOLDER_PATH)
 
 
 def dispatch_files():
-    """
+    """Dispatch the files from the local download folder to the proper folder for
+    later consumption by the slideshow and the program browser.
     """
     ids = CONFERENCE_INFO.contribution_ids()
     dispatch_posters(ids, ATTACH_FOLDER_PATH, POSTER_FOLDER_PATH)
