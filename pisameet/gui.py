@@ -250,7 +250,7 @@ class ScreenHeader(QWidget):
         font = self.subtitle_label.font()
         font.setPointSize(subtitle_font_size)
         self.subtitle_label.setFont(font)
-        # ... the presenter potrait QLabel...
+        # ... the presenter portrait QLabel...
         self.portrait_label = QLabel()
         self.portrait_label.setFixedSize(portrait_height, portrait_height)
         self.portrait_label.setAlignment(Qt.AlignLeft)
@@ -344,8 +344,6 @@ class DisplaWindowBase(QWidget):
         self.setWindowTitle(window_title)
         # Parse the command-line arguments.
         self.config_file_path = kwargs['cfgfile']
-        self.advance_interval = self.sec_to_msec(kwargs['advance_interval'])
-        self.pause_interval = self.sec_to_msec(kwargs['pause_interval'])
         self.display_mode = kwargs['mode']
         self.poster_width = kwargs['poster_width']
         self.header_height = kwargs['header_height']
@@ -452,6 +450,8 @@ class SlideShow(DisplaWindowBase):
         """Constructor.
         """
         super().__init__(**kwargs)
+        self.advance_interval = self.sec_to_msec(kwargs['advance_interval'])
+        self.pause_interval = self.sec_to_msec(kwargs['pause_interval'])
         self.screen_id = read_screen_id()
         self.__status = SlideShowStatus.STOPPED
         self.__current_index = 0
@@ -621,11 +621,11 @@ class ProgramBrowser(DisplaWindowBase):
         """
         super().__init__(**kwargs)
         # Hide the header and the poster label, and show the tree view, instead.
-        self.header.hide()
+        self.header.set_subtitle(self.DISPLAY_TYPE)
         self.poster_label.hide()
         self.tree_widget = ProgramTreeWidget(self.poster_width)
         self.tree_widget.itemExpanded.connect(self.tree_widget.collapse_unused)
-        self.layout().addWidget(self.tree_widget, 0, 0, 1, 3)
+        self.layout().addWidget(self.tree_widget, 1, 0, 1, 3)
         self.__status = BrowserStatus.TREE_VIEW
         self.__current_poster = None
         # Load the program.
@@ -668,7 +668,8 @@ class ProgramBrowser(DisplaWindowBase):
         """
         self.tree_widget.hide()
         self.__current_poster = self.tree_widget.currentItem().poster
-        self.program.load_poster_pixmaps(self.__current_poster, self.poster_width, self.potratit_height)
+        self.program.load_poster_pixmaps(self.__current_poster, self.poster_width,
+            self.portrait_height)
         self.poster_label.setPixmap(self.__current_poster.poster_pixmap)
         self.header.set_poster(self.__current_poster)
         self.poster_label.show()
@@ -715,6 +716,7 @@ class SessionDirectory(DisplaWindowBase):
         """Constructor.
         """
         super().__init__(**kwargs)
+        self.header.set_subtitle(self.DISPLAY_TYPE)
         self.poster_label.hide()
         self.tree_widget = ProgramTreeWidget(self.poster_width)
         self.layout().addWidget(self.tree_widget, 1, 0, 1, 3)

@@ -32,7 +32,7 @@ from pisameet.gui import SessionDirectory
 from pisameet.options import ArgumentParser
 
 PARSER = ArgumentParser()
-PARSER.add_geometry()
+PARSER.add_geometry(default_header_height=175)
 
 
 
