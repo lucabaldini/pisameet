@@ -626,7 +626,7 @@ class ProgramTreeWidget(QTreeWidget):
         super().__init__()
         self.setColumnCount(3)
         self.setHeaderLabels(['Session/Poster', 'Presenter', 'Screen'])
-        self.setColumnWidth(0, int(0.6 * width))
+        self.setColumnWidth(0, int(0.75 * width))
         self.setColumnWidth(1, int(0.2 * width))
         self.header().setStretchLastSection(True)
         self.itemExpanded.connect(self.collapse_unused)
