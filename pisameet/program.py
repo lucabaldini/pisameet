@@ -358,31 +358,21 @@ class PosterRoster(PosterCollectionBase, list):
 
     screen_id : int
         The screen identifier for the poster roster.
-
-    Note this is streamlined for speed, as we don't have very many resources
-    on the raspberry PI.
     """
 
     def __init__(self, config_file_path: str, root_folder_path: str, screen_id: int) -> None:
         """Constructor
         """
-        super().__init__(config_file_path)
-        self.config_file_path = config_file_path
-        self.root_folder_path = root_folder_path
-        self.poster_folder_path = os.path.join(self.root_folder_path, self.POSTER_FOLDER_NAME)
-        self.presenter_folder_path = os.path.join(self.root_folder_path, self.PRESENTER_FOLDER_NAME)
-        self.qrcode_folder_path = os.path.join(self.root_folder_path, self.QRCODE_FOLDER_NAME)
+        PosterCollectionBase.__init__(self, config_file_path, root_folder_path)
         self.screen_id = screen_id
         logger.info('Populating session list...')
-        logger.debug('Reading %s sheet from %s...', self.PROGRAM_SHEET_NAME, config_file_path)
-        program_df = pd.read_excel(config_file_path, self.PROGRAM_SHEET_NAME)
-        for _, program_row in program_df.iterrows():
+        for _, program_row in self._program_df.iterrows():
             session = PosterSession.from_df_row(program_row)
             if not session.ongoing():
                 continue
             logger.info('Parsing ongoing %s...', session)
             try:
-                session_df = pd.read_excel(config_file_path, session.id_)
+                session_df = pd.read_excel(config_file_path, f'{session.id_}')
                 for _, session_row in session_df.iterrows():
                     poster = Poster.from_df_row(session_row)
                     if poster.screen_id == self.screen_id:
@@ -392,68 +382,11 @@ class PosterRoster(PosterCollectionBase, list):
             self.session = session
             break
 
-    @staticmethod
-    def _poster_id(file_path, separator='-'):
-        """Extract the poster identifier from the file path.
-
-        It is assumed that the file path starts with the poster identifier, followed
-        by the separator---and then the rest of the path.
-
-        Arguments
-        ---------
-        file_path : pathlib.Path object
-            The file path
-
-        separator : str
-            The separator to match the initial poster identifier.
+    def load_pixmaps(self, poster_width: int, portrait_height: int):
+        """Load all the poster pixmaps with the proper dimensions.
         """
-        try:
-            return int(file_path.name.split(separator)[0])
-        except ValueError as exception:
-            logger.error('Invalid file name %s (%s)', file_path, exception)
-            return None
-
-    def _file_dict(self, folder_path, poster_ids, *extensions):
-        """Retrieve all the files in a given folder matching a given list of
-        poster identifiers (and with the proper file extension).
-        """
-        logger.info('Scanning folder %s for files...', folder_path)
-        file_dict = {}
-        for file_path in pathlib.Path(folder_path).iterdir():
-            if file_path.suffix in extensions:
-                poster_id = self._poster_id(file_path)
-                if poster_id in poster_ids:
-                    file_dict[poster_id] = str(file_path)
-        num_files = len(file_dict)
-        num_posters = len(poster_ids)
-        if num_files != num_posters:
-            logger.warning('Only %d file(s) out of %d were found.', num_files, num_posters)
-            for poster_id in poster_ids:
-                if poster_id not in file_dict:
-                    logger.warning('Poster %d is orphan.', poster_id)
-        logger.info('Done')
-        for key, value in file_dict.items():
-            logger.debug('[%03d] %s', key, value)
-        return file_dict
-
-    def load_poster_data(self, poster_size, header_height):
-        """Load all the poster data.
-
-        Note that much of the logic, here, could be deferred to the Poster class
-        in a way that would probably look neater, but that would also imply
-        multiple listings of the same folder, which we'd rather avoid.
-        """
-        logger.info('Loading poster data...')
-        poster_ids = [poster.friendly_id for poster in self]
-        poster_file_dict = self._file_dict(self.poster_folder_path, poster_ids, '.png')
-        presenter_file_dict = self._file_dict(self.presenter_folder_path, poster_ids,
-            '.png', '.jpg', '.jpeg')
-        qrcode_file_dict = self._file_dict(self.qrcode_folder_path, poster_ids, '.png')
         for poster in self:
-            args = [d.get(poster.friendly_id) for d in \
-                (poster_file_dict, presenter_file_dict, qrcode_file_dict)]
-            args += [poster_size, header_height]
-            poster.load_pixmaps(*args)
+            self.load_poster_pixmaps(poster, poster_width, portrait_height)
 
     def __str__(self):
         """String formatting.

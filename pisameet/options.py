@@ -79,37 +79,36 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument('--conference-location', type=str, default='May 22-28 2022',
             help='the conference location')
 
-    def add_geometry(self):
+    def add_geometry(self, default_header_height=300):
         """Add all the geometry options.
         """
         self.add_argument('--mode', type=str, default='maximize', choices=VALID_DISPLAY_MODES,
             help='display geometry')
         self.add_argument('--poster-width', type=int, default=None,
             help='width of the poster display (taken from the screen size by default)')
-        self.add_argument('--header-height', type=int, default=275,
+        self.add_argument('--header-height', type=int, default=default_header_height,
             help='height of the poster header')
         self.add_argument('--portrait-height', type=int, default=120,
             help='height of the presenter portraits and QR codes')
 
-    def add_pause(self):
+    def add_pause(self, default=120.):
+        """Add the pause interval option.
         """
-        """
-        self.add_argument('--pause-interval', type=float, default=120.,
+        self.add_argument('--pause-interval', type=float, default=default,
              help='pause time interval [s]')
 
+    def add_advance(self, default=30.):
+        """Add the advance interval option.
+        """
+        self.add_argument('--advance-interval', type=float, default=default,
+             help='pause time interval [s]')
 
+    def add_fading(self):
+        """Add the fading effect option.
+        """
+        self.add_argument('--fading', action='store_true',
+            help='enable the fading effect between posters')
+        self.add_argument('--no-fading', action='store_false',
+            help='disable the fading effect between posters')
+        self.set_defaults(fading=False)
 
-# PARSER = argparse.ArgumentParser()
-# PARSER.add_argument('cfgfile', type=str,
-#     help='path to the input excel configuration file')
-# PARSER.add_argument('--advance', type=float, default=30.,
-#     help='the time interval for the slide show transition [s]')
-# PARSER.add_argument('--pause', type=float, default=120.,
-#     help='the time interval for the slide show pause [s]')
-# PARSER.add_argument('--fading', action='store_true',
-#     help='enable the fading effect between posters')
-# PARSER.add_argument('--no-fading', action='store_false',
-#     help='disable the fading effect between posters')
-# PARSER.set_defaults(fading=False)
-# PARSER.add_argument('--background', type=str, default='white',
-#     help='background color')

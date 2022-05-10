@@ -424,7 +424,7 @@ class SlideShow(QWidget):
         """
         super().__init__()
         self.setStyleSheet('background-color: "white"')
-        self.setWindowTitle(f'{kwargs["conference-name"]}')
+        self.setWindowTitle(f'{kwargs["conference_name"]}')
         self.setLayout(QGridLayout())
         #
         self.screen_id = read_screen_id()
@@ -432,17 +432,16 @@ class SlideShow(QWidget):
         self.__current_index = 0
         # Parse the command-line arguments.
         self.config_file_path = kwargs.get('cfgfile')
-        self.advance_interval = self.sec_to_msec(kwargs.get('advance'))
-        self.pause_interval = self.sec_to_msec(kwargs.get('pause'))
+        self.advance_interval = self.sec_to_msec(kwargs['advance_interval'])
+        self.pause_interval = self.sec_to_msec(kwargs['pause_interval'])
         self.display_mode = kwargs.get('mode')
-        assert self.display_mode in self.VALID_DISPLAY_MODES
         self.poster_width = kwargs.get('poster_width')
         self.header_height = kwargs.get('header_height')
         self.portrait_height = kwargs.get('portrait_height')
         # Setup the widgets.
         self.poster_label = QLabel()
         self.poster_label.setAlignment(Qt.AlignHCenter or Qt.AlignTop)
-        self.header = ScreenHeader(self.WINDOW_TITLE, self.header_height, kwargs.get('portrait_height'))
+        self.header = ScreenHeader(kwargs["conference_name"], self.header_height, kwargs.get('portrait_height'))
         self.fading_effect = FadingEffect()
         if kwargs.get('fading'):
             self.poster_label.setGraphicsEffect(self.fading_effect)
@@ -486,7 +485,7 @@ class SlideShow(QWidget):
         self.hide()
         folder_path = os.path.dirname(self.config_file_path)
         self.poster_roster = PosterRoster(self.config_file_path, folder_path, self.screen_id)
-        self.poster_roster.load_poster_data(self.poster_width, self.portrait_height)
+        self.poster_roster.load_pixmaps(self.poster_width, self.portrait_height)
         self.header.set_roster(self.poster_roster)
         self.header.table.set_roster(self.poster_roster)
         self._show()
