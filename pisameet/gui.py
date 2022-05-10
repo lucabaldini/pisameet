@@ -757,6 +757,11 @@ class SessionDirectory(DisplaWindowBase):
         self.poster_label.hide()
         self.tree_widget = ProgramTreeWidget(self.poster_width)
         self.layout().addWidget(self.tree_widget, 1, 0, 1, 3)
+
+        font = self.tree_widget.headerItem().font(0)
+        font.setPointSize(font.pointSize() - 2)
+        self.tree_widget.setFont(font)
+
         # Load the program
         self.program = PosterProgram(kwargs.get('cfgfile'))
         self._load_program()
