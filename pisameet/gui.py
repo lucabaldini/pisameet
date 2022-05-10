@@ -319,9 +319,16 @@ class DisplaWindowBase(QWidget):
         if self.DISPLAY_TYPE is not None:
             window_title = f'{window_title} -- {self.DISPLAY_TYPE}'
         self.setWindowTitle(window_title)
+        # Parse the command-line arguments.
+        self.config_file_path = kwargs['cfgfile']
+        self.advance_interval = self.sec_to_msec(kwargs['advance_interval'])
+        self.pause_interval = self.sec_to_msec(kwargs['pause_interval'])
+        self.display_mode = kwargs['mode']
+        self.poster_width = kwargs['poster_width']
+        self.header_height = kwargs['header_height']
+        self.portrait_height = kwargs['portrait_height']
+        # Setup the widget.
         self.setLayout(QGridLayout())
-        self.poster_width = kwargs.get('poster_width')
-        self.potratit_height = kwargs.get('portrait_height')
         self.layout().setColumnMinimumWidth(0, self.poster_width)
         header_title = f'{kwargs["conference_name"]} - {kwargs["conference_location"]}, {kwargs["conference_dates"]}'
         self.header = ScreenHeader(header_title, kwargs['header_height'], kwargs['portrait_height'])
@@ -333,8 +340,6 @@ class DisplaWindowBase(QWidget):
         self.fading_effect = FadingEffect()
         if kwargs.get('fading', False):
             self.poster_label.setGraphicsEffect(self.fading_effect)
-        # Cache the display mode.
-        self.display_mode = kwargs.get('mode')
         # Setup the timer for updating the header.
         self.header_timer = QTimer()
         self.header_timer.setInterval(100)
@@ -412,7 +417,7 @@ class SlideShowStatus(Enum):
 
 
 
-class SlideShow(QWidget):
+class SlideShow(DisplaWindowBase):
 
     """Basic slideshow class.
     """
@@ -422,61 +427,21 @@ class SlideShow(QWidget):
     def __init__(self, **kwargs):
         """Constructor.
         """
-        super().__init__()
-        self.setStyleSheet('background-color: "white"')
-        self.setWindowTitle(f'{kwargs["conference_name"]}')
-        self.setLayout(QGridLayout())
-        #
+        super().__init__(**kwargs)
         self.screen_id = read_screen_id()
         self.__status = SlideShowStatus.STOPPED
         self.__current_index = 0
-        # Parse the command-line arguments.
-        self.config_file_path = kwargs.get('cfgfile')
-        self.advance_interval = self.sec_to_msec(kwargs['advance_interval'])
-        self.pause_interval = self.sec_to_msec(kwargs['pause_interval'])
-        self.display_mode = kwargs.get('mode')
-        self.poster_width = kwargs.get('poster_width')
-        self.header_height = kwargs.get('header_height')
-        self.portrait_height = kwargs.get('portrait_height')
-        # Setup the widgets.
-        self.poster_label = QLabel()
-        self.poster_label.setAlignment(Qt.AlignHCenter or Qt.AlignTop)
-        self.header = ScreenHeader(kwargs["conference_name"], self.header_height, kwargs.get('portrait_height'))
-        self.fading_effect = FadingEffect()
-        if kwargs.get('fading'):
-            self.poster_label.setGraphicsEffect(self.fading_effect)
-        self.layout().addWidget(self.header, 0, 0, 1, 3)
-        self.layout().addWidget(self.poster_label, 1, 0, 1, 3)
         # Setup the timers.
         self.advance_timer = QTimer()
         self.advance_timer.setInterval(self.advance_interval)
         self.advance_timer.timeout.connect(self.advance)
-        self.info_timer = QTimer()
-        self.info_timer.setInterval(100)
-        self.info_timer.timeout.connect(self.update_header_info)
-        self.info_timer.start()
         self.resume_timer = QTimer()
         self.resume_timer.setInterval(self.pause_interval)
         self.resume_timer.setSingleShot(True)
         self.resume_timer.timeout.connect(self.resume)
         # We're good to go!
         self._load_roster()
-
-    def update_header_info(self):
-        """Update the header information.
-        """
-        self.header.info_label.setText(self.status_message())
-
-    def _show(self):
-        """Small convenience hook to display the GUI in the proper visualization
-        mode, given the command-line options.
-        """
-        if self.display_mode == 'maximize':
-            self.showMaximized()
-        elif self.display_mode == 'fullscreen':
-            self.showFullScreen()
-        else:
-            self.show()
+        self.header_timer.start()
 
     def _load_roster(self):
         """Load a given session from the underlying configuration file.
@@ -491,11 +456,6 @@ class SlideShow(QWidget):
         self._show()
         self.display_poster()
         self.start()
-
-    def status(self):
-        """Return the Slideshow status.
-        """
-        return self.__status
 
     def running(self):
         """Return True if the Slideshow is running.
@@ -530,29 +490,16 @@ class SlideShow(QWidget):
         self.start()
         self.advance()
 
-    @staticmethod
-    def remaining_time(timer):
-        """Return a proxy for the (integer) number of seconds remaining to the
-        next trigger of a given counter.
-
-        There is some heuristic involved, here, as we typically want this to
-        look good in a GUI field that is not refreshed too often---which is
-        why we convert ms to s and add a 0.9 s offset
-        """
-        return int(0.001 * timer.remainingTime() + 0.9)
-
     def status_message(self):
-        """Return the message about the slideshow status to be displayed in the
-        GUI header.
+        """Return the message about the slideshow status to be displayed in the GUI header.
         """
         # pylint: disable=invalid-name
-        status = self.status()
-        if status == SlideShowStatus.RUNNING:
+        if self.__status == SlideShowStatus.RUNNING:
             dt = self.remaining_time(self.advance_timer)
-            return f'<font color="gray" size="2">{status}, {dt} s to the next poster...</font>'
-        if status == SlideShowStatus.PAUSED:
+            return f'<font color="gray" size="2">{self.__status}, {dt} s to the next poster...</font>'
+        if self.__status == SlideShowStatus.PAUSED:
             dt = self.remaining_time(self.resume_timer)
-            return f'<font color="gray" size="2">{status}, {dt} s to restart...</font>'
+            return f'<font color="gray" size="2">{self.__status}, {dt} s to restart...</font>'
         return ''
 
     def display_poster(self, index: int = 0) -> None:
@@ -573,21 +520,6 @@ class SlideShow(QWidget):
         """Advance to the next image.
         """
         self.display_poster(self.__current_index - 1)
-
-    @staticmethod
-    def sec_to_msec(sec: float) -> int:
-        """Convert a time from seconds to ms.
-
-        Arguments
-        ---------
-        sec : float
-            The time interval in s.
-
-        Return
-        ------
-            The time interval in ms, rounded to the nearest integer.
-        """
-        return int(round(1.e3 * sec))
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Overloaded method to handle key events.
