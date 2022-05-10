@@ -27,7 +27,7 @@ import pandas as pd
 from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect,\
     QTableWidget, QTableWidgetItem, QHeaderView, QTreeWidget, QTreeWidgetItem
 from PyQt5.QtGui import QKeyEvent, QColor
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
 from pisameet import logger, read_screen_id
 from pisameet.program import Poster, PosterRoster, PosterProgram
@@ -324,6 +324,15 @@ class ScreenHeader(QWidget):
         self._update_presenter(poster)
         self.table.set_current_row(current_poster_id)
 
+    def clear(self):
+        """Clear the header.
+        """
+        self.presenter_label.setText('')
+        self.status_label.setText('')
+        self.table.clear()
+        self.portrait_label.clear()
+        self.qrcode_label.clear()
+
 
 
 class DisplaWindowBase(QWidget):
@@ -570,10 +579,29 @@ class SlideShow(DisplaWindowBase):
 
 
 
+class BrowserKeyMap(IntEnum):
+
+    """Basic mapping of the five-key keyboard for the poster browser.
+    """
+
+    EXPAND = Qt.Key_Right
+    COLLAPSE = Qt.Key_Left
+    ADVANCE = Qt.Key_Up
+    BACKUP = Qt.Key_Down
+    PAUSE = Qt.Key_Enter
+
+
+
 class ProgramTreeWidget(QTreeWidget):
 
     """Light wrapper over the QTreeWidget class.
     """
+
+    # Signal emitted when the display of the current poster is requested.
+    poster_selected = pyqtSignal()
+
+    # Signal emitted when the tree view uis requested.
+    treeview_selected = pyqtSignal()
 
     def __init__(self, width):
         """Constructor.
@@ -584,6 +612,17 @@ class ProgramTreeWidget(QTreeWidget):
         self.setColumnWidth(0, int(0.70 * width))
         self.setColumnWidth(1, int(0.2 * width))
         self.header().setStretchLastSection(True)
+        self.__key_press_events_enabled = True
+
+    def enable_key_press_events(self):
+        """Enable key-press events.
+        """
+        self.__key_press_events_enabled = True
+
+    def disable_key_press_events(self):
+        """Disable key-press events.
+        """
+        self.__key_press_events_enabled = False
 
     def collapse_unused(self, current_item):
         """Small hook to collapse all the expanded items that are different from
@@ -596,6 +635,25 @@ class ProgramTreeWidget(QTreeWidget):
             item = self.topLevelItem(index)
             if item != current_item and item.isExpanded():
                 item.setExpanded(False)
+
+    def keyPressEvent(self, event):
+        """Overloaded method.
+
+        This is the one place where we intercept the arrow keys, and adapt the
+        interaction with the tree widget.
+        """
+        # If we click the EXPAND button and the node is a leaf, then we do
+        # want to display the current poster, and we emit the corresponding signal.
+        if event.key() == BrowserKeyMap.EXPAND and self.currentItem().parent() is not None:
+            self.poster_selected.emit()
+        # If key-press events are enabled, we just forward the thing to the base class
+        # and then return.
+        if self.__key_press_events_enabled:
+            super().keyPressEvent(event)
+            return
+        # Otherwise we process the remaining possibility in place.
+        if event.key() == BrowserKeyMap.COLLAPSE:
+            self.treeview_selected.emit()
 
 
 
@@ -627,6 +685,8 @@ class ProgramBrowser(DisplaWindowBase):
         self.tree_widget.itemExpanded.connect(self.tree_widget.collapse_unused)
         self.layout().addWidget(self.tree_widget, 1, 0, 1, 3)
         self.__status = BrowserStatus.TREE_VIEW
+        # We need a reference to the current poster so that we can free up the
+        # memory taken by the pixmaps when the tree view is restored.
         self.__current_poster = None
         # Load the program.
         self.program = PosterProgram(kwargs.get('cfgfile'))
@@ -635,7 +695,10 @@ class ProgramBrowser(DisplaWindowBase):
         self.poster_timer = QTimer()
         self.poster_timer.setInterval(self.sec_to_msec(kwargs['pause_interval']))
         self.poster_timer.setSingleShot(True)
-        self.poster_timer.timeout.connect(self.display_tree)
+        # Setup the necessary connections.
+        self.poster_timer.timeout.connect(self.display_tree_view)
+        self.tree_widget.poster_selected.connect(self.display_current_poster)
+        self.tree_widget.treeview_selected.connect(self.display_tree_view)
         # Show the window.
         self._show()
 
@@ -663,45 +726,58 @@ class ProgramBrowser(DisplaWindowBase):
         """
         return f'Poster closing in, {self.remaining_time(self.poster_timer)} s...'
 
-    def display_current_poster(self):
-        """Display the poster corresponding to the current item.
+    def _display_poster(self, poster):
+        """Base function to display a poster.
         """
+        # Hide the cutsom tree widget and disable the key-press events.
         self.tree_widget.hide()
-        self.__current_poster = self.tree_widget.currentItem().poster
-        self.program.load_poster_pixmaps(self.__current_poster, self.poster_width,
-            self.portrait_height)
-        self.poster_label.setPixmap(self.__current_poster.poster_pixmap)
-        self.header.set_poster(self.__current_poster)
+        self.tree_widget.disable_key_press_events()
+        # Load the necessary pixmaps for the poster.
+        self.program.load_poster_pixmaps(poster, self.poster_width, self.portrait_height)
+        # Update the widgets and show the poster label.
+        self.header.set_poster(poster)
+        self.poster_label.setPixmap(poster.poster_pixmap)
         self.poster_label.show()
         self.header.show()
+        # Final bookkeeping.
+        self.__current_poster = poster
         self.__status = BrowserStatus.POSTER_VIEW
         self.header_timer.start()
         self.poster_timer.start()
 
-    def display_tree(self):
+    def display_current_poster(self):
+        """Display the poster corresponding to the current item.
+        """
+        self._display_poster(self.tree_widget.currentItem().poster)
+
+    def display_random_poster(self):
+        """Display a randomly chosen poster.
+        """
+        pass
+
+    def display_tree_view(self):
         """Display the tree view.
         """
-        self.__current_poster.unload_pixmaps()
         self.header_timer.stop()
+        # Clear up and hide the poster
+        self.header.clear()
         self.poster_label.clear()
         self.poster_label.hide()
-        self.header.hide()
+        # Show up the tree widget and re-enable the key-press events.
         self.tree_widget.show()
+        self.tree_widget.enable_key_press_events()
+        # Final bookkeeping.
         self.__status = BrowserStatus.TREE_VIEW
+        if self.__current_poster is not None:
+            self.__current_poster.unload_pixmaps()
+            self.__current_poster = None
 
     def keyPressEvent(self, event):
         """Handle the return key button press.
         """
         # pylint: disable=invalid-name
-        if event.key() == Qt.Key_Return:
-            if self.__status == BrowserStatus.POSTER_VIEW:
-                self.display_tree()
-            elif self.__status == BrowserStatus.TREE_VIEW:
-                # If the selected items has children we are not in a leaf and
-                # there is nothing to do.
-                if self.tree_widget.currentItem().childCount() > 0:
-                    return
-                self.display_current_poster()
+        if event.key() == BrowserKeyMap.PAUSE:
+            pass
 
 
 
