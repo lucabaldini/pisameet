@@ -678,6 +678,7 @@ class ProgramBrowser(DisplaWindowBase):
         """Constructor.
         """
         super().__init__(**kwargs)
+        self.poster_prescale = 2
         # Hide the header and the poster label, and show the tree view, instead.
         self.header.set_subtitle(self.DISPLAY_TYPE)
         self.poster_label.hide()
@@ -688,10 +689,14 @@ class ProgramBrowser(DisplaWindowBase):
         # We need a reference to the current poster so that we can free up the
         # memory taken by the pixmaps when the tree view is restored.
         self.__current_poster = None
+        self.__current_index = 0
         # Load the program.
         self.program = PosterProgram(kwargs.get('cfgfile'))
         self._load_program()
         # Setup the timers.
+        self.advance_timer = QTimer()
+        self.advance_timer.setInterval(self.sec_to_msec(kwargs['advance_interval']))
+        self.advance_timer.timeout.connect(self.advance)
         self.poster_timer = QTimer()
         self.poster_timer.setInterval(self.sec_to_msec(kwargs['pause_interval']))
         self.poster_timer.setSingleShot(True)
@@ -699,6 +704,7 @@ class ProgramBrowser(DisplaWindowBase):
         self.poster_timer.timeout.connect(self.display_tree_view)
         self.tree_widget.poster_selected.connect(self.display_current_poster)
         self.tree_widget.treeview_selected.connect(self.display_tree_view)
+        #self.advance_timer.start()
         # Show the window.
         self._show()
 
@@ -771,6 +777,15 @@ class ProgramBrowser(DisplaWindowBase):
         if self.__current_poster is not None:
             self.__current_poster.unload_pixmaps()
             self.__current_poster = None
+
+    def advance(self):
+        """
+        """
+        self.__current_index = (self.__current_index + 1) % (self.poster_prescale + 1)
+        if self.__current_index == 0:
+            self.display_tree_view()
+        else:
+            self.display_random_poster()
 
     def keyPressEvent(self, event):
         """Handle the return key button press.

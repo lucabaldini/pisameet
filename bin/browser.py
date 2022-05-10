@@ -35,7 +35,7 @@ from pisameet.options import ArgumentParser
 PARSER = ArgumentParser()
 PARSER.add_geometry()
 PARSER.add_pause()
-
+PARSER.add_advance()
 
 
 if __name__ == '__main__':
