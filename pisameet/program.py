@@ -19,7 +19,6 @@
 
 import datetime
 import os
-import pathlib
 
 import pandas as pd
 #pylint: disable=no-name-in-module
@@ -264,6 +263,7 @@ class PosterCollectionBase:
     def session_data_frame(self, session_id):
         """Return a pandas data frame with all the data for a given session.
         """
+        # pylint: disable=broad-except
         logger.info('Reading data for session %d...', session_id)
         try:
             return pd.read_excel(self.config_file_path, str(session_id))
@@ -364,6 +364,7 @@ class PosterRoster(PosterCollectionBase, list):
         """Constructor
         """
         PosterCollectionBase.__init__(self, config_file_path, root_folder_path)
+        list.__init__(self)
         self.screen_id = screen_id
         logger.info('Populating session list...')
         for _, program_row in self._program_df.iterrows():

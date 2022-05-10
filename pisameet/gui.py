@@ -26,7 +26,7 @@ import pandas as pd
 # pylint: disable=no-name-in-module, too-many-instance-attributes
 from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect,\
     QTableWidget, QTableWidgetItem, QHeaderView, QTreeWidget, QTreeWidgetItem
-from PyQt5.QtGui import QKeyEvent, QColor, QPixmap
+from PyQt5.QtGui import QKeyEvent, QColor
 from PyQt5.QtCore import Qt, QTimer
 
 from pisameet import logger, read_screen_id
@@ -229,7 +229,7 @@ class ScreenHeader(QWidget):
     """
 
     def __init__(self, title: str, height: int, portrait_height: int,
-        subtitle: str = '', title_font_size: int = 20, subtitle_font_size: int = 18):
+        title_font_size: int = 20, subtitle_font_size: int = 18):
         """Constructor.
         """
         self._roster = None
@@ -411,7 +411,7 @@ class DisplaWindowBase(QWidget):
         self.header.set_status(self.status_message())
 
     def status_message(self):
-        """
+        """Do nothing hook to be reimplemented by derived classes.
         """
         raise NotImplementedError
 
@@ -585,7 +585,7 @@ class ProgramTreeWidget(QTreeWidget):
         self.setColumnWidth(1, int(0.2 * width))
         self.header().setStretchLastSection(True)
 
-    def collapse_unused(self, currentItem):
+    def collapse_unused(self, current_item):
         """Small hook to collapse all the expanded items that are different from
         the current item.
 
@@ -594,7 +594,7 @@ class ProgramTreeWidget(QTreeWidget):
         """
         for index in range(self.topLevelItemCount()):
             item = self.topLevelItem(index)
-            if item != currentItem and item.isExpanded():
+            if item != current_item and item.isExpanded():
                 item.setExpanded(False)
 
 
@@ -650,7 +650,8 @@ class ProgramBrowser(DisplaWindowBase):
                 affiliation = presenter.affiliation
                 if pd.isna(affiliation):
                     affiliation = 'N/A'
-                values = [f'[{poster.friendly_id}] {poster.title}', presenter.full_name(), f'{poster.screen_id}']
+                values = [f'[{poster.friendly_id}] {poster.title}', presenter.full_name(),
+                    f'{poster.screen_id}']
                 child = QTreeWidgetItem(values)
                 child.poster = poster
                 item.addChild(child)
@@ -690,6 +691,7 @@ class ProgramBrowser(DisplaWindowBase):
     def keyPressEvent(self, event):
         """Handle the return key button press.
         """
+        # pylint: disable=invalid-name
         if event.key() == Qt.Key_Return:
             if self.__status == BrowserStatus.POSTER_VIEW:
                 self.display_tree()
@@ -741,3 +743,8 @@ class SessionDirectory(DisplaWindowBase):
                 item.addChild(child)
             items.append(item)
         self.tree_widget.insertTopLevelItems(0, items)
+
+    def status_message(self):
+        """Do nothing overloaded method.
+        """
+        return ''
