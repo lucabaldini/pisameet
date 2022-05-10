@@ -321,6 +321,7 @@ class DisplaWindowBase(QWidget):
         self.setWindowTitle(window_title)
         self.setLayout(QGridLayout())
         self.poster_width = kwargs.get('poster_width')
+        self.potratit_height = kwargs.get('portrait_height')
         self.layout().setColumnMinimumWidth(0, self.poster_width)
         header_title = f'{kwargs["conference_name"]} - {kwargs["conference_location"]}, {kwargs["conference_dates"]}'
         self.header = ScreenHeader(header_title, kwargs['header_height'], kwargs['portrait_height'])
@@ -709,7 +710,7 @@ class ProgramBrowser(DisplaWindowBase):
         """
         self.tree_widget.hide()
         self.__current_poster = self.tree_widget.currentItem().poster
-        self.program.load_poster_pixmaps(self.__current_poster)
+        self.program.load_poster_pixmaps(self.__current_poster, self.poster_width, self.potratit_height)
         self.poster_label.setPixmap(self.__current_poster.poster_pixmap)
         self.header.set_poster(self.__current_poster)
         self.poster_label.show()

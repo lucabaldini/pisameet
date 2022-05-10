@@ -329,14 +329,15 @@ class PosterCollectionBase:
         """
         return self._image_path_base(poster_id, self.QRCODE_FOLDER_NAME, MISSING_QRCODE_PATH)
 
-    def load_poster_pixmaps(self, poster):
+    def load_poster_pixmaps(self, poster, poster_width, portrait_height):
         """Load all the necessary pixmaps for a given poster.
         """
         poster_id = poster.friendly_id
         poster_file_path = self.poster_image_path(poster_id)
         presenter_file_path = self.presenter_image_path(poster_id)
         qrcode_file_path = self.qrcode_image_path(poster_id)
-        poster.load_pixmaps(poster_file_path, presenter_file_path, qrcode_file_path, 1900, 120)
+        poster.load_pixmaps(poster_file_path, presenter_file_path, qrcode_file_path,
+            poster_width, portrait_height)
 
 
 
