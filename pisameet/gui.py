@@ -745,24 +745,6 @@ class ProgramBrowser(DisplaWindowBase):
 
 
 
-class DirectoryTreeWidget(QTreeWidget):
-
-    """Light wrapper over the QTreeWidget class.
-    """
-
-    def __init__(self, width):
-        """Constructor.
-        """
-        super().__init__()
-        self.setColumnCount(4)
-        self.setHeaderLabels(['Session/Poster', 'Screen', 'Presenter', 'Affiliation'])
-        self.setColumnWidth(0, int(0.6 * width))
-        self.setColumnWidth(1, int(0.05 * width))
-        self.setColumnWidth(2, int(0.15 * width))
-        self.header().setStretchLastSection(True)
-
-
-
 class SessionDirectory(DisplaWindowBase):
 
     """Session directory.
