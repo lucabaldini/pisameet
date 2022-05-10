@@ -742,3 +742,61 @@ class ProgramBrowser(DisplaWindowBase):
                 self.display_current_poster()
             elif self.__status == BrowserStatus.POSTER_VIEW:
                 self.display_tree()
+
+
+
+class DirectoryTreeWidget(QTreeWidget):
+
+    """Light wrapper over the QTreeWidget class.
+    """
+
+    def __init__(self, width):
+        """Constructor.
+        """
+        super().__init__()
+        self.setColumnCount(4)
+        self.setHeaderLabels(['Session/Poster', 'Screen', 'Presenter', 'Affiliation'])
+        self.setColumnWidth(0, int(0.6 * width))
+        self.setColumnWidth(1, int(0.05 * width))
+        self.setColumnWidth(2, int(0.15 * width))
+        self.header().setStretchLastSection(True)
+
+
+
+class SessionDirectory(DisplaWindowBase):
+
+    """Session directory.
+    """
+
+    def __init__(self, **kwargs):
+        """Constructor.
+        """
+        super().__init__(**kwargs)
+        self.poster_label.hide()
+        self.tree_widget = DirectoryTreeWidget(self.poster_width)
+        self.layout().addWidget(self.tree_widget, 1, 0, 1, 3)
+        # Load the program
+        self.program = PosterProgram(kwargs.get('cfgfile'))
+        self._load_program()
+        self.tree_widget.expandAll()
+        self._show()
+
+    def _load_program(self):
+        """Load the program.
+        """
+        items = []
+        for session, posters in self.program.items():
+            if not session.ongoing():
+                continue
+            item = QTreeWidgetItem([session.title])
+            for poster in posters:
+                presenter = poster.presenter
+                affiliation = presenter.affiliation
+                if pd.isna(affiliation):
+                    affiliation = 'N/A'
+                values = [poster.title, f'{poster.screen_id}', presenter.full_name(), affiliation]
+                child = QTreeWidgetItem(values)
+                child.poster = poster
+                item.addChild(child)
+            items.append(item)
+        self.tree_widget.insertTopLevelItems(0, items)
