@@ -520,10 +520,10 @@ class SlideShow(DisplaWindowBase):
         # pylint: disable=invalid-name
         if self.__status == SlideShowStatus.RUNNING:
             dt = self.remaining_time(self.advance_timer)
-            return f'<font color="gray" size="2">{self.__status}, {dt} s to the next poster...</font>'
+            return f'{self.__status}, {dt} s to the next poster...'
         if self.__status == SlideShowStatus.PAUSED:
             dt = self.remaining_time(self.resume_timer)
-            return f'<font color="gray" size="2">{self.__status}, {dt} s to restart...</font>'
+            return f'{self.__status}, {dt} s before restart...'
         return ''
 
     def display_poster(self, index: int = 0) -> None:
@@ -716,14 +716,22 @@ class SessionDirectory(DisplaWindowBase):
         """Constructor.
         """
         super().__init__(**kwargs)
+        self.advance_interval = self.sec_to_msec(kwargs['advance_interval'])
         self.header.set_subtitle(self.DISPLAY_TYPE)
         self.poster_label.hide()
         self.tree_widget = ProgramTreeWidget(self.poster_width)
         self.layout().addWidget(self.tree_widget, 1, 0, 1, 3)
+        # Setup the timers.
+        self.toggle_timer = QTimer()
+        self.toggle_timer.setInterval(self.advance_interval)
+        self.toggle_timer.timeout.connect(self.toggle_session)
+        self.header_timer.start()
+        self.toggle_timer.start()
         # Load the program
         self.program = PosterProgram(kwargs.get('cfgfile'))
-        self._load_program()
-        self.tree_widget.expandAll()
+        self.__num_sessions = self._load_program()
+        self.__current_index = -1
+        self.toggle_session()
         self._show()
 
     def _load_program(self):
@@ -739,14 +747,24 @@ class SessionDirectory(DisplaWindowBase):
                 affiliation = presenter.affiliation
                 if pd.isna(affiliation):
                     affiliation = 'N/A'
-                values = [f'[{poster.friendly_id}] {poster.title}', presenter.full_name(), f'{poster.screen_id}']
+                values = [f'[{poster.friendly_id}] {poster.title}', presenter.full_name(),
+                    f'{poster.screen_id}']
                 child = QTreeWidgetItem(values)
                 child.poster = poster
                 item.addChild(child)
             items.append(item)
         self.tree_widget.insertTopLevelItems(0, items)
+        return len(items)
+
+    def toggle_session(self):
+        """Toggle the section being displayed.
+        """
+        self.__current_index = (self.__current_index + 1) % self.__num_sessions
+        for index in range(self.tree_widget.topLevelItemCount()):
+            item = self.tree_widget.topLevelItem(index)
+            item.setExpanded(index == self.__current_index)
 
     def status_message(self):
         """Do nothing overloaded method.
         """
-        return ''
+        return f'Toggling session in {self.remaining_time(self.toggle_timer)} s...'

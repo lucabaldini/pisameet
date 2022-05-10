@@ -107,6 +107,8 @@ class Poster:
         """Create a PosterSession object from a dataframe row.
         """
         args = [row[col_name] for col_name in PosterRoster.SESSION_COL_NAMES]
+        if not pd.isna(args[2]):
+            args[2] = int(args[2])
         return cls(*args[:-3], Presenter(*args[-3:]))
 
     def short_title(self, max_chars=40):
