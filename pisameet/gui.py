@@ -215,9 +215,21 @@ class RosterTable(QTableWidget):
 class ScreenHeader(QWidget):
 
     """Poster header.
+
+    This is a composite object that can be used as a generic header for
+    different kinds of displays. More specifically, it includes:
+
+    * a QLabel object for the title (typically, the conference name and location);
+    * a QLabel object for the subtitle (e.g., indicating the session);
+    * a Qlabel object for the presenter pic;
+    * a QLabel object for the QR code pointing at the indico page of the poster;
+    * a QLabel object holding the name and affiliation of the presenter;
+    * a RosterTable object for the list of posters;
+    * a QLabel object for a status message.
     """
 
-    def __init__(self, title, height, portrait_height):
+    def __init__(self, title: str, height: int, portrait_height: int,
+        subtitle: str = '', title_font_size: int = 20, subtitle_font_size: int = 18):
         """Constructor.
         """
         self._roster = None
@@ -227,42 +239,58 @@ class ScreenHeader(QWidget):
         self.layout().setHorizontalSpacing(30)
         self.layout().setVerticalSpacing(15)
         self.layout().setContentsMargins(0, 0, 0, 0)
-        # Create all the necessary widgets
+        # Create all the necessary widgets: the title Qlabel...
         self.title_label = QLabel()
         font = self.title_label.font()
-        font.setPointSize(20)
-        self.title_label.setText(title)
+        font.setPointSize(title_font_size)
         self.title_label.setFont(font)
-        self.session_label = QLabel()
-        font = self.session_label.font()
-        font.setPointSize(20)
-        self.session_label.setFont(font)
+        self.title_label.setText(title)
+        # ... the subtitle QLabel...
+        self.subtitle_label = QLabel()
+        font = self.subtitle_label.font()
+        font.setPointSize(subtitle_font_size)
+        self.subtitle_label.setFont(font)
+        # ... the presenter potrait QLabel...
         self.portrait_label = QLabel()
         self.portrait_label.setFixedSize(portrait_height, portrait_height)
         self.portrait_label.setAlignment(Qt.AlignLeft)
+        # ... the QR code QLabel...
         self.qrcode_label = QLabel()
         self.qrcode_label.setFixedSize(portrait_height, portrait_height)
         self.qrcode_label.setAlignment(Qt.AlignCenter)
+        # ... the presenter name/affiliation QLabel...
         self.presenter_label = QLabel()
         self.presenter_label.setWordWrap(True)
         self.presenter_label.setAlignment(Qt.AlignTop)
+        # ... the poster roster table...
         self.table = RosterTable()
-        self.info_label = QLabel()
-        self.info_label.setAlignment(Qt.AlignTop)
+        # ... and the status message label.
+        self.status_label = QLabel()
+        self.status_label.setAlignment(Qt.AlignTop)
         # Add the widgets to the layout.
         self.layout().addWidget(self.title_label, 0, 0, 1, 3)
-        self.layout().addWidget(self.session_label, 1, 0, 1, 3)
+        self.layout().addWidget(self.subtitle_label, 1, 0, 1, 3)
         self.layout().addWidget(self.portrait_label, 2, 0)
         self.layout().addWidget(self.qrcode_label, 2, 1)
         self.layout().addWidget(self.presenter_label, 4, 0, 1, 2)
         self.layout().addWidget(self.table, 2, 2, 2, 2)
-        self.layout().addWidget(self.info_label, 4, 2)
+        self.layout().addWidget(self.status_label, 4, 2)
+
+    def set_subtitle(self, text):
+        """Set the subtitle.
+        """
+        self.subtitle_label.setText(text)
+
+    def set_status(self, text):
+        """Set the status text label.
+        """
+        self.status_label.setText(f'<font color="gray" size="2">{text}</font>')
 
     def set_roster(self, roster):
         """Set the poster roster for the table.
         """
         self._roster = roster
-        self.session_label.setText(str(self._roster.session))
+        self.set_subtitle(self._roster.session.title)
 
     def _update_pixmaps(self, poster):
         """Update the two pixmaps.
@@ -295,11 +323,6 @@ class ScreenHeader(QWidget):
         self._update_pixmaps(poster)
         self._update_presenter(poster)
         self.table.set_current_row(current_poster_id)
-
-    def update_info(self, text):
-        """Update the info label.
-        """
-        self.info_label.setText(f'<font color="gray" size="2">{text}</font>')
 
 
 
@@ -343,7 +366,7 @@ class DisplaWindowBase(QWidget):
         # Setup the timer for updating the header.
         self.header_timer = QTimer()
         self.header_timer.setInterval(100)
-        self.header_timer.timeout.connect(self.update_header_info)
+        self.header_timer.timeout.connect(self.update_header_status)
 
     def _show(self):
         """Small convenience hook to display the GUI in the proper visualization
@@ -382,10 +405,10 @@ class DisplaWindowBase(QWidget):
         """
         return int(round(1.e3 * sec))
 
-    def update_header_info(self):
+    def update_header_status(self):
         """Update the header information.
         """
-        self.header.update_info(self.status_message())
+        self.header.set_status(self.status_message())
 
     def status_message(self):
         """
@@ -422,6 +445,7 @@ class SlideShow(DisplaWindowBase):
     """Basic slideshow class.
     """
 
+    DISPLAY_TYPE = 'Slideshow'
     VALID_KEYS = [str(key.value) for key in SlideShowKeyMap]
 
     def __init__(self, **kwargs):
@@ -590,6 +614,8 @@ class ProgramBrowser(DisplaWindowBase):
     """Poster browser.
     """
 
+    DISPLAY_TYPE = 'Program browser'
+
     def __init__(self, **kwargs):
         """Constructor.
         """
@@ -680,6 +706,8 @@ class SessionDirectory(DisplaWindowBase):
 
     """Session directory.
     """
+
+    DISPLAY_TYPE = 'Session directory'
 
     def __init__(self, **kwargs):
         """Constructor.
