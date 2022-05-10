@@ -693,7 +693,7 @@ class ProgramBrowser(DisplaWindowBase):
                 affiliation = presenter.affiliation
                 if pd.isna(affiliation):
                     affiliation = 'N/A'
-                values = [f'[{poster.friendly_id}] {poster.title}', presenter.full_name(), f'{poster.screen_id}']
+                values = [f'[{poster.friendly_id:>3}] {poster.title}', presenter.full_name(), f'{poster.screen_id}']
                 child = QTreeWidgetItem(values)
                 child.poster = poster
                 item.addChild(child)
