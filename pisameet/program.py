@@ -271,13 +271,16 @@ class PosterCollectionBase:
             logger.warning('Data not available for session %s: %s', session_id, exception)
             return None
 
-    def session_poster_list(self, session_id):
+    def session_poster_list(self, session_id, sort=True):
         """Return a list of Poster objects for a given session data frame.
         """
         data_frame = self.session_data_frame(session_id)
         if data_frame is None:
             return []
-        return [Poster.from_df_row(row) for _, row in data_frame.iterrows()]
+        poster_list = [Poster.from_df_row(row) for _, row in data_frame.iterrows()]
+        if sort:
+            poster_list.sort(key=lambda item: item.friendly_id)
+        return poster_list
 
     def poster_dict(self):
         """Return a dictionary of lists of Poster objects, indexed by session.
@@ -472,4 +475,3 @@ class PosterProgram(PosterCollectionBase, dict):
         """
         PosterCollectionBase.__init__(self, config_file_path, root_folder_path)
         dict.__init__(self, self.poster_dict())
-        print(self.poster_image_path(23))
