@@ -454,7 +454,7 @@ class SlideShow(DisplaWindowBase):
 
     DISPLAY_TYPE = 'Slideshow'
     VALID_KEYS = [str(key.value) for key in SlideShowKeyMap]
-    TIP = 'use the arrows to navigate the poster or the mid button to pause'
+    TIP = 'use the arrows to navigate the posters or the mid button to pause'
     RUNNING_MSG = f'SlideShow running, %d s to the next poster ({TIP})'
     PAUSED_MSG = f'SlideShow paused, %d s to restart ({TIP})'
 
