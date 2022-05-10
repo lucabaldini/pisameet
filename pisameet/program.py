@@ -19,6 +19,7 @@
 
 import datetime
 import os
+import random
 
 import pandas as pd
 #pylint: disable=no-name-in-module
@@ -411,3 +412,13 @@ class PosterProgram(PosterCollectionBase, dict):
         """
         PosterCollectionBase.__init__(self, config_file_path, root_folder_path)
         dict.__init__(self, self.poster_dict())
+
+    def random_poster(self):
+        """Return a random poster object from the program.
+        """
+        logger.debug('Picking random poster from the program...')
+        session = random.choice(list(self))
+        logger.debug(session)
+        poster = random.choice(self[session])
+        logger.debug(poster)
+        return poster

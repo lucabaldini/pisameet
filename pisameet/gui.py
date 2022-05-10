@@ -753,7 +753,7 @@ class ProgramBrowser(DisplaWindowBase):
     def display_random_poster(self):
         """Display a randomly chosen poster.
         """
-        pass
+        self._display_poster(self.program.random_poster())
 
     def display_tree_view(self):
         """Display the tree view.
