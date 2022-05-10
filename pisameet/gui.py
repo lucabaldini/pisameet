@@ -430,7 +430,7 @@ class SlideShowKeyMap(IntEnum):
     """
 
     BACKUP = 1
-    PAUSE_RESUME = 2
+    PAUSE = 2
     ADVANCE = 3
     RELOAD = 5
 
@@ -454,6 +454,9 @@ class SlideShow(DisplaWindowBase):
 
     DISPLAY_TYPE = 'Slideshow'
     VALID_KEYS = [str(key.value) for key in SlideShowKeyMap]
+    TIP = 'use the arrows to navigate the poster or the mid button to pause'
+    RUNNING_MSG = f'SlideShow running, %d s to the next poster ({TIP})'
+    PAUSED_MSG = f'SlideShow paused, %d s to restart ({TIP})'
 
     def __init__(self, **kwargs):
         """Constructor.
@@ -528,12 +531,9 @@ class SlideShow(DisplaWindowBase):
         """
         # pylint: disable=invalid-name
         if self.__status == SlideShowStatus.RUNNING:
-            dt = self.remaining_time(self.advance_timer)
-            return f'{self.__status}, {dt} s to the next poster...'
+            return self.RUNNING_MSG % self.remaining_time(self.advance_timer)
         if self.__status == SlideShowStatus.PAUSED:
-            dt = self.remaining_time(self.resume_timer)
-            return f'{self.__status}, {dt} s before restart...'
-        return ''
+            return self.PAUSED_MSG % self.remaining_time(self.resume_timer)
 
     def display_poster(self, index: int = 0) -> None:
         """Display a given poster.
@@ -569,11 +569,8 @@ class SlideShow(DisplaWindowBase):
         elif key == SlideShowKeyMap.BACKUP:
             self.start()
             self.backup()
-        elif key == SlideShowKeyMap.PAUSE_RESUME:
-            if self.running():
-                self.pause()
-            else:
-                self.resume()
+        elif key == SlideShowKeyMap.PAUSE:
+            self.pause()
         elif key == SlideShowKeyMap.RELOAD:
             self._load_roster()
 
