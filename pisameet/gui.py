@@ -773,7 +773,7 @@ class SessionDirectory(DisplaWindowBase):
         """
         super().__init__(**kwargs)
         self.poster_label.hide()
-        self.tree_widget = DirectoryTreeWidget(self.poster_width)
+        self.tree_widget = ProgramTreeWidget(self.poster_width)
         self.layout().addWidget(self.tree_widget, 1, 0, 1, 3)
         # Load the program
         self.program = PosterProgram(kwargs.get('cfgfile'))
@@ -794,7 +794,7 @@ class SessionDirectory(DisplaWindowBase):
                 affiliation = presenter.affiliation
                 if pd.isna(affiliation):
                     affiliation = 'N/A'
-                values = [poster.title, f'{poster.screen_id}', presenter.full_name(), affiliation]
+                values = [f'[{poster.friendly_id}] {poster.title}', presenter.full_name(), f'{poster.screen_id}']
                 child = QTreeWidgetItem(values)
                 child.poster = poster
                 item.addChild(child)
