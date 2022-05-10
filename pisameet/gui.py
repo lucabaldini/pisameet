@@ -629,7 +629,6 @@ class ProgramTreeWidget(QTreeWidget):
         self.setColumnWidth(0, int(0.70 * width))
         self.setColumnWidth(1, int(0.2 * width))
         self.header().setStretchLastSection(True)
-        self.itemExpanded.connect(self.collapse_unused)
 
     def collapse_unused(self, currentItem):
         """Small hook to collapse all the expanded items that are different from
@@ -668,6 +667,7 @@ class ProgramBrowser(DisplaWindowBase):
         self.header.hide()
         self.poster_label.hide()
         self.tree_widget = ProgramTreeWidget(self.poster_width)
+        self.tree_widget.itemExpanded.connect(self.tree_widget.collapse_unused)
         self.layout().addWidget(self.tree_widget, 0, 0, 1, 3)
         self.__status = BrowserStatus.TREE_VIEW
         self.__current_poster = None
@@ -757,11 +757,6 @@ class SessionDirectory(DisplaWindowBase):
         self.poster_label.hide()
         self.tree_widget = ProgramTreeWidget(self.poster_width)
         self.layout().addWidget(self.tree_widget, 1, 0, 1, 3)
-
-        font = self.tree_widget.headerItem().font(0)
-        font.setPointSize(font.pointSize() - 2)
-        self.tree_widget.setFont(font)
-
         # Load the program
         self.program = PosterProgram(kwargs.get('cfgfile'))
         self._load_program()
