@@ -625,7 +625,7 @@ class ProgramTreeWidget(QTreeWidget):
         """
         super().__init__()
         self.setColumnCount(3)
-        self.setHeaderLabels(['Session/Poster', 'Presenter', 'Affiliation'])
+        self.setHeaderLabels(['Session/Poster', 'Presenter', 'Screen'])
         self.setColumnWidth(0, int(0.6 * width))
         self.setColumnWidth(1, int(0.2 * width))
         self.header().setStretchLastSection(True)
@@ -693,7 +693,7 @@ class ProgramBrowser(DisplaWindowBase):
                 affiliation = presenter.affiliation
                 if pd.isna(affiliation):
                     affiliation = 'N/A'
-                values = [poster.title, presenter.full_name(), affiliation]
+                values = [f'[{poster.friendly_id}] {poster.title}', presenter.full_name(), f'{poster.screen_id}']
                 child = QTreeWidgetItem(values)
                 child.poster = poster
                 item.addChild(child)
