@@ -728,7 +728,6 @@ class ProgramBrowser(DisplaWindowBase):
         self.poster_label.hide()
         self.header.hide()
         self.tree_widget.show()
-        #self.tree_widget.collapseAll()
         self.__status = BrowserStatus.TREE_VIEW
 
     def keyPressEvent(self, event):
