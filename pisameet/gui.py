@@ -734,14 +734,14 @@ class ProgramBrowser(DisplaWindowBase):
         """Handle the return key button press.
         """
         if event.key() == Qt.Key_Return:
-            # If the selected items has children we are not in a leaf and
-            # there is nothing to do.
-            if self.tree_widget.currentItem().childCount() > 0:
-                return
-            if self.__status == BrowserStatus.TREE_VIEW:
-                self.display_current_poster()
-            elif self.__status == BrowserStatus.POSTER_VIEW:
+            if self.__status == BrowserStatus.POSTER_VIEW:
                 self.display_tree()
+            elif self.__status == BrowserStatus.TREE_VIEW:
+                # If the selected items has children we are not in a leaf and
+                # there is nothing to do.
+                if self.tree_widget.currentItem().childCount() > 0:
+                    return
+                self.display_current_poster()
 
 
 
