@@ -85,4 +85,4 @@ def preprocess_posters(folder_path : str, output_folder_path : str):
 
 if __name__ == '__main__':
     preprocess_posters('pm2022/poster_original', 'pm2022/poster_images')
-    generate_qr_codes('pm2022/poster_original', 'pm2022/qrcodes')
+    #generate_qr_codes('pm2022/poster_original', 'pm2022/qrcodes')
