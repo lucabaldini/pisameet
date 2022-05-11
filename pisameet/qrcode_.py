@@ -17,22 +17,25 @@
 """QR-code facilities.
 """
 
+import os
+
 import qrcode
 
-from pisameet import MISSING_QRCODE_PATH
+from pisameet import logger, MISSING_QRCODE_PATH
 
 
-def generate_qrcode(data, file_path):
+def generate_qrcode(data, file_path, overwrite=False):
     """Generate a qrcode for a given input data.
     """
+    if os.path.exists(file_path) and overwrite is False:
+        logger.info('File %s exists, skipping...', file_path)
+        return 
     #pylint: disable=invalid-name
+    logger.info('Generating QR code for "%s"...', data)
     qr = qrcode.QRCode(version=1, box_size=10, border=0)
     qr.add_data(data)
     qr.make(fit=True)
     img = qr.make_image(fill='black', back_color='white')
+    logger.info('Saving file to %s...', file_path)
     img.save(file_path)
-
-
-
-if __name__ == '__main__':
-    generate_qrcode('Ops... something went wrong?', MISSING_QRCODE_PATH)
+    logger.info('Done.')

@@ -326,14 +326,13 @@ class ConferenceInfo(dict):
                             f.write(timestamp)
 
     def generate_qr_codes(self, folder_path):
-        """
+        """Generate all the QR codes for the poster contributions.
         """
         for session in self.values():
             for contrib in session['contributions']:
                 url = contrib['url']
                 file_name = f'{contrib["friendly_id"]:03}.png'
                 file_path = os.path.join(folder_path, file_name)
-                logger.info('Writing QR code to %s...', file_path)
                 generate_qrcode(url, file_path)
 
     def __str__(self):

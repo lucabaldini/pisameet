@@ -26,6 +26,7 @@ import pdfrw
 from pisameet import logger, PISAMEET_BASE
 from pisameet.indico import retrieve_info, ConferenceInfo
 from pisameet.dispatch import dispatch_posters
+from pisameet.qrcode_ import generate_qrcode
 
 
 # Basic conference info.
@@ -99,11 +100,15 @@ def generate_qr_codes():
     """
     """
     CONFERENCE_INFO.generate_qr_codes(QRCODE_FOLDER_PATH)
+    for url, file_name in [
+        ('https://agenda.infn.it/event/22092/timetable', 'timetable.png')
+    ]:
+        generate_qrcode(url, os.path.join(QRCODE_FOLDER_PATH, file_name))
 
 
 
 if __name__ == '__main__':
-    dump_config_file()
+    #dump_config_file()
     #download_attachments()
     #dispatch_files()
-    #generate_qr_codes()
+    generate_qr_codes()
