@@ -27,8 +27,9 @@ import os
 import pandas as pd
 import requests
 
-from . import logger
-from .program import PosterCollectionBase
+from pisameet import logger
+from pisameet.program import PosterCollectionBase
+from pisameet.qrcode_ import generate_qrcode
 
 
 # pylint: disable=invalid-name
@@ -323,6 +324,17 @@ class ConferenceInfo(dict):
                     if not dry_run:
                         with open(tstamp_file_path, 'w') as f:
                             f.write(timestamp)
+
+    def generate_qr_codes(self, folder_path):
+        """
+        """
+        for session in self.values():
+            for contrib in session['contributions']:
+                url = contrib['url']
+                file_name = f'{contrib["friendly_id"]:03}.png'
+                file_path = os.path.join(folder_path, file_name)
+                logger.info('Writing QR code to %s...', file_path)
+                generate_qrcode(url, file_path)
 
     def __str__(self):
         """String formatting.

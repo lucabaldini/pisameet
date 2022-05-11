@@ -36,6 +36,7 @@ INFO_FILE_PATH = os.path.join(LOCAL_ROOT, f'{BASE_NAME}.json')
 CONFIG_FILE_PATH = INFO_FILE_PATH.replace('.json', '.xlsx')
 ATTACH_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'indico_attachments')
 POSTER_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_original')
+QRCODE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'qrcodes')
 
 
 # Definition of the posted program---mind this has to be compiled by hand.
@@ -94,8 +95,15 @@ def dispatch_files():
     dispatch_posters(ids, ATTACH_FOLDER_PATH, POSTER_FOLDER_PATH)
 
 
+def generate_qr_codes():
+    """
+    """
+    CONFERENCE_INFO.generate_qr_codes(QRCODE_FOLDER_PATH)
+
+
 
 if __name__ == '__main__':
     #dump_config_file()
-    download_attachments()
+    #download_attachments()
     #dispatch_files()
+    generate_qr_codes()
