@@ -97,7 +97,7 @@ def dispatch_files():
 
 
 def generate_qr_codes():
-    """
+    """Generate all the relevant QR codes.
     """
     CONFERENCE_INFO.generate_qr_codes(QRCODE_FOLDER_PATH)
     for url, file_name in [
@@ -111,4 +111,4 @@ if __name__ == '__main__':
     #dump_config_file()
     #download_attachments()
     #dispatch_files()
-    generate_qr_codes()
+    #generate_qr_codes()
