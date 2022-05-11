@@ -27,7 +27,7 @@ import pandas as pd
 # pylint: disable=no-name-in-module, too-many-instance-attributes
 from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect,\
     QTableWidget, QTableWidgetItem, QHeaderView, QTreeWidget, QTreeWidgetItem
-from PyQt5.QtGui import QKeyEvent, QColor
+from PyQt5.QtGui import QKeyEvent, QColor, QPixmap
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
 from pisameet import logger, abort, read_screen_id
@@ -834,6 +834,10 @@ class SessionDirectory(DisplaWindowBase):
         if self.__num_sessions == 0:
             abort('No valid session found for the specified date (%s)' % self.display_date)
         self.__current_index = -1
+        if False:
+            file_path = os.path.join(self.program.qrcode_folder_path, 'timetable.png')
+            pixmap = Poster._load_pixmap_h(file_path, self.portrait_height)
+            self.header.qrcode_label.setPixmap(pixmap)
         self.toggle_session()
         self._show()
 
