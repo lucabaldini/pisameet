@@ -294,7 +294,7 @@ class ConferenceInfo(dict):
         return urls
 
     def download_attachments(self, folder_path: str, separator: str = '-',
-        filters=('pdf', 'ppt', 'pptx'), dry_run: bool = False):
+        filters=('pdf', 'ppt', 'pptx', 'png', 'jpg', 'jpeg'), dry_run: bool = False):
         """Download all the files attached to the given conference program.
         """
         logger.info('Downloading files...')
