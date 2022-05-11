@@ -498,7 +498,7 @@ class SlideShow(DisplaWindowBase):
             abort('cannot load roster')
         self.poster_roster.load_pixmaps(self.poster_width, self.portrait_height)
         self.header.set_roster(self.poster_roster)
-        subtitle = f'{self.poster_roster.session.title} - Screen #{self.screen_id}'
+        subtitle = f'{self.poster_roster.session.title} (screen #{self.screen_id})'
         self.header.set_subtitle(subtitle)
         self.header.table.set_roster(self.poster_roster)
         self._show()
