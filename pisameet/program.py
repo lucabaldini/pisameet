@@ -30,6 +30,11 @@ from pisameet import logger, MISSING_PICTURE_PATH, MISSING_POSTER_PATH, MISSING_
 
 
 
+DATE_FORMAT =  '%d/%m/%Y'
+DATE_PRETTY_FORMAT = '%A, %B %d, %Y'
+DATETIME_FORMAT =  f'{DATE_FORMAT} %H:%M'
+
+
 class Presenter:
 
     """Presenter descriptor.
@@ -186,7 +191,7 @@ class PosterSession:
         """
         # pylint: disable=broad-except
         try:
-            return datetime.datetime.strptime(text, PosterRoster.DATETIME_FORMAT)
+            return datetime.datetime.strptime(text, DATETIME_FORMAT)
         except Exception as exception:
             logger.warning('Invalid date and/or time for session %s (%s).', self.id_, exception)
             return None
@@ -197,12 +202,13 @@ class PosterSession:
         """
         return cls(*[row[col_name] for col_name in PosterRoster.PROGRAM_COL_NAMES])
 
-    def ongoing(self, display_date: str = None, display_time: str = '12:00') -> bool:
+    def ongoing(self, display_date=None, display_time: str = '12:00') -> bool:
         """Return True if the session is ongoing.
         """
         if display_date is None:
             now = datetime.datetime.now()
         else:
+            display_date = display_date.strftime(DATE_FORMAT)
             now = self.parse_datetime(f'{display_date} {display_time}')
         return self.start is not None and self.end is not None and \
             self.start <= now <= self.end
@@ -237,7 +243,6 @@ class PosterCollectionBase:
     """
 
     PROGRAM_SHEET_NAME = 'Program'
-    DATETIME_FORMAT = '%d/%m/%Y %H:%M'
     PROGRAM_COL_NAMES = (
         'Session ID', 'Session Name', 'Start Date', 'End Date'
         )

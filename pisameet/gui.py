@@ -19,6 +19,7 @@
 This module contains all the widgets that are relevant for the slideshow.
 """
 
+import datetime
 from enum import Enum, IntEnum, auto
 import os
 
@@ -30,7 +31,7 @@ from PyQt5.QtGui import QKeyEvent, QColor
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
 from pisameet import logger, abort, read_screen_id
-from pisameet.program import Poster, PosterRoster, PosterProgram
+from pisameet.program import Poster, PosterRoster, PosterProgram, DATE_FORMAT, DATE_PRETTY_FORMAT
 
 
 
@@ -357,7 +358,12 @@ class DisplaWindowBase(QWidget):
         self.poster_width = kwargs['poster_width']
         self.header_height = kwargs['header_height']
         self.portrait_height = kwargs['portrait_height']
-        self.display_date = kwargs.get('display_date')
+        # Parse the optional display date and turn it into a
+        display_date = kwargs.get('display_date')
+        if display_date is None:
+            self.display_date = datetime.date.today()
+        else:
+            self.display_date = datetime.datetime.strptime(display_date, DATE_FORMAT).date()
         # Setup the widget.
         self.setLayout(QGridLayout())
         self.layout().setColumnMinimumWidth(0, self.poster_width)
@@ -492,6 +498,8 @@ class SlideShow(DisplaWindowBase):
             abort('cannot load roster')
         self.poster_roster.load_pixmaps(self.poster_width, self.portrait_height)
         self.header.set_roster(self.poster_roster)
+        subtitle = f'{self.poster_roster.session.title} - Screen #{self.screen_id}'
+        self.header.set_subtitle(subtitle)
         self.header.table.set_roster(self.poster_roster)
         self._show()
         self.display_poster()
@@ -802,14 +810,15 @@ class SessionDirectory(DisplaWindowBase):
     """Session directory.
     """
 
-    DISPLAY_TYPE = 'Session directory'
+    DISPLAY_TYPE = 'Poster session directory'
 
     def __init__(self, **kwargs):
         """Constructor.
         """
         super().__init__(**kwargs)
         self.advance_interval = self.sec_to_msec(kwargs['advance_interval'])
-        self.header.set_subtitle(self.DISPLAY_TYPE)
+        subtitle = f'{self.DISPLAY_TYPE} ({self.display_date.strftime(DATE_PRETTY_FORMAT)})'
+        self.header.set_subtitle(subtitle)
         self.poster_label.hide()
         self.tree_widget = ProgramTreeWidget(self.poster_width)
         self.layout().addWidget(self.tree_widget, 1, 0, 1, 3)
@@ -822,6 +831,8 @@ class SessionDirectory(DisplaWindowBase):
         # Load the program
         self.program = PosterProgram(kwargs.get('cfgfile'))
         self.__num_sessions = self._load_program()
+        if self.__num_sessions == 0:
+            abort('No valid session found for the specified date (%s)' % self.display_date)
         self.__current_index = -1
         self.toggle_session()
         self._show()
