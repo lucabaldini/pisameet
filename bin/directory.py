@@ -34,6 +34,7 @@ from pisameet.options import ArgumentParser
 PARSER = ArgumentParser()
 PARSER.add_geometry(default_header_height=175)
 PARSER.add_advance()
+PARSER.add_date()
 
 
 

@@ -29,7 +29,7 @@ from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect
 from PyQt5.QtGui import QKeyEvent, QColor
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
-from pisameet import logger, read_screen_id
+from pisameet import logger, abort, read_screen_id
 from pisameet.program import Poster, PosterRoster, PosterProgram
 
 
@@ -357,6 +357,7 @@ class DisplaWindowBase(QWidget):
         self.poster_width = kwargs['poster_width']
         self.header_height = kwargs['header_height']
         self.portrait_height = kwargs['portrait_height']
+        self.display_date = kwargs.get('display_date')
         # Setup the widget.
         self.setLayout(QGridLayout())
         self.layout().setColumnMinimumWidth(0, self.poster_width)
@@ -485,7 +486,10 @@ class SlideShow(DisplaWindowBase):
         logger.info('Loading poster roster...')
         self.hide()
         folder_path = os.path.dirname(self.config_file_path)
-        self.poster_roster = PosterRoster(self.config_file_path, folder_path, self.screen_id)
+        self.poster_roster = PosterRoster(self.config_file_path, folder_path,
+            self.screen_id, self.display_date)
+        if len(self.poster_roster) == 0:
+            abort('cannot load roster')
         self.poster_roster.load_pixmaps(self.poster_width, self.portrait_height)
         self.header.set_roster(self.poster_roster)
         self.header.table.set_roster(self.poster_roster)
@@ -827,7 +831,7 @@ class SessionDirectory(DisplaWindowBase):
         """
         items = []
         for session, posters in self.program.items():
-            if not session.ongoing():
+            if not session.ongoing(self.display_date):
                 continue
             item = QTreeWidgetItem([session.title])
             for poster in posters:

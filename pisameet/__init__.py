@@ -23,6 +23,7 @@
 import logging
 import os
 import shutil
+import sys
 
 #
 # System-wide environment settings.
@@ -75,6 +76,12 @@ class TerminalColors:
         """Process a piece of text to be printed out in green.
         """
         return TerminalColors._color(text, TerminalColors.GREEN)
+
+
+def abort(msg=''):
+    """Abort the execution of the program.
+    """
+    sys.exit(TerminalColors.red(f'Abort: {msg}'))
 
 
 

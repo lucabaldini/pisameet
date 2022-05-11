@@ -197,11 +197,15 @@ class PosterSession:
         """
         return cls(*[row[col_name] for col_name in PosterRoster.PROGRAM_COL_NAMES])
 
-    def ongoing(self) -> bool:
+    def ongoing(self, display_date: str = None, display_time: str = '12:00') -> bool:
         """Return True if the session is ongoing.
         """
+        if display_date is None:
+            now = datetime.datetime.now()
+        else:
+            now = self.parse_datetime(f'{display_date} {display_time}')
         return self.start is not None and self.end is not None and \
-            self.start <= datetime.datetime.now() <= self.end
+            self.start <= now <= self.end
 
     def __str__(self):
         """String formatting.
@@ -363,16 +367,18 @@ class PosterRoster(PosterCollectionBase, list):
         The screen identifier for the poster roster.
     """
 
-    def __init__(self, config_file_path: str, root_folder_path: str, screen_id: int) -> None:
+    def __init__(self, config_file_path: str, root_folder_path: str, screen_id: int,
+        display_date: str = None) -> None:
         """Constructor
         """
         PosterCollectionBase.__init__(self, config_file_path, root_folder_path)
         list.__init__(self)
         self.screen_id = screen_id
+        self.session = None
         logger.info('Populating session list...')
         for _, program_row in self._program_df.iterrows():
             session = PosterSession.from_df_row(program_row)
-            if not session.ongoing():
+            if not session.ongoing(display_date):
                 continue
             logger.info('Parsing ongoing %s...', session)
             try:
@@ -385,6 +391,8 @@ class PosterRoster(PosterCollectionBase, list):
                 logger.warning('Data not available for session %s: %s', session.id_, exception)
             self.session = session
             break
+        if len(self) == 0:
+            logger.warning('Empty poster roster for screen %d', self.screen_id)
 
     def load_pixmaps(self, poster_width: int, portrait_height: int):
         """Load all the poster pixmaps with the proper dimensions.
