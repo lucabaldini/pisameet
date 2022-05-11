@@ -429,9 +429,9 @@ class SlideShowKeyMap(IntEnum):
     """Basic mapping of the four-key keyboard.
     """
 
-    BACKUP = 1
+    ADVANCE = 1
     PAUSE = 2
-    ADVANCE = 3
+    BACKUP = 3
     RELOAD = 5
 
 
