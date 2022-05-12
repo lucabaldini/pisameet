@@ -76,7 +76,7 @@ class ArgumentParser(argparse.ArgumentParser):
             help='the conference name')
         self.add_argument('--conference-dates', type=str, default='La Biodola, Isola d\'Elba',
             help='the conference dates')
-        self.add_argument('--conference-location', type=str, default='May 22-28 2022',
+        self.add_argument('--conference-location', type=str, default='May 22-28, 2022',
             help='the conference location')
 
     def add_geometry(self, default_header_height=300):
@@ -117,4 +117,3 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument('--no-fading', action='store_false',
             help='disable the fading effect between posters')
         self.set_defaults(fading=False)
-
