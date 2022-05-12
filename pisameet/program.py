@@ -99,9 +99,9 @@ class Poster:
         title: str, presenter) -> None:
         """Constructor.
         """
-        self.friendly_id = friendly_id
-        self.db_id = db_id
-        self.screen_id = screen_id
+        self.friendly_id = int(friendly_id)
+        self.db_id = int(db_id)
+        self.screen_id = int(screen_id)
         self.title = title
         self.presenter = presenter
         self.poster_pixmap = None
