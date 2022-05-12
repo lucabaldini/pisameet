@@ -181,7 +181,7 @@ class PosterSession:
     def __init__(self, id_: int, title: str, start: str , end: str):
         """Constructor
         """
-        self.id_ = id_
+        self.id_ = int(id_)
         self.title = title
         self.start = self.parse_datetime(start)
         self.end = self.parse_datetime(end)
