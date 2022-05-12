@@ -79,12 +79,14 @@ def dump_config_file():
     CONFERENCE_INFO.dump_excel(CONFIG_FILE_PATH)
 
 
-def download_attachments():
+def download_attachments(refresh_info=False):
     """Download all the attachments.
 
     This is downloading *all* the material for the relevant contributions for the
     specified contributions.
     """
+    if refresh_info:
+        donwload_info(overwrite=True)
     CONFERENCE_INFO.download_attachments(ATTACH_FOLDER_PATH)
 
 
@@ -109,6 +111,6 @@ def generate_qr_codes():
 
 if __name__ == '__main__':
     #dump_config_file()
-    #download_attachments()
+    download_attachments(True)
     #dispatch_files()
     #generate_qr_codes()

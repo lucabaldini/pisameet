@@ -28,7 +28,7 @@ import pandas as pd
 import requests
 
 from pisameet import logger
-from pisameet.program import PosterCollectionBase
+from pisameet.program import PosterCollectionBase, DATETIME_FORMAT
 from pisameet.qrcode_ import generate_qrcode
 
 
@@ -182,7 +182,7 @@ class ConferenceInfo(dict):
         return f'[{identifier}] {full_name}: "{title}"'
 
     @staticmethod
-    def _format_date(date_dict: str, fmt: str = PosterCollectionBase.DATETIME_FORMAT):
+    def _format_date(date_dict: str, fmt: str = DATETIME_FORMAT):
         """Format a date in the .json file according to the date format in use
         for the excel configuration file.
 
