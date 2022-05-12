@@ -918,4 +918,4 @@ class SessionDirectory(DisplaWindowBase):
     def status_message(self):
         """Do nothing overloaded method.
         """
-        return f'Toggling session in {self.remaining_time(self.toggle_timer)} s...'
+        return f'Toggling session in {self.remaining_time(self.toggle_timer)} s (we appreciate your patience)...'
