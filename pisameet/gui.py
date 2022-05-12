@@ -282,7 +282,7 @@ class ScreenHeaderMinimal(QWidget):
 
 
 
-class ScreenHeader(QWidget):
+class ScreenHeader(ScreenHeaderMinimal):
 
     """Fully fledged poster header.
 
@@ -298,29 +298,9 @@ class ScreenHeader(QWidget):
     * a QLabel object for a status message.
     """
 
-    def __init__(self, title: str, height: int, portrait_height: int):
+    def __init__(self, title: str, height: int, portrait_height: int, **kwargs):
         """Constructor.
         """
-        title_font_size = 20
-        subtitle_font_size = 18
-        self._roster = None
-        super().__init__()
-        self.setFixedHeight(height)
-        self.setLayout(QGridLayout())
-        self.layout().setHorizontalSpacing(30)
-        self.layout().setVerticalSpacing(15)
-        self.layout().setContentsMargins(0, 0, 0, 0)
-        # Create all the necessary widgets: the title Qlabel...
-        self.title_label = QLabel()
-        font = self.title_label.font()
-        font.setPointSize(title_font_size)
-        self.title_label.setFont(font)
-        self.title_label.setText(title)
-        # ... the subtitle QLabel...
-        self.subtitle_label = QLabel()
-        font = self.subtitle_label.font()
-        font.setPointSize(subtitle_font_size)
-        self.subtitle_label.setFont(font)
         # ... the presenter portrait QLabel...
         self.portrait_label = QLabel()
         self.portrait_label.setFixedSize(portrait_height, portrait_height)
@@ -335,10 +315,13 @@ class ScreenHeader(QWidget):
         self.presenter_label.setAlignment(Qt.AlignTop)
         # ... the poster roster table...
         self.table = RosterTable()
-        # ... and the status message label.
-        self.status_label = QLabel()
-        self.status_label.setAlignment(Qt.AlignTop)
-        # Add the widgets to the layout.
+        self._roster = None
+        super().__init__(title, **kwargs)
+        self.setFixedHeight(height)
+
+    def _setup_layout(self):
+        """Overloaded method.
+        """
         self.layout().addWidget(self.title_label, 0, 0, 1, 3)
         self.layout().addWidget(self.subtitle_label, 1, 0, 1, 3)
         self.layout().addWidget(self.portrait_label, 2, 0)
@@ -346,16 +329,6 @@ class ScreenHeader(QWidget):
         self.layout().addWidget(self.presenter_label, 4, 0, 1, 2)
         self.layout().addWidget(self.table, 2, 2, 2, 2)
         self.layout().addWidget(self.status_label, 4, 2)
-
-    def set_subtitle(self, text):
-        """Set the subtitle.
-        """
-        self.subtitle_label.setText(text)
-
-    def set_status(self, text):
-        """Set the status text label.
-        """
-        self.status_label.setText(f'<font color="gray" size="2">{text}</font>')
 
     def set_roster(self, roster):
         """Set the poster roster for the table.
@@ -398,6 +371,7 @@ class ScreenHeader(QWidget):
     def clear(self):
         """Clear the header.
         """
+        super().clear()
         self.presenter_label.setText('')
         self.status_label.setText('')
         self.table.clear()
