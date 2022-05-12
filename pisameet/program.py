@@ -246,9 +246,11 @@ class PosterCollectionBase:
     PROGRAM_COL_NAMES = (
         'Session ID', 'Session Name', 'Start Date', 'End Date'
         )
+    PROGRAM_COL_DTYPES = {'Session ID': int, 'Start Date': str, 'End Date': str}
     SESSION_COL_NAMES = (
         'Friendly ID', 'DB ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation'
         )
+    SESSION_COL_DTYPES = {'Friendly ID': int, 'DB ID': int, 'Screen ID': int}
     POSTER_FOLDER_NAME = 'poster_images'
     PRESENTER_FOLDER_NAME = 'presenters'
     QRCODE_FOLDER_NAME = 'qrcodes'
@@ -264,7 +266,8 @@ class PosterCollectionBase:
         self.presenter_folder_path = os.path.join(self.root_folder_path, self.PRESENTER_FOLDER_NAME)
         self.qrcode_folder_path = os.path.join(self.root_folder_path, self.QRCODE_FOLDER_NAME)
         logger.debug('Reading %s sheet from %s...', self.PROGRAM_SHEET_NAME, config_file_path)
-        self._program_df = pd.read_excel(config_file_path, self.PROGRAM_SHEET_NAME)
+        self._program_df = pd.read_excel(config_file_path, self.PROGRAM_SHEET_NAME,
+            dtype=self.PROGRAM_COL_DTYPES)
         logger.debug('Done, %d row(s) found.', len(self._program_df))
 
     def session_list(self):
@@ -278,7 +281,7 @@ class PosterCollectionBase:
         # pylint: disable=broad-except
         logger.info('Reading data for session %d...', session_id)
         try:
-            return pd.read_excel(self.config_file_path, str(session_id))
+            return pd.read_excel(self.config_file_path, str(session_id), dtype=self.SESSION_COL_DTYPES)
         except Exception as exception:
             logger.warning('Data not available for session %s: %s', session_id, exception)
             return None
