@@ -130,7 +130,7 @@ class RosterTable(QTableWidget):
         (i.e., not highlighted) color.
     """
 
-    def __init__(self, height: int, row_height: int = 22, default_rgb: int = 175):
+    def __init__(self, height: int, row_height: int = 26, default_rgb: int = 175):
         """Constructor,
         """
         super().__init__()
@@ -459,7 +459,7 @@ class DisplaWindowBase(QWidget):
         look good in a GUI field that is not refreshed too often---which is
         why we convert ms to s and add a 0.9 s offset
         """
-        return int(0.001 * timer.remainingTime() + 0.9)
+        return int(0.001 * timer.remainingTime() + 0.75)
 
     @staticmethod
     def sec_to_msec(sec: float) -> int:
@@ -654,7 +654,7 @@ class BrowserKeyMap(IntEnum):
     COLLAPSE = Qt.Key_Left
     ADVANCE = Qt.Key_Up
     BACKUP = Qt.Key_Down
-    PAUSE = Qt.Key_Enter
+    PAUSE = Qt.Key_Return
 
 
 
@@ -662,6 +662,9 @@ class ProgramTreeWidget(QTreeWidget):
 
     """Light wrapper over the QTreeWidget class.
     """
+
+    # Signal emitted when any active key has been pressed.
+    key_pressed = pyqtSignal()
 
     # Signal emitted when the display of the current poster is requested.
     poster_selected = pyqtSignal()
@@ -708,6 +711,10 @@ class ProgramTreeWidget(QTreeWidget):
         This is the one place where we intercept the arrow keys, and adapt the
         interaction with the tree widget.
         """
+        # If one of the active key for the parent browser is pressed, we want
+        # to signal it to the parent.
+        if event.key() in ProgramBrowser.VALID_KEYS:
+            self.key_pressed.emit()
         # If we click the EXPAND button and the node is a leaf, then we do
         # want to display the current poster, and we emit the corresponding signal.
         if event.key() == BrowserKeyMap.EXPAND and self.currentItem().parent() is not None:
@@ -772,6 +779,7 @@ class ProgramBrowser(DisplaWindowBase):
         self.toggle_timer.timeout.connect(self.toggle_view)
         self.tree_widget.poster_selected.connect(self.display_current_poster)
         self.tree_widget.treeview_selected.connect(self.display_tree_view)
+        self.tree_widget.key_pressed.connect(self.toggle_timer.start)
         # By default we start the carousel.
         self.start_carousel()
         # Show the window.
@@ -807,7 +815,7 @@ class ProgramBrowser(DisplaWindowBase):
             return f'Full program view, going back to carousel in {dt} s...'
         if self.__status == BrowserStatus.POSTER_VIEW:
             dt = self.remaining_time(self.toggle_timer)
-            return f'Poster view, going back to full program view in {dt} s (press pause to reset the timer)...'
+            return f'Poster view, going back to full program view in {dt} s (press the pause button to reset the timer)...'
 
     def _display_poster(self, poster):
         """Base function to display a poster.
@@ -824,9 +832,12 @@ class ProgramBrowser(DisplaWindowBase):
         self.header.show()
         # Final bookkeeping.
         self.__current_poster = poster
-        #self.__status = BrowserStatus.POSTER_VIEW
         self.header_timer.start()
         self.toggle_timer.start()
+        # And mind we need to get the focus on the main window, otherwise we might
+        # be messing around with the underlying tree widget and, even more
+        # important, we will not be accepting keyPressEvents.
+        self.setFocus()
 
     def display_current_poster(self):
         """Display the poster corresponding to the current item.
@@ -878,17 +889,16 @@ class ProgramBrowser(DisplaWindowBase):
         # the posters start cycling.
         self.display_random_poster()
         self.carousel_timer.start()
-        # And mind we need to get the focus on the main window, otherwise we might
-        # be messing around with the underlying tree widget and, even more
-        # important, we will not be accepting keyPressEvents.
-        self.setFocus()
 
     def keyPressEvent(self, event):
         """Handle the return key button press.
         """
+        print(event.key(), BrowserKeyMap.PAUSE.value, event.key() == BrowserKeyMap.PAUSE.value)
         if self.__status == BrowserStatus.CAROUSEL and event.key() in self.VALID_KEYS:
             self.display_tree_view()
         elif self.__status == BrowserStatus.TREE_VIEW and event.key() in self.VALID_KEYS:
+            self.toggle_timer.start()
+        elif self.__status == BrowserStatus.POSTER_VIEW and event.key() == BrowserKeyMap.PAUSE.value:
             self.toggle_timer.start()
 
 
