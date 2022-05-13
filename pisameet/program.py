@@ -17,6 +17,7 @@
 """Basic description of the conference program.
 """
 
+from collections import Counter
 import datetime
 import os
 import random
@@ -28,6 +29,11 @@ from PyQt5.QtGui import QPixmap
 
 from pisameet import logger, MISSING_PICTURE_PATH, MISSING_POSTER_PATH, MISSING_QRCODE_PATH
 
+
+
+DATE_FORMAT =  '%d/%m/%Y'
+DATE_PRETTY_FORMAT = '%A, %B %d, %Y'
+DATETIME_FORMAT =  f'{DATE_FORMAT} %H:%M'
 
 
 class Presenter:
@@ -94,9 +100,9 @@ class Poster:
         title: str, presenter) -> None:
         """Constructor.
         """
-        self.friendly_id = friendly_id
-        self.db_id = db_id
-        self.screen_id = screen_id
+        self.friendly_id = int(friendly_id)
+        self.db_id = int(db_id)
+        self.screen_id = int(screen_id)
         self.title = title
         self.presenter = presenter
         self.poster_pixmap = None
@@ -176,7 +182,7 @@ class PosterSession:
     def __init__(self, id_: int, title: str, start: str , end: str):
         """Constructor
         """
-        self.id_ = id_
+        self.id_ = int(id_)
         self.title = title
         self.start = self.parse_datetime(start)
         self.end = self.parse_datetime(end)
@@ -186,7 +192,7 @@ class PosterSession:
         """
         # pylint: disable=broad-except
         try:
-            return datetime.datetime.strptime(text, PosterRoster.DATETIME_FORMAT)
+            return datetime.datetime.strptime(text, DATETIME_FORMAT)
         except Exception as exception:
             logger.warning('Invalid date and/or time for session %s (%s).', self.id_, exception)
             return None
@@ -197,11 +203,16 @@ class PosterSession:
         """
         return cls(*[row[col_name] for col_name in PosterRoster.PROGRAM_COL_NAMES])
 
-    def ongoing(self) -> bool:
+    def ongoing(self, display_date=None, display_time: str = '12:00') -> bool:
         """Return True if the session is ongoing.
         """
+        if display_date is None:
+            now = datetime.datetime.now()
+        else:
+            display_date = display_date.strftime(DATE_FORMAT)
+            now = self.parse_datetime(f'{display_date} {display_time}')
         return self.start is not None and self.end is not None and \
-            self.start <= datetime.datetime.now() <= self.end
+            self.start <= now <= self.end
 
     def __str__(self):
         """String formatting.
@@ -233,13 +244,14 @@ class PosterCollectionBase:
     """
 
     PROGRAM_SHEET_NAME = 'Program'
-    DATETIME_FORMAT = '%d/%m/%Y %H:%M'
     PROGRAM_COL_NAMES = (
         'Session ID', 'Session Name', 'Start Date', 'End Date'
         )
+    PROGRAM_COL_DTYPES = {'Session ID': int, 'Start Date': str, 'End Date': str}
     SESSION_COL_NAMES = (
         'Friendly ID', 'DB ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation'
         )
+    SESSION_COL_DTYPES = {'Friendly ID': int, 'DB ID': int, 'Screen ID': int}
     POSTER_FOLDER_NAME = 'poster_images'
     PRESENTER_FOLDER_NAME = 'presenters'
     QRCODE_FOLDER_NAME = 'qrcodes'
@@ -255,7 +267,8 @@ class PosterCollectionBase:
         self.presenter_folder_path = os.path.join(self.root_folder_path, self.PRESENTER_FOLDER_NAME)
         self.qrcode_folder_path = os.path.join(self.root_folder_path, self.QRCODE_FOLDER_NAME)
         logger.debug('Reading %s sheet from %s...', self.PROGRAM_SHEET_NAME, config_file_path)
-        self._program_df = pd.read_excel(config_file_path, self.PROGRAM_SHEET_NAME)
+        self._program_df = pd.read_excel(config_file_path, self.PROGRAM_SHEET_NAME,
+            dtype=self.PROGRAM_COL_DTYPES)
         logger.debug('Done, %d row(s) found.', len(self._program_df))
 
     def session_list(self):
@@ -269,7 +282,7 @@ class PosterCollectionBase:
         # pylint: disable=broad-except
         logger.info('Reading data for session %d...', session_id)
         try:
-            return pd.read_excel(self.config_file_path, str(session_id))
+            return pd.read_excel(self.config_file_path, str(session_id), dtype=self.SESSION_COL_DTYPES)
         except Exception as exception:
             logger.warning('Data not available for session %s: %s', session_id, exception)
             return None
@@ -363,16 +376,18 @@ class PosterRoster(PosterCollectionBase, list):
         The screen identifier for the poster roster.
     """
 
-    def __init__(self, config_file_path: str, root_folder_path: str, screen_id: int) -> None:
+    def __init__(self, config_file_path: str, root_folder_path: str, screen_id: int,
+        display_date: str = None) -> None:
         """Constructor
         """
         PosterCollectionBase.__init__(self, config_file_path, root_folder_path)
         list.__init__(self)
         self.screen_id = screen_id
+        self.session = None
         logger.info('Populating session list...')
         for _, program_row in self._program_df.iterrows():
             session = PosterSession.from_df_row(program_row)
-            if not session.ongoing():
+            if not session.ongoing(display_date):
                 continue
             logger.info('Parsing ongoing %s...', session)
             try:
@@ -385,6 +400,8 @@ class PosterRoster(PosterCollectionBase, list):
                 logger.warning('Data not available for session %s: %s', session.id_, exception)
             self.session = session
             break
+        if len(self) == 0:
+            logger.warning('Empty poster roster for screen %d', self.screen_id)
 
     def load_pixmaps(self, poster_width: int, portrait_height: int):
         """Load all the poster pixmaps with the proper dimensions.
@@ -422,3 +439,19 @@ class PosterProgram(PosterCollectionBase, dict):
         poster = random.choice(self[session])
         logger.debug(poster)
         return poster
+
+    def dump_report(self):
+        """Dump a program report for diagnostics purposes.
+        """
+        for session, posters in self.items():
+            logger.info(session)
+            cnt = Counter([poster.screen_id for poster in posters])
+            cnt = dict(sorted(cnt.items()))
+            num_posters = len(posters)
+            mult = cnt.values()
+            num_screens = len(mult)
+            mean_mult = num_posters / num_screens
+            logger.info('Total number of posters: %d on %d screen(s)', num_posters, num_screens)
+            logger.info('Multiplicity range: %d--%d (average %.2f)', min(mult), max(mult), mean_mult)
+            logger.info('Stats: %s', cnt)
+            print()

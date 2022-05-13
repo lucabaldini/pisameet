@@ -19,6 +19,7 @@
 This module contains all the widgets that are relevant for the slideshow.
 """
 
+import datetime
 from enum import Enum, IntEnum, auto
 import os
 
@@ -26,11 +27,11 @@ import pandas as pd
 # pylint: disable=no-name-in-module, too-many-instance-attributes
 from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect,\
     QTableWidget, QTableWidgetItem, QHeaderView, QTreeWidget, QTreeWidgetItem
-from PyQt5.QtGui import QKeyEvent, QColor
+from PyQt5.QtGui import QKeyEvent, QColor, QPixmap
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
-from pisameet import logger, read_screen_id
-from pisameet.program import Poster, PosterRoster, PosterProgram
+from pisameet import logger, abort, read_screen_id
+from pisameet.program import Poster, PosterRoster, PosterProgram, DATE_FORMAT, DATE_PRETTY_FORMAT
 
 
 
@@ -129,7 +130,7 @@ class RosterTable(QTableWidget):
         (i.e., not highlighted) color.
     """
 
-    def __init__(self, row_height: int = 25, default_rgb: int = 175):
+    def __init__(self, height: int, row_height: int = 22, default_rgb: int = 175):
         """Constructor,
         """
         super().__init__()
@@ -144,6 +145,7 @@ class RosterTable(QTableWidget):
         self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.setStyleSheet("border: 0px")
         self.setEnabled(False)
+        self.setMaximumHeight(height)
         self._default_color = QColor(default_rgb, default_rgb, default_rgb)
         self._highlight_color = QColor(0, 0, 0)
         self._highlighted_row = None
@@ -180,7 +182,7 @@ class RosterTable(QTableWidget):
             The poster to be displayed on a given row.
         """
         self.set_text(row, 0, f'[{poster.friendly_id}]')
-        self.set_text(row, 1, f'{poster.short_title(60)}')
+        self.set_text(row, 1, f'{poster.short_title(85)}')
         self.set_text(row, 2, f'{poster.presenter.full_name()}')
 
     def set_roster(self, roster: PosterRoster):
@@ -212,9 +214,80 @@ class RosterTable(QTableWidget):
 
 
 
-class ScreenHeader(QWidget):
+class ScreenHeaderMinimal(QWidget):
 
-    """Poster header.
+    """Minimal screen header.
+
+    This is a composite object including:
+
+    * a QLabel object for the title (typically, the conference name and location);
+    * a QLabel object for the subtitle (e.g., indicating the session);
+    * a QLabel object for a status message.
+    """
+
+    def __init__(self, title: str, *args, **kwargs):
+        """Constructor.
+        """
+        title_font_size = kwargs.get('title_font_size', 20)
+        subtitle_font_size = kwargs.get('subtitle_font_size', 18)
+        bottom_row_height = kwargs.get('bottom_row_height', 15)
+        horizontal_spacing = kwargs.get('horizontal_spacing', 30)
+        vertical_spacing = kwargs.get('vertical_spacing', 10)
+        margin = kwargs.get('margin', 0)
+        super().__init__()
+        self.setLayout(QGridLayout())
+        self.layout().setHorizontalSpacing(horizontal_spacing)
+        self.layout().setVerticalSpacing(vertical_spacing)
+        self.layout().setContentsMargins(margin, margin, margin, margin)
+        # Create all the necessary widgets: the title Qlabel...
+        self.title_label = QLabel()
+        font = self.title_label.font()
+        font.setPointSize(title_font_size)
+        self.title_label.setFont(font)
+        self.title_label.setText(title)
+        # ... the subtitle QLabel...
+        self.subtitle_label = QLabel()
+        font = self.subtitle_label.font()
+        font.setPointSize(subtitle_font_size)
+        self.subtitle_label.setFont(font)
+        # ... and the status message label.
+        self.status_label = QLabel()
+        self.status_label.setAlignment(Qt.AlignTop)
+        # Setup the payout.
+        self._setup_layout()
+        # And freeze the height of the last column to add a minimum space between
+        # the header and the actual content.
+        self.layout().setRowMinimumHeight(self.layout().columnCount(), bottom_row_height)
+
+    def _setup_layout(self):
+        """Setup the layout.
+        """
+        self.layout().addWidget(self.title_label, 0, 0, 1, 3)
+        self.layout().addWidget(self.subtitle_label, 1, 0, 1, 3)
+        self.layout().addWidget(self.status_label, 2, 0, 1, 3)
+
+    def set_subtitle(self, text):
+        """Set the subtitle.
+        """
+        self.subtitle_label.setText(text)
+
+    def set_status(self, text):
+        """Set the status text label.
+        """
+        text = f'<font color="white" size="4">F</font><br/>'\
+               f'<font color="gray" size="2">{text}</font><br/>'
+        self.status_label.setText(text)
+
+    def clear(self):
+        """Clear the header.
+        """
+        self.status_label.setText('')
+
+
+
+class ScreenHeader(ScreenHeaderMinimal):
+
+    """Fully fledged poster header.
 
     This is a composite object that can be used as a generic header for
     different kinds of displays. More specifically, it includes:
@@ -228,28 +301,9 @@ class ScreenHeader(QWidget):
     * a QLabel object for a status message.
     """
 
-    def __init__(self, title: str, height: int, portrait_height: int,
-        title_font_size: int = 20, subtitle_font_size: int = 18):
+    def __init__(self, title: str, height: int, portrait_height: int, **kwargs):
         """Constructor.
         """
-        self._roster = None
-        super().__init__()
-        self.setFixedHeight(height)
-        self.setLayout(QGridLayout())
-        self.layout().setHorizontalSpacing(30)
-        self.layout().setVerticalSpacing(15)
-        self.layout().setContentsMargins(0, 0, 0, 0)
-        # Create all the necessary widgets: the title Qlabel...
-        self.title_label = QLabel()
-        font = self.title_label.font()
-        font.setPointSize(title_font_size)
-        self.title_label.setFont(font)
-        self.title_label.setText(title)
-        # ... the subtitle QLabel...
-        self.subtitle_label = QLabel()
-        font = self.subtitle_label.font()
-        font.setPointSize(subtitle_font_size)
-        self.subtitle_label.setFont(font)
         # ... the presenter portrait QLabel...
         self.portrait_label = QLabel()
         self.portrait_label.setFixedSize(portrait_height, portrait_height)
@@ -263,28 +317,31 @@ class ScreenHeader(QWidget):
         self.presenter_label.setWordWrap(True)
         self.presenter_label.setAlignment(Qt.AlignTop)
         # ... the poster roster table...
-        self.table = RosterTable()
-        # ... and the status message label.
-        self.status_label = QLabel()
-        self.status_label.setAlignment(Qt.AlignTop)
-        # Add the widgets to the layout.
+        self.table = RosterTable(portrait_height)
+        self._roster = None
+        super().__init__(title, **kwargs)
+        self.setFixedHeight(height)
+        if False:
+            self.show_debug_borders()
+
+    def _setup_layout(self, bottom_margin: int = 10):
+        """Overloaded method.
+        """
         self.layout().addWidget(self.title_label, 0, 0, 1, 3)
         self.layout().addWidget(self.subtitle_label, 1, 0, 1, 3)
         self.layout().addWidget(self.portrait_label, 2, 0)
         self.layout().addWidget(self.qrcode_label, 2, 1)
-        self.layout().addWidget(self.presenter_label, 4, 0, 1, 2)
-        self.layout().addWidget(self.table, 2, 2, 2, 2)
-        self.layout().addWidget(self.status_label, 4, 2)
+        self.layout().addWidget(self.table, 2, 2)
+        self.layout().addWidget(self.presenter_label, 3, 0, 1, 2)
+        self.layout().addWidget(self.status_label, 3, 2)
+        self.layout().setRowMinimumHeight(self.layout().rowCount(), bottom_margin)
 
-    def set_subtitle(self, text):
-        """Set the subtitle.
+    def show_debug_borders(self):
+        """Show the relevant widget borders to debug the geometry.
         """
-        self.subtitle_label.setText(text)
-
-    def set_status(self, text):
-        """Set the status text label.
-        """
-        self.status_label.setText(f'<font color="gray" size="2">{text}</font>')
+        for item in (self.title_label, self.subtitle_label, self.portrait_label,
+            self.qrcode_label, self.presenter_label, self.table, self.status_label):
+            item.setStyleSheet('border: 1px solid black;')
 
     def set_roster(self, roster):
         """Set the poster roster for the table.
@@ -327,6 +384,7 @@ class ScreenHeader(QWidget):
     def clear(self):
         """Clear the header.
         """
+        super().clear()
         self.presenter_label.setText('')
         self.status_label.setText('')
         self.table.clear()
@@ -342,7 +400,7 @@ class DisplaWindowBase(QWidget):
 
     DISPLAY_TYPE = None
 
-    def __init__(self, **kwargs):
+    def __init__(self, header_class=ScreenHeader, **kwargs):
         """Constructor.
         """
         super().__init__()
@@ -357,11 +415,17 @@ class DisplaWindowBase(QWidget):
         self.poster_width = kwargs['poster_width']
         self.header_height = kwargs['header_height']
         self.portrait_height = kwargs['portrait_height']
+        # Parse the optional display date and turn it into a
+        display_date = kwargs.get('display_date')
+        if display_date is None:
+            self.display_date = datetime.date.today()
+        else:
+            self.display_date = datetime.datetime.strptime(display_date, DATE_FORMAT).date()
         # Setup the widget.
         self.setLayout(QGridLayout())
         self.layout().setColumnMinimumWidth(0, self.poster_width)
-        header_title = f'{kwargs["conference_name"]} - {kwargs["conference_location"]}, {kwargs["conference_dates"]}'
-        self.header = ScreenHeader(header_title, kwargs['header_height'], kwargs['portrait_height'])
+        header_title = f'{kwargs["conference_name"]} - {kwargs["conference_location"]} - {kwargs["conference_dates"]}'
+        self.header = header_class(header_title, kwargs['header_height'], kwargs['portrait_height'])
         self.poster_label = QLabel()
         self.poster_label.setAlignment(Qt.AlignHCenter or Qt.AlignTop)
         self.layout().addWidget(self.header, 0, 0, 1, 3)
@@ -485,9 +549,14 @@ class SlideShow(DisplaWindowBase):
         logger.info('Loading poster roster...')
         self.hide()
         folder_path = os.path.dirname(self.config_file_path)
-        self.poster_roster = PosterRoster(self.config_file_path, folder_path, self.screen_id)
+        self.poster_roster = PosterRoster(self.config_file_path, folder_path,
+            self.screen_id, self.display_date)
+        if len(self.poster_roster) == 0:
+            abort('cannot load roster')
         self.poster_roster.load_pixmaps(self.poster_width, self.portrait_height)
         self.header.set_roster(self.poster_roster)
+        subtitle = f'{self.poster_roster.session.title} (screen #{self.screen_id})'
+        self.header.set_subtitle(subtitle)
         self.header.table.set_roster(self.poster_roster)
         self._show()
         self.display_poster()
@@ -787,7 +856,7 @@ class ProgramBrowser(DisplaWindowBase):
     def keyPressEvent(self, event):
         """Handle the return key button press.
         """
-        # pylint: disable=invalid-name
+        # pylint: disable=lid-name
         if event.key() == BrowserKeyMap.PAUSE:
             pass
 
@@ -798,14 +867,15 @@ class SessionDirectory(DisplaWindowBase):
     """Session directory.
     """
 
-    DISPLAY_TYPE = 'Session directory'
+    DISPLAY_TYPE = 'Poster session directory'
 
     def __init__(self, **kwargs):
         """Constructor.
         """
-        super().__init__(**kwargs)
+        super().__init__(header_class=ScreenHeaderMinimal, **kwargs)
         self.advance_interval = self.sec_to_msec(kwargs['advance_interval'])
-        self.header.set_subtitle(self.DISPLAY_TYPE)
+        subtitle = f'{self.DISPLAY_TYPE} ({self.display_date.strftime(DATE_PRETTY_FORMAT)})'
+        self.header.set_subtitle(subtitle)
         self.poster_label.hide()
         self.tree_widget = ProgramTreeWidget(self.poster_width)
         self.layout().addWidget(self.tree_widget, 1, 0, 1, 3)
@@ -818,7 +888,13 @@ class SessionDirectory(DisplaWindowBase):
         # Load the program
         self.program = PosterProgram(kwargs.get('cfgfile'))
         self.__num_sessions = self._load_program()
+        if self.__num_sessions == 0:
+            abort('No valid session found for the specified date (%s)' % self.display_date)
         self.__current_index = -1
+        if False:
+            file_path = os.path.join(self.program.qrcode_folder_path, 'timetable.png')
+            pixmap = Poster._load_pixmap_h(file_path, self.portrait_height)
+            self.header.qrcode_label.setPixmap(pixmap)
         self.toggle_session()
         self._show()
 
@@ -827,7 +903,7 @@ class SessionDirectory(DisplaWindowBase):
         """
         items = []
         for session, posters in self.program.items():
-            if not session.ongoing():
+            if not session.ongoing(self.display_date):
                 continue
             item = QTreeWidgetItem([session.title])
             for poster in posters:
@@ -855,4 +931,4 @@ class SessionDirectory(DisplaWindowBase):
     def status_message(self):
         """Do nothing overloaded method.
         """
-        return f'Toggling session in {self.remaining_time(self.toggle_timer)} s...'
+        return f'Toggling session in {self.remaining_time(self.toggle_timer)} s (we appreciate your patience)...'
