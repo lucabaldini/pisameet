@@ -232,7 +232,7 @@ class ScreenHeaderMinimal(QWidget):
         subtitle_font_size = kwargs.get('subtitle_font_size', 18)
         bottom_row_height = kwargs.get('bottom_row_height', 15)
         horizontal_spacing = kwargs.get('horizontal_spacing', 30)
-        vertical_spacing = kwargs.get('vertical_spacing', 15)
+        vertical_spacing = kwargs.get('vertical_spacing', 10)
         margin = kwargs.get('margin', 0)
         super().__init__()
         self.setLayout(QGridLayout())
@@ -320,7 +320,7 @@ class ScreenHeader(ScreenHeaderMinimal):
         self.table = RosterTable(portrait_height)
         self._roster = None
         super().__init__(title, **kwargs)
-        self.setFixedHeight(height)
+        #self.setFixedHeight(height)
         if False:
             self.show_debug_borders()
 

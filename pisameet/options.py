@@ -88,7 +88,7 @@ class ArgumentParser(argparse.ArgumentParser):
             help='width of the poster display (taken from the screen size by default)')
         self.add_argument('--header-height', type=int, default=default_header_height,
             help='height of the poster header')
-        self.add_argument('--portrait-height', type=int, default=120,
+        self.add_argument('--portrait-height', type=int, default=165,
             help='height of the presenter portraits and QR codes')
 
     def add_date(self):
