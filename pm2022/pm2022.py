@@ -111,6 +111,6 @@ def generate_qr_codes():
 
 if __name__ == '__main__':
     #dump_config_file()
-    download_attachments(True)
-    #dispatch_files()
+    #download_attachments(True)
+    dispatch_files()
     #generate_qr_codes()
