@@ -445,10 +445,13 @@ class PosterProgram(PosterCollectionBase, dict):
         """
         for session, posters in self.items():
             logger.info(session)
-            logger.info('Total number of posters: %d', len(posters))
             cnt = Counter([poster.screen_id for poster in posters])
             cnt = dict(sorted(cnt.items()))
-            logger.info('Screen stats: %s', cnt)
+            num_posters = len(posters)
             mult = cnt.values()
-            logger.info('Multiplicity range: %d--%d', min(mult), max(mult))
-            
+            num_screens = len(mult)
+            mean_mult = num_posters / num_screens
+            logger.info('Total number of posters: %d on %d screen(s)', num_posters, num_screens)
+            logger.info('Multiplicity range: %d--%d (average %.2f)', min(mult), max(mult), mean_mult)
+            logger.info('Stats: %s', cnt)
+            print()
