@@ -730,6 +730,7 @@ class BrowserStatus(Enum):
 
     TREE_VIEW = auto()
     POSTER_VIEW = auto()
+    CAROUSEL = auto()
 
 
 
@@ -738,6 +739,7 @@ class ProgramBrowser(DisplaWindowBase):
     """Poster browser.
     """
 
+    VALID_KEYS = [key.value for key in BrowserKeyMap]
     DISPLAY_TYPE = 'Program browser'
 
     def __init__(self, **kwargs):
@@ -759,18 +761,19 @@ class ProgramBrowser(DisplaWindowBase):
         # Load the program.
         self.program = PosterProgram(kwargs.get('cfgfile'))
         self._load_program()
-        # Setup the timers.
-        self.advance_timer = QTimer()
-        self.advance_timer.setInterval(self.sec_to_msec(kwargs['advance_interval']))
-        self.advance_timer.timeout.connect(self.advance)
-        self.poster_timer = QTimer()
-        self.poster_timer.setInterval(self.sec_to_msec(kwargs['pause_interval']))
-        self.poster_timer.setSingleShot(True)
+        # Setup the timers. We have two of them---one for the carousel progression
+        # and another one for toggling between the different views.
+        self.carousel_timer = QTimer()
+        self.carousel_timer.setInterval(self.sec_to_msec(kwargs['advance_interval']))
+        self.carousel_timer.timeout.connect(self.display_random_poster)
+        self.toggle_timer = QTimer()
+        self.toggle_timer.setInterval(self.sec_to_msec(kwargs['pause_interval']))
         # Setup the necessary connections.
-        self.poster_timer.timeout.connect(self.display_tree_view)
+        self.toggle_timer.timeout.connect(self.toggle_view)
         self.tree_widget.poster_selected.connect(self.display_current_poster)
         self.tree_widget.treeview_selected.connect(self.display_tree_view)
-        #self.advance_timer.start()
+        # By default we start the carousel.
+        self.start_carousel()
         # Show the window.
         self._show()
 
@@ -796,7 +799,15 @@ class ProgramBrowser(DisplaWindowBase):
     def status_message(self):
         """Overloaded method.
         """
-        return f'Poster closing in, {self.remaining_time(self.poster_timer)} s...'
+        if self.__status == BrowserStatus.CAROUSEL:
+            dt = self.remaining_time(self.carousel_timer)
+            return f'Carousel running, next random poster in {dt} s, press any key to see the full program...'
+        if self.__status == BrowserStatus.TREE_VIEW:
+            dt = self.remaining_time(self.toggle_timer)
+            return f'Full program view, going back to carousel in {dt} s...'
+        if self.__status == BrowserStatus.POSTER_VIEW:
+            dt = self.remaining_time(self.toggle_timer)
+            return f'Poster view, going back to full program view in {dt} s (press pause to reset the timer)...'
 
     def _display_poster(self, poster):
         """Base function to display a poster.
@@ -813,13 +824,14 @@ class ProgramBrowser(DisplaWindowBase):
         self.header.show()
         # Final bookkeeping.
         self.__current_poster = poster
-        self.__status = BrowserStatus.POSTER_VIEW
+        #self.__status = BrowserStatus.POSTER_VIEW
         self.header_timer.start()
-        self.poster_timer.start()
+        self.toggle_timer.start()
 
     def display_current_poster(self):
         """Display the poster corresponding to the current item.
         """
+        self.__status = BrowserStatus.POSTER_VIEW
         self._display_poster(self.tree_widget.currentItem().poster)
 
     def display_random_poster(self):
@@ -827,10 +839,21 @@ class ProgramBrowser(DisplaWindowBase):
         """
         self._display_poster(self.program.random_poster())
 
+    def toggle_view(self):
+        """Toggle between the different views.
+        """
+        if self.__status == BrowserStatus.TREE_VIEW:
+            self.start_carousel()
+        elif self.__status == BrowserStatus.POSTER_VIEW:
+            self.display_tree_view()
+
     def display_tree_view(self):
         """Display the tree view.
         """
-        self.header_timer.stop()
+        self.__status = BrowserStatus.TREE_VIEW
+        # Stop the carousel timer and start the toggle timer.
+        self.carousel_timer.stop()
+        self.toggle_timer.start()
         # Clear up and hide the poster
         self.header.clear()
         self.poster_label.clear()
@@ -838,27 +861,35 @@ class ProgramBrowser(DisplaWindowBase):
         # Show up the tree widget and re-enable the key-press events.
         self.tree_widget.show()
         self.tree_widget.enable_key_press_events()
+        self.tree_widget.setFocus()
         # Final bookkeeping.
-        self.__status = BrowserStatus.TREE_VIEW
         if self.__current_poster is not None:
             self.__current_poster.unload_pixmaps()
             self.__current_poster = None
 
-    def advance(self):
+    def start_carousel(self):
+        """Start the carousel.
         """
-        """
-        self.__current_index = (self.__current_index + 1) % (self.poster_prescale + 1)
-        if self.__current_index == 0:
-            self.display_tree_view()
-        else:
-            self.display_random_poster()
+        # Set the status to BrowserStatus.CAROUSEL.
+        self.__status = BrowserStatus.CAROUSEL
+        # Stop the toggle timer.
+        self.toggle_timer.stop()
+        # Display the first random poster, and start the carousel timer, so that
+        # the posters start cycling.
+        self.display_random_poster()
+        self.carousel_timer.start()
+        # And mind we need to get the focus on the main window, otherwise we might
+        # be messing around with the underlying tree widget and, even more
+        # important, we will not be accepting keyPressEvents.
+        self.setFocus()
 
     def keyPressEvent(self, event):
         """Handle the return key button press.
         """
-        # pylint: disable=lid-name
-        if event.key() == BrowserKeyMap.PAUSE:
-            pass
+        if self.__status == BrowserStatus.CAROUSEL and event.key() in self.VALID_KEYS:
+            self.display_tree_view()
+        elif self.__status == BrowserStatus.TREE_VIEW and event.key() in self.VALID_KEYS:
+            self.toggle_timer.start()
 
 
 
