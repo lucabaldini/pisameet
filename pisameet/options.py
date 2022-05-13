@@ -79,7 +79,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument('--conference-location', type=str, default='May 22-28, 2022',
             help='the conference location')
 
-    def add_geometry(self, default_header_height=320):
+    def add_geometry(self, default_header_height=290):
         """Add all the geometry options.
         """
         self.add_argument('--mode', type=str, default='maximize', choices=VALID_DISPLAY_MODES,
@@ -88,7 +88,7 @@ class ArgumentParser(argparse.ArgumentParser):
             help='width of the poster display (taken from the screen size by default)')
         self.add_argument('--header-height', type=int, default=default_header_height,
             help='height of the poster header')
-        self.add_argument('--portrait-height', type=int, default=165,
+        self.add_argument('--portrait-height', type=int, default=132,
             help='height of the presenter portraits and QR codes')
 
     def add_date(self):

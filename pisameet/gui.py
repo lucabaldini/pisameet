@@ -170,7 +170,7 @@ class RosterTable(QTableWidget):
         item.setForeground(self._default_color)
         self.setItem(row, col, item)
 
-    def set_poster(self, row: int, poster: Poster):
+    def set_poster(self, row: int, poster: Poster, title_length=65):
         """Populate a given row with the poster information.
 
         Arguments
@@ -182,7 +182,7 @@ class RosterTable(QTableWidget):
             The poster to be displayed on a given row.
         """
         self.set_text(row, 0, f'[{poster.friendly_id}]')
-        self.set_text(row, 1, f'{poster.short_title(60)}'.ljust(80))
+        self.set_text(row, 1, f'{poster.short_title(title_length)}'.ljust(title_length))
         self.set_text(row, 2, f'{poster.presenter.full_name()}')
 
     def set_roster(self, roster: PosterRoster):
