@@ -79,7 +79,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument('--conference-location', type=str, default='May 22-28, 2022',
             help='the conference location')
 
-    def add_geometry(self, default_header_height=290):
+    def add_geometry(self, default_header_height=310):
         """Add all the geometry options.
         """
         self.add_argument('--mode', type=str, default='maximize', choices=VALID_DISPLAY_MODES,
