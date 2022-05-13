@@ -320,7 +320,7 @@ class ScreenHeader(ScreenHeaderMinimal):
         self.table = RosterTable(portrait_height)
         self._roster = None
         super().__init__(title, **kwargs)
-        #self.setFixedHeight(height)
+        self.setFixedHeight(height)
         if False:
             self.show_debug_borders()
 
