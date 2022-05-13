@@ -17,6 +17,7 @@
 """Basic description of the conference program.
 """
 
+from collections import Counter
 import datetime
 import os
 import random
@@ -438,3 +439,16 @@ class PosterProgram(PosterCollectionBase, dict):
         poster = random.choice(self[session])
         logger.debug(poster)
         return poster
+
+    def dump_report(self):
+        """Dump a program report for diagnostics purposes.
+        """
+        for session, posters in self.items():
+            logger.info(session)
+            logger.info('Total number of posters: %d', len(posters))
+            cnt = Counter([poster.screen_id for poster in posters])
+            cnt = dict(sorted(cnt.items()))
+            logger.info('Screen stats: %s', cnt)
+            mult = cnt.values()
+            logger.info('Multiplicity range: %d--%d', min(mult), max(mult))
+            
