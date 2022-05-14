@@ -894,13 +894,19 @@ class ProgramBrowser(DisplaWindowBase):
         """Handle the return key button press.
         """
         key = event.key()
+        # If we are in carousel mode we want to switch to tree view if any key is
+        # pressed.
         if self.__status == BrowserStatus.CAROUSEL and key in self.VALID_KEYS:
             self.display_tree_view()
+        # If we are in tree view, we go back to carousel mode by pressing the
+        # COLLAPSE button. And we restart the toggle timer if any key is pressed.
         elif self.__status == BrowserStatus.TREE_VIEW and key in self.VALID_KEYS:
             if key == BrowserKeyMap.COLLAPSE.value:
                 self.start_carousel()
             else:
                 self.toggle_timer.start()
+        # If we are in poster view mode, we buy more time with the pause button,
+        # or go back to the tree view with the collapse button.
         elif self.__status == BrowserStatus.POSTER_VIEW:
             if key == BrowserKeyMap.PAUSE.value:
                 self.toggle_timer.start()
