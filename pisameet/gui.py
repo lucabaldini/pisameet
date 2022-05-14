@@ -812,10 +812,10 @@ class ProgramBrowser(DisplaWindowBase):
             return f'Carousel running, next random poster in {dt} s, press any key to see the full program...'
         if self.__status == BrowserStatus.TREE_VIEW:
             dt = self.remaining_time(self.toggle_timer)
-            return f'Full program view, going back to carousel in {dt} s...'
+            return f'Full program view, returning to carousel in {dt} s (navigate with the arrows, or press the left button to go back)...'
         if self.__status == BrowserStatus.POSTER_VIEW:
             dt = self.remaining_time(self.toggle_timer)
-            return f'Poster view, going back to full program view in {dt} s (press the pause button to reset the timer)...'
+            return f'Poster view, returning to full program in {dt} s (press the left button to go back, or the pause button to reset the timer)...'
 
     def _display_poster(self, poster):
         """Base function to display a poster.
@@ -893,13 +893,19 @@ class ProgramBrowser(DisplaWindowBase):
     def keyPressEvent(self, event):
         """Handle the return key button press.
         """
-        print(event.key(), BrowserKeyMap.PAUSE.value, event.key() == BrowserKeyMap.PAUSE.value)
-        if self.__status == BrowserStatus.CAROUSEL and event.key() in self.VALID_KEYS:
+        key = event.key()
+        if self.__status == BrowserStatus.CAROUSEL and key in self.VALID_KEYS:
             self.display_tree_view()
-        elif self.__status == BrowserStatus.TREE_VIEW and event.key() in self.VALID_KEYS:
-            self.toggle_timer.start()
-        elif self.__status == BrowserStatus.POSTER_VIEW and event.key() == BrowserKeyMap.PAUSE.value:
-            self.toggle_timer.start()
+        elif self.__status == BrowserStatus.TREE_VIEW and key in self.VALID_KEYS:
+            if key == BrowserKeyMap.COLLAPSE.value:
+                self.start_carousel()
+            else:
+                self.toggle_timer.start()
+        elif self.__status == BrowserStatus.POSTER_VIEW:
+            if key == BrowserKeyMap.PAUSE.value:
+                self.toggle_timer.start()
+            elif key == BrowserKeyMap.COLLAPSE.value:
+                self.display_tree_view()
 
 
 
