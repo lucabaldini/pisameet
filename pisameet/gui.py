@@ -27,7 +27,7 @@ import pandas as pd
 # pylint: disable=no-name-in-module, too-many-instance-attributes
 from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect,\
     QTableWidget, QTableWidgetItem, QHeaderView, QTreeWidget, QTreeWidgetItem
-from PyQt5.QtGui import QKeyEvent, QColor, QPixmap
+from PyQt5.QtGui import QKeyEvent, QColor
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
 from pisameet import logger, abort, read_screen_id
@@ -711,6 +711,7 @@ class ProgramTreeWidget(QTreeWidget):
         This is the one place where we intercept the arrow keys, and adapt the
         interaction with the tree widget.
         """
+        # pylint: disable=invalid-name
         # If one of the active key for the parent browser is pressed, we want
         # to signal it to the parent.
         if event.key() in ProgramBrowser.VALID_KEYS:
@@ -753,7 +754,6 @@ class ProgramBrowser(DisplaWindowBase):
         """Constructor.
         """
         super().__init__(**kwargs)
-        self.poster_prescale = 2
         # Hide the header and the poster label, and show the tree view, instead.
         self.header.set_subtitle(self.DISPLAY_TYPE)
         self.poster_label.hide()
@@ -764,7 +764,6 @@ class ProgramBrowser(DisplaWindowBase):
         # We need a reference to the current poster so that we can free up the
         # memory taken by the pixmaps when the tree view is restored.
         self.__current_poster = None
-        self.__current_index = 0
         # Load the program.
         self.program = PosterProgram(kwargs.get('cfgfile'))
         self._load_program()
@@ -808,14 +807,18 @@ class ProgramBrowser(DisplaWindowBase):
         """Overloaded method.
         """
         if self.__status == BrowserStatus.CAROUSEL:
-            dt = self.remaining_time(self.carousel_timer)
-            return f'Carousel running, next random poster in {dt} s, press any key to see the full program...'
+            delta = self.remaining_time(self.carousel_timer)
+            tip = 'press any key to see the full program'
+            return f'Carousel running, next random poster in {delta} s ({tip})...'
         if self.__status == BrowserStatus.TREE_VIEW:
-            dt = self.remaining_time(self.toggle_timer)
-            return f'Full program view, returning to carousel in {dt} s (navigate with the arrows, or press the left button to go back)...'
+            delta = self.remaining_time(self.toggle_timer)
+            tip = 'navigate with the arrows, or press the left button to go back'
+            return f'Full program view, returning to carousel in {delta} s ({tip})...'
         if self.__status == BrowserStatus.POSTER_VIEW:
-            dt = self.remaining_time(self.toggle_timer)
-            return f'Poster view, returning to full program in {dt} s (press the left button to go back, or the pause button to reset the timer)...'
+            delta = self.remaining_time(self.toggle_timer)
+            tip = 'press the left button to go back, or the pause button to reset the timer'
+            return f'Poster view, returning to full program in {delta} s ({tip})...'
+        return None
 
     def _display_poster(self, poster):
         """Base function to display a poster.
@@ -893,6 +896,7 @@ class ProgramBrowser(DisplaWindowBase):
     def keyPressEvent(self, event):
         """Handle the return key button press.
         """
+        # pylint: disable=invalid-name
         key = event.key()
         # If we are in carousel mode we want to switch to tree view if any key is
         # pressed.
@@ -944,10 +948,9 @@ class SessionDirectory(DisplaWindowBase):
         if self.__num_sessions == 0:
             abort('No valid session found for the specified date (%s)' % self.display_date)
         self.__current_index = -1
-        if False:
-            file_path = os.path.join(self.program.qrcode_folder_path, 'timetable.png')
-            pixmap = Poster._load_pixmap_h(file_path, self.portrait_height)
-            self.header.qrcode_label.setPixmap(pixmap)
+        #file_path = os.path.join(self.program.qrcode_folder_path, 'timetable.png')
+        #pixmap = Poster._load_pixmap_h(file_path, self.portrait_height)
+        #self.header.qrcode_label.setPixmap(pixmap)
         self.toggle_session()
         self._show()
 
