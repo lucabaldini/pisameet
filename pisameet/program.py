@@ -451,7 +451,6 @@ class PosterProgram(PosterCollectionBase, dict):
             mult = cnt.values()
             num_screens = len(mult)
             mean_mult = num_posters / num_screens
-            logger.info('Total number of posters: %d on %d screen(s)', num_posters, num_screens)
-            logger.info('Multiplicity range: %d--%d (average %.2f)', min(mult), max(mult), mean_mult)
-            logger.info('Stats: %s', cnt)
-            print()
+            logger.info('%d posters on %d screen(s), multiplicity: %d--%d (average %.2f)',
+                num_posters, num_screens, min(mult), max(mult), mean_mult)
+            #logger.info('Stats: %s', cnt)
