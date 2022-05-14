@@ -901,16 +901,16 @@ class ProgramBrowser(DisplaWindowBase):
         # If we are in tree view, we go back to carousel mode by pressing the
         # COLLAPSE button. And we restart the toggle timer if any key is pressed.
         elif self.__status == BrowserStatus.TREE_VIEW and key in self.VALID_KEYS:
-            if key == BrowserKeyMap.COLLAPSE.value:
+            if key == BrowserKeyMap.COLLAPSE:
                 self.start_carousel()
             else:
                 self.toggle_timer.start()
         # If we are in poster view mode, we buy more time with the pause button,
         # or go back to the tree view with the collapse button.
         elif self.__status == BrowserStatus.POSTER_VIEW:
-            if key == BrowserKeyMap.PAUSE.value:
+            if key == BrowserKeyMap.PAUSE:
                 self.toggle_timer.start()
-            elif key == BrowserKeyMap.COLLAPSE.value:
+            elif key == BrowserKeyMap.COLLAPSE:
                 self.display_tree_view()
 
 
