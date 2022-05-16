@@ -31,6 +31,7 @@ from PyQt5.QtGui import QKeyEvent, QColor
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
 from pisameet import logger, abort, read_screen_id
+from pisameet.profile import psstatus
 from pisameet.program import Poster, PosterRoster, PosterProgram, DATE_FORMAT, DATE_PRETTY_FORMAT
 
 
@@ -428,8 +429,10 @@ class DisplaWindowBase(QWidget):
         self.header = header_class(header_title, kwargs['header_height'], kwargs['portrait_height'])
         self.poster_label = QLabel()
         self.poster_label.setAlignment(Qt.AlignHCenter or Qt.AlignTop)
+        self.debug_label = QLabel()
         self.layout().addWidget(self.header, 0, 0, 1, 3)
         self.layout().addWidget(self.poster_label, 1, 0, 1, 3)
+        self.layout().addWidget(self.debug_label, 2, 0, 1, 3)
         # Setup the fading effect.
         self.fading_effect = FadingEffect()
         if kwargs.get('fading', False):
@@ -449,6 +452,12 @@ class DisplaWindowBase(QWidget):
             self.showFullScreen()
         else:
             self.show()
+
+    def set_debug_message(self, text):
+        """Set the status text label.
+        """
+        text = f'<font color="gray" size="2">{text}</font><br/>'
+        self.debug_label.setText(text)
 
     @staticmethod
     def remaining_time(timer):
@@ -841,6 +850,7 @@ class ProgramBrowser(DisplaWindowBase):
         # be messing around with the underlying tree widget and, even more
         # important, we will not be accepting keyPressEvents.
         self.setFocus()
+        self.set_debug_message(psstatus())
 
     def display_current_poster(self):
         """Display the poster corresponding to the current item.
