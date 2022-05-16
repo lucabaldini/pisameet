@@ -26,7 +26,7 @@ try:
 except ImportError:
     psutil = None
 
-from ixpeobssim.utils.logging_ import logger
+from pisameet import logger
 
 
 NO_PSUTIL_MSG = 'No system information available.'
