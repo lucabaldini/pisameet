@@ -830,7 +830,7 @@ class ProgramBrowser(DisplaWindowBase):
         return None
 
     def unload_current_pixmaps(self):
-        """
+        """Unload all the pixmaps for the current poster.
         """
         if self.__current_poster is not None:
             self.__current_poster.unload_pixmaps()
@@ -842,7 +842,7 @@ class ProgramBrowser(DisplaWindowBase):
         # Hide the cutsom tree widget and disable the key-press events.
         self.tree_widget.hide()
         self.tree_widget.disable_key_press_events()
-        #
+        # Unload the pixmaps.
         self.unload_current_pixmaps()
         # Load the necessary pixmaps for the poster.
         self.program.load_poster_pixmaps(poster, self.poster_width, self.portrait_height)
