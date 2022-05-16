@@ -25,7 +25,7 @@ import pdfrw
 
 from pisameet import logger, PISAMEET_BASE
 from pisameet.indico import retrieve_info, ConferenceInfo
-from pisameet.dispatch import dispatch_posters
+from pisameet.dispatch import dispatch_posters, dispatch_pictures
 from pisameet.qrcode_ import generate_qrcode
 
 
@@ -37,6 +37,8 @@ INFO_FILE_PATH = os.path.join(LOCAL_ROOT, f'{BASE_NAME}.json')
 CONFIG_FILE_PATH = INFO_FILE_PATH.replace('.json', '.xlsx')
 ATTACH_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'indico_attachments')
 POSTER_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_original')
+POSTER_IMAGE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_images')
+PRESENTER_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'presenters')
 QRCODE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'qrcodes')
 
 
@@ -79,6 +81,16 @@ def dump_config_file():
     CONFERENCE_INFO.dump_excel(CONFIG_FILE_PATH)
 
 
+def generate_qr_codes():
+    """Generate all the relevant QR codes.
+    """
+    CONFERENCE_INFO.generate_qr_codes(QRCODE_FOLDER_PATH)
+    for url, file_name in [
+        ('https://agenda.infn.it/event/22092/timetable', 'timetable.png')
+    ]:
+        generate_qrcode(url, os.path.join(QRCODE_FOLDER_PATH, file_name))
+
+
 def download_attachments(refresh_info=False):
     """Download all the attachments.
 
@@ -96,21 +108,15 @@ def dispatch_files():
     """
     ids = CONFERENCE_INFO.contribution_ids()
     dispatch_posters(ids, ATTACH_FOLDER_PATH, POSTER_FOLDER_PATH)
+    dispatch_pictures(ids, ATTACH_FOLDER_PATH, PRESENTER_FOLDER_PATH)
 
 
-def generate_qr_codes():
-    """Generate all the relevant QR codes.
-    """
-    CONFERENCE_INFO.generate_qr_codes(QRCODE_FOLDER_PATH)
-    for url, file_name in [
-        ('https://agenda.infn.it/event/22092/timetable', 'timetable.png')
-    ]:
-        generate_qrcode(url, os.path.join(QRCODE_FOLDER_PATH, file_name))
 
 
 
 if __name__ == '__main__':
     #dump_config_file()
-    download_attachments(True)
+    #download_attachments(True)
     #dispatch_files()
     #generate_qr_codes()
+    dispatch_files()
