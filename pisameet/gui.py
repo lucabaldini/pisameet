@@ -829,12 +829,21 @@ class ProgramBrowser(DisplaWindowBase):
             return f'Poster view, returning to full program in {delta} s ({tip})...'
         return None
 
+    def unload_current_pixmaps(self):
+        """
+        """
+        if self.__current_poster is not None:
+            self.__current_poster.unload_pixmaps()
+            self.__current_poster = None
+
     def _display_poster(self, poster):
         """Base function to display a poster.
         """
         # Hide the cutsom tree widget and disable the key-press events.
         self.tree_widget.hide()
         self.tree_widget.disable_key_press_events()
+        #
+        self.unload_current_pixmaps()
         # Load the necessary pixmaps for the poster.
         self.program.load_poster_pixmaps(poster, self.poster_width, self.portrait_height)
         # Update the widgets and show the poster label.
@@ -886,10 +895,6 @@ class ProgramBrowser(DisplaWindowBase):
         self.tree_widget.show()
         self.tree_widget.enable_key_press_events()
         self.tree_widget.setFocus()
-        # Final bookkeeping.
-        if self.__current_poster is not None:
-            self.__current_poster.unload_pixmaps()
-            self.__current_poster = None
 
     def start_carousel(self):
         """Start the carousel.
