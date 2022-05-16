@@ -36,9 +36,11 @@ INDICO_URL = 'https://agenda.infn.it/export/event/22092.json'
 INFO_FILE_PATH = os.path.join(LOCAL_ROOT, f'{BASE_NAME}.json')
 CONFIG_FILE_PATH = INFO_FILE_PATH.replace('.json', '.xlsx')
 ATTACH_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'indico_attachments')
-POSTER_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_original')
+POSTER_ORIGINAL_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_original')
+PRESENTER_ORIGINAL_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'presenter_original')
 POSTER_IMAGE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_images')
 PRESENTER_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'presenters')
+
 QRCODE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'qrcodes')
 
 
@@ -107,8 +109,8 @@ def dispatch_files():
     later consumption by the slideshow and the program browser.
     """
     ids = CONFERENCE_INFO.contribution_ids()
-    dispatch_posters(ids, ATTACH_FOLDER_PATH, POSTER_FOLDER_PATH)
-    dispatch_pictures(ids, ATTACH_FOLDER_PATH, PRESENTER_FOLDER_PATH)
+    dispatch_posters(ids, ATTACH_FOLDER_PATH, POSTER_ORIGINAL_FOLDER_PATH)
+    dispatch_pictures(ids, ATTACH_FOLDER_PATH, PRESENTER_ORIGINAL_FOLDER_PATH)
 
 
 

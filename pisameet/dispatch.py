@@ -100,6 +100,7 @@ def dispatch_posters(contribution_ids, src_folder_path, dest_folder_path):
 def dispatch_pictures(contribution_ids, src_folder_path, dest_folder_path):
     """
     """
+    logger.info('Dispatching pictures...')
     file_dict = {id_: [] for id_ in contribution_ids}
     for file_name in os.listdir(src_folder_path):
         if not file_name.split('.')[-1].lower() in ('png', 'jpg', 'jpeg'):
@@ -125,3 +126,4 @@ def dispatch_pictures(contribution_ids, src_folder_path, dest_folder_path):
         else:
             logger.warning('%d candidate pictures found for contribution...',
                 len(attachments), id_)
+    logger.info('Done.')
