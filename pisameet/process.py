@@ -21,6 +21,8 @@
 import os
 import subprocess
 
+from PIL import Image
+
 from pisameet import logger
 from pisameet.qrcode_ import generate_qrcode
 
@@ -71,3 +73,17 @@ def process_posters(folder_path : str, output_folder_path : str):
     """
     for file_path in crawl(folder_path):
         pdf_to_png(file_path, output_folder_path)
+
+
+def resize_image(file_path, height: int, output_folder_path, reducing_gap=3.):
+    """Resize an image to the target height.
+    """
+    with Image.open(file_path) as img:
+        w, h = img.size
+        width = round(height / h * w)
+        file_name = os.path.basename(file_path)
+        logger.info('Resizing image %s (%d, %d) -> (%d, %d)...', file_name, w, h, width, height)
+        img = img.resize((width, height), reducing_gap=reducing_gap)
+        dest = os.path.join(output_folder_path, f'{file_name.split(".")[0]}.png')
+        logger.info('Saving image to %s...', dest)
+        img.save(dest)

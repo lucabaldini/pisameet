@@ -26,6 +26,7 @@ import pdfrw
 from pisameet import logger, PISAMEET_BASE
 from pisameet.indico import retrieve_info, ConferenceInfo
 from pisameet.dispatch import dispatch_posters, dispatch_pictures
+from pisameet.process import resize_image, process_posters
 from pisameet.qrcode_ import generate_qrcode
 
 
@@ -40,7 +41,6 @@ POSTER_ORIGINAL_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_original')
 PRESENTER_ORIGINAL_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'presenter_original')
 POSTER_IMAGE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_images')
 PRESENTER_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'presenters')
-
 QRCODE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'qrcodes')
 
 
@@ -113,6 +113,20 @@ def dispatch_files():
     dispatch_pictures(ids, ATTACH_FOLDER_PATH, PRESENTER_ORIGINAL_FOLDER_PATH)
 
 
+def process_presenter_pics(height: int = 132):
+    """Process the presenter pics.
+    """
+    for file_name in os.listdir(PRESENTER_ORIGINAL_FOLDER_PATH):
+        file_path = os.path.join(PRESENTER_ORIGINAL_FOLDER_PATH, file_name)
+        resize_image(file_path, height, PRESENTER_FOLDER_PATH)
+
+
+def process():
+    """
+    """
+    process_posters(POSTER_ORIGINAL_FOLDER_PATH, POSTER_IMAGE_FOLDER_PATH)
+    process_presenter_pics()
+
 
 
 
@@ -121,4 +135,5 @@ if __name__ == '__main__':
     #download_attachments(True)
     #dispatch_files()
     #generate_qr_codes()
-    dispatch_files()
+    #dispatch_files()
+    process()
