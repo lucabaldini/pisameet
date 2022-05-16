@@ -65,24 +65,9 @@ def pdf_to_png(input_file_path: str, output_folder_path) -> str:
     subprocess.run(['convert', input_file_path, output_file_path], check=True)
     return output_file_path
 
-def generate_qr_codes(folder_path : str, output_folder_path : str):
-    """Generate all the QR codes.
-    """
-    for file_path in crawl(folder_path):
-        poster_id = os.path.basename(file_path).split('-')[0]
-        file_name = f'{poster_id}-qrcode.png'
-        qrcode_path = os.path.join(output_folder_path, file_name)
-        logger.info('Writing QR-code to %s...', qrcode_path)
-        generate_qrcode(file_path, qrcode_path)
 
-def preprocess_posters(folder_path : str, output_folder_path : str):
+def process_posters(folder_path : str, output_folder_path : str):
     """Save png versions of the posters.
     """
     for file_path in crawl(folder_path):
         pdf_to_png(file_path, output_folder_path)
-
-
-
-if __name__ == '__main__':
-    preprocess_posters('pm2022/poster_original', 'pm2022/poster_images')
-    #generate_qr_codes('pm2022/poster_original', 'pm2022/qrcodes')
