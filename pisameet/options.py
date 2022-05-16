@@ -82,7 +82,7 @@ class ArgumentParser(argparse.ArgumentParser):
     def add_geometry(self, default_header_height=310):
         """Add all the geometry options.
         """
-        self.add_argument('--mode', type=str, default='maximize', choices=VALID_DISPLAY_MODES,
+        self.add_argument('--mode', type=str, default='fullscreen', choices=VALID_DISPLAY_MODES,
             help='display geometry')
         self.add_argument('--poster-width', type=int, default=None,
             help='width of the poster display (taken from the screen size by default)')
