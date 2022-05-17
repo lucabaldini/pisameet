@@ -1,0 +1,173 @@
+#
+# Copyright (C) 2021, luca.baldini@pi.infn.it
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+"""Pre-processing tools.
+"""
+
+import os
+import subprocess
+
+import cv2
+from PIL import Image
+
+from pisameet import logger
+from pisameet.qrcode_ import generate_qrcode
+
+
+def crawl(folder_path: str, file_type: str = '.pdf', filter_pattern: str = None) -> list:
+    """Crawl a given folder recursively and return a list of all the files of
+    a given type matching a given pattern.
+
+    Arguments
+    ---------
+    folder_path : str
+        The path to the root folder to be recursively crawled.
+
+    file_type : str
+        The file extension, including the dot (e.g., '.pdf')
+
+    filter_pattern : str
+        An optional filtering pattern---if not None, only the files containing
+        the pattern in the name are retained.
+
+    Return
+    ------
+    A list of absolute file paths.
+    """
+    file_list = []
+    for root, _, files in os.walk(folder_path):
+        file_list += [os.path.join(root, file) for file in files if file.endswith(file_type)]
+    file_list.sort()
+    if filter_pattern is not None:
+        file_list = [file_path for file_path in file_list \
+            if filter_pattern in os.path.basename(file_path)]
+    return file_list
+
+
+def pdf_to_png(input_file_path: str, output_folder_path) -> str:
+    """Convert a .pdf file to a .png file.
+    """
+    assert input_file_path.endswith('.pdf')
+    file_name = os.path.basename(input_file_path).replace('.pdf', '.png')
+    output_file_path = os.path.join(output_folder_path, file_name)
+    print('Converting %s to %s...' % (input_file_path, output_file_path))
+    subprocess.run(['convert', input_file_path, output_file_path], check=True)
+    return output_file_path
+
+
+def process_posters(folder_path : str, output_folder_path : str):
+    """Save png versions of the posters.
+    """
+    for file_path in crawl(folder_path):
+        pdf_to_png(file_path, output_folder_path)
+
+
+def resize_image(file_path, height: int, output_folder_path, reducing_gap=3.):
+    """Resize an image to the target height.
+    """
+    with Image.open(file_path) as img:
+        w, h = img.size
+        width = round(height / h * w)
+        file_name = os.path.basename(file_path)
+        logger.info('Resizing image %s (%d, %d) -> (%d, %d)...', file_name, w, h, width, height)
+        img = img.resize((width, height), reducing_gap=reducing_gap)
+        dest = os.path.join(output_folder_path, f'{file_name.split(".")[0]}.png')
+        logger.info('Saving image to %s...', dest)
+        img.save(dest)
+
+
+
+HAARCASCADE_FILE_PATH = '/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml'
+
+def face_bbox(file_path, min_frac_size: float = 0.15, padding=1.85):
+    """Run a simple opencv face detection and return the proper bounding box for
+    cropping the input image.
+
+    This is returning an approximately square (modulo 1 pixel possible difference
+    between the two sides) bounding box containing the face.
+    """
+    logger.info('Running face detection on %s...', file_path)
+    # Run opencv and find the face.
+    cascade = cv2.CascadeClassifier(HAARCASCADE_FILE_PATH)
+    img = cv2.imread(file_path)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    height, width = img.shape
+    min_size = round(width * min_frac_size), round(height * min_frac_size)
+    faces = cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=5, minSize=min_size)
+    x, y, w, h = faces[-1]
+    # Calculate the starting center and size.
+    x0, y0 = x + w // 2, y + h // 2
+    half_side = round(0.5 * max(w, h) * padding)
+    # First pass on the bounding box.
+    xmin = max(x0 - half_side, 0)
+    ymin = max(y0 - half_side, 0)
+    xmax = min(x0 + half_side, width - 1)
+    ymax = min(y0 + half_side, height - 1)
+    # Second pass to avoid exceeding the physical dimensions of the original image.
+    w = xmax - xmin
+    h = ymax - ymin
+    if h > w:
+        delta = (h - w) // 2
+        ymin += delta
+        ymax -= delta
+    w = xmax - xmin
+    h = ymax - ymin
+    assert abs(w - h) <= 1
+    bbox = (xmin, ymin, xmax, ymax)
+    logger.info('%d face candidate(s) found, last bbox = %s', len(faces), bbox)
+    return bbox
+
+
+EXIF_ORIENTATION_TAG = 274
+EXIF_ROTATION_DICT = {3: 180, 6: 270, 8: 90}
+
+
+def resize_presenter_pic(file_path: str, height: int, output_file_path: str = None, **kwargs):
+    """Resize a given presented pic to the target height.
+    """
+    logger.info('Resizing %s...', file_path)
+    kwargs.setdefault('resample', Image.ANTIALIAS)
+    kwargs.setdefault('reducing_gap', 3.)
+    with Image.open(file_path) as img:
+        # Parse the original image size and orientation.
+        w, h = img.size
+        orientation = img.getexif().get(EXIF_ORIENTATION_TAG, None)
+        logger.info('Original size: (%d, %d), orientation: %s', w, h, orientation)
+        # If the image is rotated, we need to change the orientation.
+        if orientation in EXIF_ROTATION_DICT:
+            rotation = EXIF_ROTATION_DICT[orientation]
+            logger.info('Applying a rotation by %d degrees...', rotation)
+            img = img.rotate(rotation, expand=True)
+            w, h = img.size
+            logger.info('Rotated size: (%d, %d)', w, h)
+        # Crop and scale to the target dimensions.
+        bbox = face_bbox(file_path)
+        logger.info('Resizing image to (%d, %d)...', height, height)
+        img = img.resize((height, height), box=bbox, **kwargs)
+        if output_file_path is not None:
+            logger.info('Saving image to %s...', output_file_path)
+            img.save(output_file_path)
+
+
+
+
+
+if __name__ == '__main__':
+    import glob
+    for file_path in glob.glob('/data/work/pisameet/pm2022/presenter_original/*.*'):
+        resize_presenter_pic(file_path, 132)
+

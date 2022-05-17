@@ -25,7 +25,8 @@ import pdfrw
 
 from pisameet import logger, PISAMEET_BASE
 from pisameet.indico import retrieve_info, ConferenceInfo
-from pisameet.dispatch import dispatch_posters
+from pisameet.dispatch import dispatch_posters, dispatch_pictures
+from pisameet.process import resize_image, process_posters, resize_presenter_pic
 from pisameet.qrcode_ import generate_qrcode
 
 
@@ -36,7 +37,10 @@ INDICO_URL = 'https://agenda.infn.it/export/event/22092.json'
 INFO_FILE_PATH = os.path.join(LOCAL_ROOT, f'{BASE_NAME}.json')
 CONFIG_FILE_PATH = INFO_FILE_PATH.replace('.json', '.xlsx')
 ATTACH_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'indico_attachments')
-POSTER_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_original')
+POSTER_ORIGINAL_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_original')
+PRESENTER_ORIGINAL_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'presenter_original')
+POSTER_IMAGE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_images')
+PRESENTER_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'presenters')
 QRCODE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'qrcodes')
 
 
@@ -79,6 +83,16 @@ def dump_config_file():
     CONFERENCE_INFO.dump_excel(CONFIG_FILE_PATH)
 
 
+def generate_qr_codes():
+    """Generate all the relevant QR codes.
+    """
+    CONFERENCE_INFO.generate_qr_codes(QRCODE_FOLDER_PATH)
+    for url, file_name in [
+        ('https://agenda.infn.it/event/22092/timetable', 'timetable.png')
+    ]:
+        generate_qrcode(url, os.path.join(QRCODE_FOLDER_PATH, file_name))
+
+
 def download_attachments(refresh_info=False):
     """Download all the attachments.
 
@@ -95,22 +109,31 @@ def dispatch_files():
     later consumption by the slideshow and the program browser.
     """
     ids = CONFERENCE_INFO.contribution_ids()
-    dispatch_posters(ids, ATTACH_FOLDER_PATH, POSTER_FOLDER_PATH)
+    dispatch_posters(ids, ATTACH_FOLDER_PATH, POSTER_ORIGINAL_FOLDER_PATH)
+    dispatch_pictures(ids, ATTACH_FOLDER_PATH, PRESENTER_ORIGINAL_FOLDER_PATH)
 
 
-def generate_qr_codes():
-    """Generate all the relevant QR codes.
+def process_presenter_pics(height: int = 132):
+    """Process the presenter pics.
     """
-    CONFERENCE_INFO.generate_qr_codes(QRCODE_FOLDER_PATH)
-    for url, file_name in [
-        ('https://agenda.infn.it/event/22092/timetable', 'timetable.png')
-    ]:
-        generate_qrcode(url, os.path.join(QRCODE_FOLDER_PATH, file_name))
+    for file_name in os.listdir(PRESENTER_ORIGINAL_FOLDER_PATH):
+        src = os.path.join(PRESENTER_ORIGINAL_FOLDER_PATH, file_name)
+        dest = os.path.join(PRESENTER_FOLDER_PATH, f'{file_name.split(".")[0]}.png')
+        resize_presenter_pic(src, height, dest)
+
+
+def process():
+    """
+    """
+    #process_posters(POSTER_ORIGINAL_FOLDER_PATH, POSTER_IMAGE_FOLDER_PATH)
+    process_presenter_pics()
+
 
 
 
 if __name__ == '__main__':
     #dump_config_file()
-    download_attachments(True)
+    #download_attachments(True)
     #dispatch_files()
     #generate_qr_codes()
+    process()

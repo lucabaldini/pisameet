@@ -22,6 +22,7 @@ This module contains all the widgets that are relevant for the slideshow.
 import datetime
 from enum import Enum, IntEnum, auto
 import os
+import time
 
 import pandas as pd
 # pylint: disable=no-name-in-module, too-many-instance-attributes
@@ -432,6 +433,9 @@ class DisplaWindowBase(QWidget):
         self.debug_label = QLabel()
         self.layout().addWidget(self.header, 0, 0, 1, 3)
         self.layout().addWidget(self.poster_label, 1, 0, 1, 3)
+        # Increase the stretch value for the poster label so that it takes
+        # all the available space.
+        self.layout().setRowStretch(1, 1)
         self.layout().addWidget(self.debug_label, 2, 0, 1, 3)
         # Setup the fading effect.
         self.fading_effect = FadingEffect()
@@ -441,6 +445,7 @@ class DisplaWindowBase(QWidget):
         self.header_timer = QTimer()
         self.header_timer.setInterval(100)
         self.header_timer.timeout.connect(self.update_header_status)
+        self.__start_time = time.time()
 
     def _show(self):
         """Small convenience hook to display the GUI in the proper visualization
@@ -458,6 +463,13 @@ class DisplaWindowBase(QWidget):
         """
         text = f'<font color="gray" size="2">{text}</font><br/>'
         self.debug_label.setText(text)
+
+    def update_debug_label(self):
+        """
+        """
+        uptime = time.time() - self.__start_time
+        msg = f'Powered by https://github.com/lucabaldini/pisameet, {uptime:.1f} s uptime, {psstatus()}'
+        self.set_debug_message(msg)
 
     @staticmethod
     def remaining_time(timer):
@@ -830,7 +842,7 @@ class ProgramBrowser(DisplaWindowBase):
         return None
 
     def unload_current_pixmaps(self):
-        """
+        """Unload all the pixmaps for the current poster.
         """
         if self.__current_poster is not None:
             self.__current_poster.unload_pixmaps()
@@ -842,7 +854,7 @@ class ProgramBrowser(DisplaWindowBase):
         # Hide the cutsom tree widget and disable the key-press events.
         self.tree_widget.hide()
         self.tree_widget.disable_key_press_events()
-        #
+        # Unload the pixmaps.
         self.unload_current_pixmaps()
         # Load the necessary pixmaps for the poster.
         self.program.load_poster_pixmaps(poster, self.poster_width, self.portrait_height)
@@ -855,11 +867,11 @@ class ProgramBrowser(DisplaWindowBase):
         self.__current_poster = poster
         self.header_timer.start()
         self.toggle_timer.start()
+        self.update_debug_label()
         # And mind we need to get the focus on the main window, otherwise we might
         # be messing around with the underlying tree widget and, even more
         # important, we will not be accepting keyPressEvents.
         self.setFocus()
-        self.set_debug_message(psstatus())
 
     def display_current_poster(self):
         """Display the poster corresponding to the current item.
@@ -917,13 +929,12 @@ class ProgramBrowser(DisplaWindowBase):
         # pressed.
         if self.__status == BrowserStatus.CAROUSEL and key in self.VALID_KEYS:
             self.display_tree_view()
-        # If we are in tree view, we go back to carousel mode by pressing the
-        # COLLAPSE button. And we restart the toggle timer if any key is pressed.
+        # If we are in tree view, we restart the toggle timer if any key is pressed.
         elif self.__status == BrowserStatus.TREE_VIEW and key in self.VALID_KEYS:
-            if key == BrowserKeyMap.COLLAPSE:
-                self.start_carousel()
-            else:
-                self.toggle_timer.start()
+            #if key == BrowserKeyMap.COLLAPSE:
+            #    self.start_carousel()
+            #else:
+            self.toggle_timer.start()
         # If we are in poster view mode, we buy more time with the pause button,
         # or go back to the tree view with the collapse button.
         elif self.__status == BrowserStatus.POSTER_VIEW:
