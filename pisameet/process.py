@@ -21,6 +21,7 @@
 import os
 import subprocess
 
+import cv2
 from PIL import Image
 
 from pisameet import logger
@@ -87,3 +88,61 @@ def resize_image(file_path, height: int, output_folder_path, reducing_gap=3.):
         dest = os.path.join(output_folder_path, f'{file_name.split(".")[0]}.png')
         logger.info('Saving image to %s...', dest)
         img.save(dest)
+
+
+
+HAARCASCADE_FILE_PATH = '/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml'
+
+def face_bbox(file_path):
+    """
+    """
+    cascade = cv2.CascadeClassifier(HAARCASCADE_FILE_PATH)
+    img = cv2.imread(file_path)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    faces = cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=5)
+    #for (x, y, w, h) in faces:
+    #    cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
+    #cv2.imshow('img', img)
+    #cv2.waitKey()
+
+
+
+EXIF_ORIENTATION_TAG = 274
+EXIF_ROTATION_DICT = {3: 180, 6: 270, 8: 90}
+
+
+def resize_presenter_pic(file_path: str, height: int, output_file_path: str = None, **kwargs):
+    """Resize a given presented pic to the target height.
+    """
+    logger.info('Resizing %s...', file_path)
+    kwargs.setdefault('resample', Image.ANTIALIAS)
+    kwargs.setdefault('reducing_gap', 3.)
+    with Image.open(file_path) as img:
+        # Parse the original image size and orientation.
+        w, h = img.size
+        orientation = img.getexif().get(EXIF_ORIENTATION_TAG, None)
+        logger.info('Original size: (%d, %d), orientation: %s', w, h, orientation)
+        # If the image is rotated, we need to change the orientation.
+        if orientation in EXIF_ROTATION_DICT:
+            rotation = EXIF_ROTATION_DICT[orientation]
+            logger.info('Applying a rotation by %d degrees...', rotation)
+            img = img.rotate(rotation, expand=True)
+            w, h = img.size
+            logger.info('Rotated size: (%d, %d)', w, h)
+        # Scale to the target dimensions.
+        width = round(height / h * w)
+        logger.info('Resizing image to (%d, %d)...', width, height)
+        img = img.resize((width, height), **kwargs)
+        if output_file_path is not None:
+            logger.info('Saving image to %s...', output_file_path)
+            img.save(output_file_path)
+
+
+
+
+
+if __name__ == '__main__':
+    import glob
+    for file_path in glob.glob('/data/work/pisameet/pm2022/presenter_original/*.png'):
+        resize_presenter_pic(file_path, 132)
+        face_bbox(file_path)
