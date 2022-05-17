@@ -93,18 +93,43 @@ def resize_image(file_path, height: int, output_folder_path, reducing_gap=3.):
 
 HAARCASCADE_FILE_PATH = '/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml'
 
-def face_bbox(file_path):
+def face_bbox(file_path, min_frac_size: float = 0.15, padding=1.85):
+    """Run a simple opencv face detection and return the proper bounding box for
+    cropping the input image.
+
+    This is returning an approximately square (modulo 1 pixel possible difference
+    between the two sides) bounding box containing the face.
     """
-    """
+    logger.info('Running face detection on %s...', file_path)
+    # Run opencv and find the face.
     cascade = cv2.CascadeClassifier(HAARCASCADE_FILE_PATH)
     img = cv2.imread(file_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    faces = cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=5)
-    #for (x, y, w, h) in faces:
-    #    cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
-    #cv2.imshow('img', img)
-    #cv2.waitKey()
-
+    height, width = img.shape
+    min_size = round(width * min_frac_size), round(height * min_frac_size)
+    faces = cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=5, minSize=min_size)
+    x, y, w, h = faces[-1]
+    # Calculate the starting center and size.
+    x0, y0 = x + w // 2, y + h // 2
+    half_side = round(0.5 * max(w, h) * padding)
+    # First pass on the bounding box.
+    xmin = max(x0 - half_side, 0)
+    ymin = max(y0 - half_side, 0)
+    xmax = min(x0 + half_side, width - 1)
+    ymax = min(y0 + half_side, height - 1)
+    # Second pass to avoid exceeding the physical dimensions of the original image.
+    w = xmax - xmin
+    h = ymax - ymin
+    if h > w:
+        delta = (h - w) // 2
+        ymin += delta
+        ymax -= delta
+    w = xmax - xmin
+    h = ymax - ymin
+    assert abs(w - h) <= 1
+    bbox = (xmin, ymin, xmax, ymax)
+    logger.info('%d face candidate(s) found, last bbox = %s', len(faces), bbox)
+    return bbox
 
 
 EXIF_ORIENTATION_TAG = 274
@@ -129,10 +154,10 @@ def resize_presenter_pic(file_path: str, height: int, output_file_path: str = No
             img = img.rotate(rotation, expand=True)
             w, h = img.size
             logger.info('Rotated size: (%d, %d)', w, h)
-        # Scale to the target dimensions.
-        width = round(height / h * w)
-        logger.info('Resizing image to (%d, %d)...', width, height)
-        img = img.resize((width, height), **kwargs)
+        # Crop and scale to the target dimensions.
+        bbox = face_bbox(file_path)
+        logger.info('Resizing image to (%d, %d)...', height, height)
+        img = img.resize((height, height), box=bbox, **kwargs)
         if output_file_path is not None:
             logger.info('Saving image to %s...', output_file_path)
             img.save(output_file_path)
@@ -143,6 +168,6 @@ def resize_presenter_pic(file_path: str, height: int, output_file_path: str = No
 
 if __name__ == '__main__':
     import glob
-    for file_path in glob.glob('/data/work/pisameet/pm2022/presenter_original/*.png'):
+    for file_path in glob.glob('/data/work/pisameet/pm2022/presenter_original/*.*'):
         resize_presenter_pic(file_path, 132)
-        face_bbox(file_path)
+
