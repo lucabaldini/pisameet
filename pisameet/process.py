@@ -76,19 +76,37 @@ def process_posters(folder_path : str, output_folder_path : str):
         pdf_to_png(file_path, output_folder_path)
 
 
-def resize_image(file_path, height: int, output_folder_path, reducing_gap=3.):
+def _resize_image(img, width, height, output_file_path=None, resample=Image.LANCZOS, reducing_gap=3.):
+    """Base function to resize an image.
+    """
+    w, h = img.size
+    logger.info('Resizing image (%d, %d) -> (%d, %d)...', w, h, width, height)
+    img = img.resize((width, height), resample, None, reducing_gap)
+    if output_file_path is not None:
+        logger.info('Saving image to %s...', output_file_path)
+        img.save(output_file_path)
+
+
+def resize_image_to_width(file_path, width: int, output_folder_path, **kwargs):
+    """Resize an image to the target width.
+    """
+    with Image.open(file_path) as img:
+        w, h = img.size
+        height = round(width / w * h)
+        file_name = os.path.basename(file_path)
+        dest = os.path.join(output_folder_path, f'{file_name.split(".")[0]}.png')
+        _resize_image(img, width, height, dest, **kwargs)
+
+
+def resize_image_to_height(file_path, height: int, output_folder_path, **kwargs):
     """Resize an image to the target height.
     """
     with Image.open(file_path) as img:
         w, h = img.size
         width = round(height / h * w)
         file_name = os.path.basename(file_path)
-        logger.info('Resizing image %s (%d, %d) -> (%d, %d)...', file_name, w, h, width, height)
-        img = img.resize((width, height), reducing_gap=reducing_gap)
         dest = os.path.join(output_folder_path, f'{file_name.split(".")[0]}.png')
-        logger.info('Saving image to %s...', dest)
-        img.save(dest)
-
+        _resize_image(img, width, height, dest, **kwargs)
 
 
 HAARCASCADE_FILE_PATH = '/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml'
@@ -167,7 +185,9 @@ def resize_presenter_pic(file_path: str, height: int, output_file_path: str = No
 
 
 if __name__ == '__main__':
-    import glob
-    for file_path in glob.glob('/data/work/pisameet/pm2022/presenter_original/*.*'):
-        resize_presenter_pic(file_path, 132)
-
+    #import glob
+    #for file_path in glob.glob('/data/work/pisameet/pm2022/presenter_original/*.*'):
+    #    resize_presenter_pic(file_path, 132)
+    for file_path in ('/data/work/pisameet/pm2022/poster_images/117.png',
+        '/data/work/pisameet/pm2022/poster_images/343.png'):
+        resize_image_to_width(file_path, 1060, '.')
