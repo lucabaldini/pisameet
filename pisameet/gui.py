@@ -234,7 +234,7 @@ class ScreenHeaderMinimal(QWidget):
         subtitle_font_size = kwargs.get('subtitle_font_size', 18)
         bottom_row_height = kwargs.get('bottom_row_height', 15)
         horizontal_spacing = kwargs.get('horizontal_spacing', 30)
-        vertical_spacing = kwargs.get('vertical_spacing', 10)
+        vertical_spacing = kwargs.get('vertical_spacing', 8)
         margin = kwargs.get('margin', 0)
         super().__init__()
         self.setLayout(QGridLayout())
@@ -867,7 +867,7 @@ class ProgramBrowser(DisplaWindowBase):
         self.__current_poster = poster
         self.header_timer.start()
         self.toggle_timer.start()
-        self.update_debug_label()
+        #self.update_debug_label()
         # And mind we need to get the focus on the main window, otherwise we might
         # be messing around with the underlying tree widget and, even more
         # important, we will not be accepting keyPressEvents.

@@ -24,6 +24,7 @@ import subprocess
 import cv2
 import PIL
 from PIL import Image
+import pdfrw
 
 from pisameet import logger
 from pisameet.qrcode_ import generate_qrcode
@@ -59,14 +60,14 @@ def crawl(folder_path: str, file_type: str = '.pdf', filter_pattern: str = None)
     return file_list
 
 
-def pdf_to_png(input_file_path: str, output_folder_path) -> str:
+def pdf_to_png(input_file_path: str, output_folder_path, density=72) -> str:
     """Convert a .pdf file to a .png file.
     """
     assert input_file_path.endswith('.pdf')
     file_name = os.path.basename(input_file_path).replace('.pdf', '.png')
     output_file_path = os.path.join(output_folder_path, file_name)
-    print('Converting %s to %s...' % (input_file_path, output_file_path))
-    subprocess.run(['convert', input_file_path, output_file_path], check=True)
+    print('Converting %s to %s (density = %d)...' % (input_file_path, output_file_path, density))
+    subprocess.run(['convert', '-density', f'{density}', input_file_path, output_file_path], check=True)
     return output_file_path
 
 

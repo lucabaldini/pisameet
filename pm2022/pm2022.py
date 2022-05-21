@@ -122,12 +122,29 @@ def process_presenter_pics(height: int = 132):
         dest = os.path.join(PRESENTER_FOLDER_PATH, f'{file_name.split(".")[0]}.png')
         resize_presenter_pic(src, height, dest)
 
+
+def process_poster(file_path, width=1060, intermediate_min_size=2500):
+    """Process a single poster.
+    """
+    # Gauge the bounding box for the input pdf file---this will be used to
+    # decide the value for -density option in convert.
+    pdf = pdfrw.PdfReader(file_path)
+    box = [float(val) for val in pdf.pages[0].MediaBox or pdf.pages[0].Parent.MediaBox]
+    width = box[2] - box[0]
+    height = box[3] - box[1]
+    side = min(width, height)
+    density = round(intermediate_min_size / side * 72)
+    # Convert the file to pdf.
+    _file_path = pdf_to_png(file_path, POSTER_IMAGE_FOLDER_PATH, density)
+    # Resize the image to the target value.
+    resize_image_to_width(_file_path, 1060, POSTER_IMAGE_FOLDER_PATH)
+
+
 def process_posters(width=1060):
     """Process the poster images.
     """
     for file_path in crawl(POSTER_ORIGINAL_FOLDER_PATH):
-        _file_path = pdf_to_png(file_path, POSTER_IMAGE_FOLDER_PATH)
-        resize_image_to_width(_file_path, 1060, POSTER_IMAGE_FOLDER_PATH)
+        process_poster(file_path)
 
 
 def process():
@@ -140,10 +157,12 @@ def process():
 
 if __name__ == '__main__':
     #donwload_info(overwrite=True)
-    dump_config_file()
+    #dump_config_file()
     #download_attachments(True)
     #dispatch_files()
     #generate_qr_codes()
     #process()
     #process_presenter_pics()
-    #process_posters()
+    process_posters()
+    #process_poster('pm2022/poster_original/311.pdf')
+    #process_poster('pm2022/poster_original/138.pdf')
