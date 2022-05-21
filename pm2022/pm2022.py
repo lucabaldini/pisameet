@@ -145,4 +145,5 @@ if __name__ == '__main__':
     #dispatch_files()
     #generate_qr_codes()
     #process()
-    process_posters()
+    process_presenter_pics()
+    #process_posters()

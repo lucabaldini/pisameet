@@ -128,8 +128,10 @@ def face_bbox(file_path, min_frac_size: float = 0.15, padding=1.85):
     min_size = round(width * min_frac_size), round(height * min_frac_size)
     faces = cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=5, minSize=min_size)
     if len(faces) == 0:
-        logger.warning('No candidate face found, returning full bounding box...')
-        return (0, 0, width - 1, height - 1 )
+        logger.warning('No candidate face found, returning dummy bounding box...')
+        x0, y0 = width // 2, height // 2
+        half_side = round(0.5 * min(width, height))
+        return (x0 - half_side, y0 - half_side, x0 + half_side, y0 + half_side)
     logger.info('%d candidate bounding boxes found...', len(faces))
     x, y, w, h = faces[-1]
     # Calculate the starting center and size.
@@ -149,7 +151,7 @@ def face_bbox(file_path, min_frac_size: float = 0.15, padding=1.85):
         ymax -= delta
     w = xmax - xmin
     h = ymax - ymin
-    if abs(w - h) <= 1:
+    if abs(w - h) > 1:
         logger.warning('Skewed bounding box (width = %d, height = %d)', w, h)
     bbox = (xmin, ymin, xmax, ymax)
     logger.info('%d face candidate(s) found, last bbox = %s', len(faces), bbox)
