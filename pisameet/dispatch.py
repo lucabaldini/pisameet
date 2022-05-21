@@ -124,6 +124,6 @@ def dispatch_pictures(contribution_ids, src_folder_path, dest_folder_path):
                 logger.info('Copying over poster to %s...', dest)
                 shutil.copyfile(src, dest)
         else:
-            logger.warning('%d candidate pictures found for contribution...',
+            logger.warning('%d candidate pictures found for contribution %d...',
                 len(attachments), id_)
     logger.info('Done.')

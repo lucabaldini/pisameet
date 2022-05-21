@@ -26,7 +26,8 @@ import pdfrw
 from pisameet import logger, PISAMEET_BASE
 from pisameet.indico import retrieve_info, ConferenceInfo
 from pisameet.dispatch import dispatch_posters, dispatch_pictures
-from pisameet.process import resize_image, process_posters, resize_presenter_pic
+from pisameet.process import resize_image_to_width, process_posters,\
+    resize_presenter_pic, pdf_to_png, crawl
 from pisameet.qrcode_ import generate_qrcode
 
 
@@ -121,19 +122,27 @@ def process_presenter_pics(height: int = 132):
         dest = os.path.join(PRESENTER_FOLDER_PATH, f'{file_name.split(".")[0]}.png')
         resize_presenter_pic(src, height, dest)
 
+def process_posters(width=1060):
+    """Process the poster images.
+    """
+    for file_path in crawl(POSTER_ORIGINAL_FOLDER_PATH):
+        _file_path = pdf_to_png(file_path, POSTER_IMAGE_FOLDER_PATH)
+        resize_image_to_width(_file_path, 1060, POSTER_IMAGE_FOLDER_PATH)
+
 
 def process():
     """
     """
-    #process_posters(POSTER_ORIGINAL_FOLDER_PATH, POSTER_IMAGE_FOLDER_PATH)
     process_presenter_pics()
-
+    process_posters()
 
 
 
 if __name__ == '__main__':
+    #donwload_info(overwrite=True)
     #dump_config_file()
     #download_attachments(True)
     #dispatch_files()
     #generate_qr_codes()
-    process()
+    #process()
+    process_posters()

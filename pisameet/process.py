@@ -22,6 +22,7 @@ import os
 import subprocess
 
 import cv2
+import PIL
 from PIL import Image
 
 from pisameet import logger
@@ -126,6 +127,10 @@ def face_bbox(file_path, min_frac_size: float = 0.15, padding=1.85):
     height, width = img.shape
     min_size = round(width * min_frac_size), round(height * min_frac_size)
     faces = cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=5, minSize=min_size)
+    if len(faces) == 0:
+        logger.warning('No candidate face found, returning full bounding box...')
+        return (0, 0, width - 1, height - 1 )
+    logger.info('%d candidate bounding boxes found...', len(faces))
     x, y, w, h = faces[-1]
     # Calculate the starting center and size.
     x0, y0 = x + w // 2, y + h // 2
@@ -144,7 +149,8 @@ def face_bbox(file_path, min_frac_size: float = 0.15, padding=1.85):
         ymax -= delta
     w = xmax - xmin
     h = ymax - ymin
-    assert abs(w - h) <= 1
+    if abs(w - h) <= 1:
+        logger.warning('Skewed bounding box (width = %d, height = %d)', w, h)
     bbox = (xmin, ymin, xmax, ymax)
     logger.info('%d face candidate(s) found, last bbox = %s', len(faces), bbox)
     return bbox
@@ -160,34 +166,25 @@ def resize_presenter_pic(file_path: str, height: int, output_file_path: str = No
     logger.info('Resizing %s...', file_path)
     kwargs.setdefault('resample', Image.ANTIALIAS)
     kwargs.setdefault('reducing_gap', 3.)
-    with Image.open(file_path) as img:
-        # Parse the original image size and orientation.
-        w, h = img.size
-        orientation = img.getexif().get(EXIF_ORIENTATION_TAG, None)
-        logger.info('Original size: (%d, %d), orientation: %s', w, h, orientation)
-        # If the image is rotated, we need to change the orientation.
-        if orientation in EXIF_ROTATION_DICT:
-            rotation = EXIF_ROTATION_DICT[orientation]
-            logger.info('Applying a rotation by %d degrees...', rotation)
-            img = img.rotate(rotation, expand=True)
+    try:
+        with Image.open(file_path) as img:
+            # Parse the original image size and orientation.
             w, h = img.size
-            logger.info('Rotated size: (%d, %d)', w, h)
-        # Crop and scale to the target dimensions.
-        bbox = face_bbox(file_path)
-        logger.info('Resizing image to (%d, %d)...', height, height)
-        img = img.resize((height, height), box=bbox, **kwargs)
-        if output_file_path is not None:
-            logger.info('Saving image to %s...', output_file_path)
-            img.save(output_file_path)
-
-
-
-
-
-if __name__ == '__main__':
-    #import glob
-    #for file_path in glob.glob('/data/work/pisameet/pm2022/presenter_original/*.*'):
-    #    resize_presenter_pic(file_path, 132)
-    for file_path in ('/data/work/pisameet/pm2022/poster_images/117.png',
-        '/data/work/pisameet/pm2022/poster_images/343.png'):
-        resize_image_to_width(file_path, 1060, '.')
+            orientation = img.getexif().get(EXIF_ORIENTATION_TAG, None)
+            logger.info('Original size: (%d, %d), orientation: %s', w, h, orientation)
+            # If the image is rotated, we need to change the orientation.
+            if orientation in EXIF_ROTATION_DICT:
+                rotation = EXIF_ROTATION_DICT[orientation]
+                logger.info('Applying a rotation by %d degrees...', rotation)
+                img = img.rotate(rotation, expand=True)
+                w, h = img.size
+                logger.info('Rotated size: (%d, %d)', w, h)
+            # Crop and scale to the target dimensions.
+            bbox = face_bbox(file_path)
+            logger.info('Resizing image to (%d, %d)...', height, height)
+            img = img.resize((height, height), box=bbox, **kwargs)
+            if output_file_path is not None:
+                logger.info('Saving image to %s...', output_file_path)
+                img.save(output_file_path)
+    except PIL.UnidentifiedImageError as exception:
+        logger.error(exception)
