@@ -200,9 +200,25 @@ class ConferenceInfo(dict):
         writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
 
         # Create the master sheet with the session data.
-        def _session_data(key):
+        def _session_data(key, change_hour='15:00:00'):
             """Small nested function to facilitate the session data retrival.
             """
+            if key == 'startDate':
+                _data = []
+                for session in self.values():
+                    date_dict = session[key]
+                    if int(date_dict['time'].split(':')[0]) < 13:
+                        date_dict['time'] = '00:01:00'
+                    else:
+                        date_dict['time'] = change_hour
+            if key == 'endDate':
+                _data = []
+                for session in self.values():
+                    date_dict = session[key]
+                    if int(date_dict['time'].split(':')[0]) < 13:
+                        date_dict['time'] = change_hour
+                    else:
+                        date_dict['time'] = '23:59:00'
             if key in ('startDate', 'endDate'):
                 return [self._format_date(session[key]) for session in self.values()]
             return [str(session[key]) for session in self.values()]
@@ -254,7 +270,8 @@ class ConferenceInfo(dict):
                     col.append(val)
 
             # Placeholder for the screen id.
-            data.insert(2, [''] * len(session['contributions']))
+            screen_id = [i % 20 + 1 for i in range(len(session['contributions']))]
+            data.insert(2, screen_id)
             df = pd.DataFrame({key: val for key, val in zip(PosterCollectionBase.SESSION_COL_NAMES, data)})
             sheet_name = str(session['id'])
             df.to_excel(writer, sheet_name=sheet_name, index=False)
