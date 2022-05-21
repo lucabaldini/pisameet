@@ -277,7 +277,7 @@ class ScreenHeaderMinimal(QWidget):
         """Set the status text label.
         """
         text = f'<font color="white" size="4">F</font><br/>'\
-               f'<font color="gray" size="2">{text}</font><br/>'
+               f'<font color="black" size="2">{text}</font><br/>'
         self.status_label.setText(text)
 
     def clear(self):
