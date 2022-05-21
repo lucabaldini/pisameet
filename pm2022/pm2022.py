@@ -114,13 +114,22 @@ def dispatch_files():
     dispatch_pictures(ids, ATTACH_FOLDER_PATH, PRESENTER_ORIGINAL_FOLDER_PATH)
 
 
+def process_presenter_pic(file_path, height: int = 132, overwrite=False):
+    """Process a single presenter pic.
+    """
+    file_name = os.path.basename(file_path)
+    dest = os.path.join(PRESENTER_FOLDER_PATH, f'{file_name.split(".")[0]}.png')
+    if os.path.exists(dest):
+        logger.info('File %s already exists, skipping...', dest)
+        return
+    resize_presenter_pic(file_path, height, dest)
+
 def process_presenter_pics(height: int = 132):
     """Process the presenter pics.
     """
     for file_name in os.listdir(PRESENTER_ORIGINAL_FOLDER_PATH):
-        src = os.path.join(PRESENTER_ORIGINAL_FOLDER_PATH, file_name)
-        dest = os.path.join(PRESENTER_FOLDER_PATH, f'{file_name.split(".")[0]}.png')
-        resize_presenter_pic(src, height, dest)
+        file_path = os.path.join(PRESENTER_ORIGINAL_FOLDER_PATH, file_name)
+        process_presenter_pic(file_path)
 
 
 def process_poster(file_path, width=1060, intermediate_min_size=2500):
@@ -162,7 +171,7 @@ if __name__ == '__main__':
     #dispatch_files()
     #generate_qr_codes()
     #process()
-    #process_presenter_pics()
-    process_posters()
+    process_presenter_pics()
+    #process_posters()
     #process_poster('pm2022/poster_original/311.pdf')
     #process_poster('pm2022/poster_original/138.pdf')

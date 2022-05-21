@@ -304,7 +304,7 @@ class ConferenceInfo(dict):
         for folder in contribution['folders']:
             for attachment in folder['attachments']:
                 url = attachment['download_url']
-                if url.split('.')[-1] in filters:
+                if url.split('.')[-1].lower() in filters:
                     timestamp = attachment['modified_dt']
                     urls.append((url, timestamp))
         if len(urls) == 0:
