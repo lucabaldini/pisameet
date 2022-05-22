@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Hide mouse
+Exec=/usr/bin/unclutter -display :0 -idle 5 -root -noevents
+Type=Application
+Encoding=UTF-8
+Terminal=False
+Path=/home/pi
