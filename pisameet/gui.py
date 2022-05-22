@@ -586,7 +586,8 @@ class SlideShow(DisplaWindowBase):
         self.header.table.set_roster(self.poster_roster)
         self._show()
         self.display_poster()
-        self.start()
+        if len(self.poster_roster) > 1:
+            self.start()
 
     def running(self):
         """Return True if the Slideshow is running.
@@ -653,6 +654,8 @@ class SlideShow(DisplaWindowBase):
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Overloaded method to handle key events.
         """
+        if len(self.poster_roster) == 1:
+            return
         # pylint: disable=invalid-name
         key = event.text()
         if not key in self.VALID_KEYS:
