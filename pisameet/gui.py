@@ -699,14 +699,22 @@ class ProgramTreeWidget(QTreeWidget):
     # Signal emitted when the tree view uis requested.
     treeview_selected = pyqtSignal()
 
-    def __init__(self, width):
+    def __init__(self, width: int, screen_id: bool = False):
         """Constructor.
         """
         super().__init__()
-        self.setColumnCount(2)
-        self.setHeaderLabels(['Session/Poster', 'Presenter'])
-        self.setColumnWidth(0, int(0.75 * width))
-        self.setColumnWidth(1, int(0.25 * width))
+        self.__screen_id = screen_id
+        if self.__screen_id:
+            self.setColumnCount(3)
+            self.setHeaderLabels(['Session/Poster', 'Presenter', 'Screen'])
+            self.setColumnWidth(0, int(0.75 * width))
+            self.setColumnWidth(1, int(0.20 * width))
+            self.header().setStretchLastSection(True)
+        else:
+            self.setColumnCount(2)
+            self.setHeaderLabels(['Session/Poster', 'Presenter'])
+            self.setColumnWidth(0, int(0.75 * width))
+            self.setColumnWidth(1, int(0.25 * width))
         self.__key_press_events_enabled = True
 
     def enable_key_press_events(self):
@@ -783,7 +791,7 @@ class ProgramBrowser(DisplaWindowBase):
         # Hide the header and the poster label, and show the tree view, instead.
         self.header.set_subtitle(self.DISPLAY_TYPE)
         self.poster_label.hide()
-        self.tree_widget = ProgramTreeWidget(self.poster_width)
+        self.tree_widget = ProgramTreeWidget(self.poster_width, screen_id=False)
         self.tree_widget.itemExpanded.connect(self.tree_widget.collapse_unused)
         self.layout().addWidget(self.tree_widget, 1, 0, 1, 3)
         self.__status = BrowserStatus.TREE_VIEW
@@ -964,7 +972,7 @@ class SessionDirectory(DisplaWindowBase):
         subtitle = f'{self.DISPLAY_TYPE} ({self.display_date.strftime(DATE_PRETTY_FORMAT)})'
         self.header.set_subtitle(subtitle)
         self.poster_label.hide()
-        self.tree_widget = ProgramTreeWidget(self.poster_width)
+        self.tree_widget = ProgramTreeWidget(self.poster_width, screen_id=True)
         self.layout().addWidget(self.tree_widget, 1, 0, 1, 3)
         # Setup the timers.
         self.toggle_timer = QTimer()
