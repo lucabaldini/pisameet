@@ -853,7 +853,7 @@ class ProgramBrowser(DisplaWindowBase):
             return f'Full program view, returning to carousel in {delta} s ({tip})...'
         if self.__status == BrowserStatus.POSTER_VIEW:
             delta = self.remaining_time(self.toggle_timer)
-            tip = 'left button to go back, pause button to reset the timer, up/down to navigate the session'
+            tip = 'left button to go back, pause button to reset the timer, up/down to navigate'
             return f'Poster view, returning to full program in {delta} s ({tip})...'
         return None
 
