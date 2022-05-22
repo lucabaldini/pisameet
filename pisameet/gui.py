@@ -946,7 +946,7 @@ class ProgramBrowser(DisplaWindowBase):
         except AttributeError:
             return
         if self.__current_poster is not None and selected_poster != self.__current_poster:
-            parent = self.tree_widget.currentItem().current_item.parent()
+            parent = self.tree_widget.currentItem().parent()
             for i in range(parent.childCount()):
                 item = parent.child(i)
                 if item.poster == self.__current_poster:
