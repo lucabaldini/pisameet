@@ -1,6 +1,6 @@
 #! /bin/bash
 
-for (( x=1; x<=24; x++ ))
+for (( x=0; x<=24; x++ ))
 do
     ip=$((100 + x))
     echo "pulling git on ppm$x"
