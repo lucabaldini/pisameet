@@ -132,11 +132,12 @@ class RosterTable(QTableWidget):
         (i.e., not highlighted) color.
     """
 
-    def __init__(self, height: int, row_height: int = 26, default_rgb: int = 175):
+    def __init__(self, height: int, row_height: int = 26,
+        default_rgb: int = 175):
         """Constructor,
         """
         super().__init__()
-        self.setColumnCount(3)
+        self.setColumnCount(2)
         self.horizontalHeader().hide()
         self.verticalHeader().hide()
         self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
@@ -185,7 +186,6 @@ class RosterTable(QTableWidget):
         """
         self.set_text(row, 0, f'[{poster.friendly_id}]')
         self.set_text(row, 1, f'{poster.short_title(title_length)}'.ljust(title_length))
-        self.set_text(row, 2, f'{poster.presenter.full_name()}')
 
     def set_roster(self, roster: PosterRoster):
         """Populate the entire table with a poster roster.
