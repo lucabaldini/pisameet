@@ -140,6 +140,13 @@ class Poster:
         logger.debug('Loading image data from %s...', file_path)
         return QPixmap(file_path).scaledToHeight(height, Qt.SmoothTransformation)
 
+    @staticmethod
+    def load_default_pixmaps(poster_width: int, portrait_height: int):
+        """
+        """
+        return Poster._load_pixmap_w(MISSING_POSTER_PATH, poster_width),\
+            Poster._load_pixmap_h(MISSING_QRCODE_PATH, portrait_height)
+
     def load_pixmaps(self, poster_file_path, presenter_file_path, qrcode_file_path,
         poster_width, portrait_height):
         """Load all the necessary poster data.
@@ -453,4 +460,8 @@ class PosterProgram(PosterCollectionBase, dict):
             mean_mult = num_posters / num_screens
             logger.info('%d posters on %d screen(s), multiplicity: %d--%d (average %.2f)',
                 num_posters, num_screens, min(mult), max(mult), mean_mult)
+            for poster in posters:
+                self.poster_image_path(poster.friendly_id)
+                self.presenter_image_path(poster.friendly_id)
+                self.qrcode_image_path(poster.friendly_id)
             #logger.info('Stats: %s', cnt)

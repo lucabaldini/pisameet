@@ -132,11 +132,12 @@ class RosterTable(QTableWidget):
         (i.e., not highlighted) color.
     """
 
-    def __init__(self, height: int, row_height: int = 26, default_rgb: int = 175):
+    def __init__(self, height: int, row_height: int = 26,
+        default_rgb: int = 175):
         """Constructor,
         """
         super().__init__()
-        self.setColumnCount(3)
+        self.setColumnCount(2)
         self.horizontalHeader().hide()
         self.verticalHeader().hide()
         self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
@@ -185,7 +186,6 @@ class RosterTable(QTableWidget):
         """
         self.set_text(row, 0, f'[{poster.friendly_id}]')
         self.set_text(row, 1, f'{poster.short_title(title_length)}'.ljust(title_length))
-        self.set_text(row, 2, f'{poster.presenter.full_name()}')
 
     def set_roster(self, roster: PosterRoster):
         """Populate the entire table with a poster roster.
@@ -573,7 +573,12 @@ class SlideShow(DisplaWindowBase):
         self.poster_roster = PosterRoster(self.config_file_path, folder_path,
             self.screen_id, self.display_date)
         if len(self.poster_roster) == 0:
-            abort('cannot load roster')
+            logger.info('Displaying default poster...')
+            self._show()
+            pix1, pix2 = Poster.load_default_pixmaps(self.poster_width, self.portrait_height)
+            self.poster_label.setPixmap(pix1)
+            self.header.qrcode_label.setPixmap(pix2)
+            return
         self.poster_roster.load_pixmaps(self.poster_width, self.portrait_height)
         self.header.set_roster(self.poster_roster)
         subtitle = f'{self.poster_roster.session.title} (screen #{self.screen_id})'
@@ -624,6 +629,7 @@ class SlideShow(DisplaWindowBase):
             return self.RUNNING_MSG % self.remaining_time(self.advance_timer)
         if self.__status == SlideShowStatus.PAUSED:
             return self.PAUSED_MSG % self.remaining_time(self.resume_timer)
+        return ''
 
     def display_poster(self, index: int = 0) -> None:
         """Display a given poster.
