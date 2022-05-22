@@ -108,6 +108,9 @@ class Poster:
         self.poster_pixmap = None
         self.presenter_pixmap = None
         self.qrcode_pixmap = None
+        self.session = None
+        self.session_index = None
+        self.program_index = None
 
     @classmethod
     def from_df_row(cls, row):
@@ -436,6 +439,26 @@ class PosterProgram(PosterCollectionBase, dict):
         """
         PosterCollectionBase.__init__(self, config_file_path, root_folder_path)
         dict.__init__(self, self.poster_dict())
+        self.__flattened_list = []
+        program_index = 0
+        for session, posters in self.items():
+            for i, poster in enumerate(posters):
+                poster.session = session
+                poster.program_index = program_index
+                poster.session_index = i
+                program_index += 1
+                self.__flattened_list.append(poster)
+
+    def select_by_program_index(self, index):
+        """Select a poster by program index.
+        """
+        return self.__flattened_list[index % len(self.__flattened_list)]
+
+    def select_by_session_index(self, session, index):
+        """Select a poster by session index.
+        """
+        posters = self[session]
+        return posters[index % len(posters)]
 
     def random_poster(self):
         """Return a random poster object from the program.
