@@ -973,10 +973,13 @@ class SessionDirectory(DisplaWindowBase):
         self.toggle_timer.setInterval(self.advance_interval)
         self.toggle_timer.timeout.connect(self.toggle_session)
         self.header_timer.start()
-        self.toggle_timer.start()
         # Load the program
         self.program = PosterProgram(kwargs.get('cfgfile'))
         self.__num_sessions = self._load_program()
+        if self.__num_sessions > 1:
+            self.toggle_timer.start()
+        else:
+            self.header_timer.stop()
         if self.__num_sessions == 0:
             abort('No valid session found for the specified date (%s)' % self.display_date)
         self.__current_index = -1

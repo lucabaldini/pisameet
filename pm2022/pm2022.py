@@ -173,4 +173,4 @@ if __name__ == '__main__':
     #process()
     #process_presenter_pics()
     #process_posters()
-    process_poster('pm2022/poster_original/363.pdf')
+    #process_poster('pm2022/poster_original/363.pdf')
