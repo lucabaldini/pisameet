@@ -655,7 +655,8 @@ class SlideShow(DisplaWindowBase):
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Overloaded method to handle key events.
         """
-        if len(self.poster_roster) == 1:
+        # Disengage the keyboard if there is less than two posters.
+        if len(self.poster_roster) <= 1:
             return
         # pylint: disable=invalid-name
         key = event.text()
