@@ -453,4 +453,8 @@ class PosterProgram(PosterCollectionBase, dict):
             mean_mult = num_posters / num_screens
             logger.info('%d posters on %d screen(s), multiplicity: %d--%d (average %.2f)',
                 num_posters, num_screens, min(mult), max(mult), mean_mult)
+            for poster in posters:
+                self.poster_image_path(poster.friendly_id)
+                self.presenter_image_path(poster.friendly_id)
+                self.qrcode_image_path(poster.friendly_id)
             #logger.info('Stats: %s', cnt)
