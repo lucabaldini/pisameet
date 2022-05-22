@@ -703,11 +703,10 @@ class ProgramTreeWidget(QTreeWidget):
         """Constructor.
         """
         super().__init__()
-        self.setColumnCount(3)
-        self.setHeaderLabels(['Session/Poster', 'Presenter', 'Screen'])
-        self.setColumnWidth(0, int(0.70 * width))
-        self.setColumnWidth(1, int(0.2 * width))
-        self.header().setStretchLastSection(True)
+        self.setColumnCount(2)
+        self.setHeaderLabels(['Session/Poster', 'Presenter'])
+        self.setColumnWidth(0, int(0.75 * width))
+        self.setColumnWidth(1, int(0.25 * width))
         self.__key_press_events_enabled = True
 
     def enable_key_press_events(self):
@@ -822,8 +821,7 @@ class ProgramBrowser(DisplaWindowBase):
                 affiliation = presenter.affiliation
                 if pd.isna(affiliation):
                     affiliation = 'N/A'
-                values = [f'[{poster.friendly_id}] {poster.title}', presenter.full_name(),
-                    f'{poster.screen_id}']
+                values = [f'[{poster.friendly_id}] {poster.title}', presenter.full_name()]
                 child = QTreeWidgetItem(values)
                 child.poster = poster
                 item.addChild(child)
