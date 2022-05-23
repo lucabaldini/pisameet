@@ -33,7 +33,8 @@ from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
 from pisameet import logger, abort, read_screen_id
 from pisameet.profile import psstatus
-from pisameet.program import Poster, PosterRoster, PosterProgram, DATE_FORMAT, DATE_PRETTY_FORMAT
+from pisameet.program import Poster, PosterRoster, PosterProgram, DATE_FORMAT,\
+    DATE_PRETTY_FORMAT, DATETIME_FORMAT
 
 
 
@@ -418,14 +419,20 @@ class DisplaWindowBase(QWidget):
         self.poster_width = kwargs['poster_width']
         self.header_height = kwargs['header_height']
         self.portrait_height = kwargs['portrait_height']
-        # Parse the optional display date and turn it into a
+        # Retrieve the display date.
         display_date = kwargs.get('display_date')
+        # If the --display-date command-line switch is not set we jut cache the
+        # current day and time. Note that we cache both the date and the datetime
+        # of the display.
         if display_date is None:
             self.display_date = datetime.date.today()
             self.display_datetime = datetime.datetime.now()
+        # Otherwise we also parse the optional display time and proceed.
         else:
+            display_time = kwargs.get('display_time')
+            display_datetime = f'{display_date} {display_time}'
             self.display_date = datetime.datetime.strptime(display_date, DATE_FORMAT).date()
-            self.display_datetime = datetime.datetime.strptime(display_date, DATE_FORMAT)
+            self.display_datetime = datetime.datetime.strptime(display_datetime, DATETIME_FORMAT)
         # Setup the widget.
         self.setLayout(QGridLayout())
         self.layout().setColumnMinimumWidth(0, self.poster_width)

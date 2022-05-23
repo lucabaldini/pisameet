@@ -91,11 +91,14 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument('--portrait-height', type=int, default=132,
             help='height of the presenter portraits and QR codes')
 
-    def add_date(self):
+    def add_datetime(self):
         """Add an option to fake a different running date.
         """
         self.add_argument('--display-date', type=str, default=None,
             help='optional date, e.g., 23/05/2022')
+        self.add_argument('--display-time', type=str, default='12:00',
+            help='optional time, e.g., 12:00')
+
 
     def add_pause(self, default=120.):
         """Add the pause interval option.

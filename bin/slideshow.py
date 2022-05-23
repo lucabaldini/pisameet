@@ -37,7 +37,7 @@ PARSER.add_geometry()
 PARSER.add_pause()
 PARSER.add_advance()
 PARSER.add_fading()
-PARSER.add_date()
+PARSER.add_datetime()
 
 
 if __name__ == '__main__':
