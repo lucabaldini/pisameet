@@ -137,7 +137,7 @@ class RosterTable(QTableWidget):
         """Constructor,
         """
         super().__init__()
-        self.setColumnCount(2)
+        self.setColumnCount(3)
         self.horizontalHeader().hide()
         self.verticalHeader().hide()
         self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
@@ -186,6 +186,7 @@ class RosterTable(QTableWidget):
         """
         self.set_text(row, 0, f'[{poster.friendly_id}]')
         self.set_text(row, 1, f'{poster.short_title(title_length)}'.ljust(title_length))
+        self.set_text(row, 2, f'{poster.presenter.full_name()}')
 
     def set_roster(self, roster: PosterRoster):
         """Populate the entire table with a poster roster.
@@ -586,7 +587,8 @@ class SlideShow(DisplaWindowBase):
         self.header.table.set_roster(self.poster_roster)
         self._show()
         self.display_poster()
-        self.start()
+        if len(self.poster_roster) > 1:
+            self.start()
 
     def running(self):
         """Return True if the Slideshow is running.
@@ -653,6 +655,9 @@ class SlideShow(DisplaWindowBase):
     def keyPressEvent(self, event: QKeyEvent) -> None:
         """Overloaded method to handle key events.
         """
+        # Disengage the keyboard if there is less than two posters.
+        if len(self.poster_roster) <= 1:
+            return
         # pylint: disable=invalid-name
         key = event.text()
         if not key in self.VALID_KEYS:
@@ -679,8 +684,8 @@ class BrowserKeyMap(IntEnum):
 
     EXPAND = Qt.Key_Right
     COLLAPSE = Qt.Key_Left
-    ADVANCE = Qt.Key_Up
-    BACKUP = Qt.Key_Down
+    ADVANCE = Qt.Key_Down
+    BACKUP = Qt.Key_Up
     PAUSE = Qt.Key_Return
 
 
@@ -845,11 +850,11 @@ class ProgramBrowser(DisplaWindowBase):
             return f'Carousel running, next random poster in {delta} s ({tip})...'
         if self.__status == BrowserStatus.TREE_VIEW:
             delta = self.remaining_time(self.toggle_timer)
-            tip = 'navigate with the arrows, or press the left button to go back'
+            tip = 'use the arrows to navigate the tree view'
             return f'Full program view, returning to carousel in {delta} s ({tip})...'
         if self.__status == BrowserStatus.POSTER_VIEW:
             delta = self.remaining_time(self.toggle_timer)
-            tip = 'press the left button to go back, or the pause button to reset the timer'
+            tip = 'left button to go back, pause button to reset the timer, up/down to navigate'
             return f'Poster view, returning to full program in {delta} s ({tip})...'
         return None
 
@@ -872,6 +877,10 @@ class ProgramBrowser(DisplaWindowBase):
         self.program.load_poster_pixmaps(poster, self.poster_width, self.portrait_height)
         # Update the widgets and show the poster label.
         self.header.set_poster(poster)
+        if self.__status == BrowserStatus.CAROUSEL:
+            self.header.set_subtitle(f'{self.DISPLAY_TYPE} (random carousel)')
+        else:
+            self.header.set_subtitle(f'{self.DISPLAY_TYPE} ({poster.session.title})')
         self.poster_label.setPixmap(poster.poster_pixmap)
         self.poster_label.show()
         self.header.show()
@@ -896,6 +905,20 @@ class ProgramBrowser(DisplaWindowBase):
         """
         self._display_poster(self.program.random_poster())
 
+    def display_next_poster(self):
+        """Display the next poster in the program.
+        """
+        session = self.__current_poster.session
+        index = self.__current_poster.session_index
+        self._display_poster(self.program.select_by_session_index(session, index + 1))
+
+    def display_previous_poster(self):
+        """Display the previous poster in the program.
+        """
+        session = self.__current_poster.session
+        index = self.__current_poster.session_index
+        self._display_poster(self.program.select_by_session_index(session, index - 1))
+
     def toggle_view(self):
         """Toggle between the different views.
         """
@@ -913,12 +936,27 @@ class ProgramBrowser(DisplaWindowBase):
         self.toggle_timer.start()
         # Clear up and hide the poster
         self.header.clear()
+        self.header.set_subtitle(f'{self.DISPLAY_TYPE} (tree view)')
         self.poster_label.clear()
         self.poster_label.hide()
         # Show up the tree widget and re-enable the key-press events.
         self.tree_widget.show()
         self.tree_widget.enable_key_press_events()
         self.tree_widget.setFocus()
+        # When we enter the tree view from the poster view, we want to make sure
+        # that the selected entry in the corresponding widget is corresponding
+        # to the last poster that we have seen.
+        try:
+            selected_poster = self.tree_widget.currentItem().poster
+        except AttributeError:
+            return
+        if self.__current_poster is not None and selected_poster != self.__current_poster:
+            parent = self.tree_widget.currentItem().parent()
+            for i in range(parent.childCount()):
+                item = parent.child(i)
+                if item.poster == self.__current_poster:
+                    self.tree_widget.setCurrentItem(item)
+                    break
 
     def start_carousel(self):
         """Start the carousel.
@@ -954,6 +992,10 @@ class ProgramBrowser(DisplaWindowBase):
                 self.toggle_timer.start()
             elif key == BrowserKeyMap.COLLAPSE:
                 self.display_tree_view()
+            elif key == BrowserKeyMap.ADVANCE:
+                self.display_next_poster()
+            elif key == BrowserKeyMap.BACKUP:
+                self.display_previous_poster()
 
 
 
