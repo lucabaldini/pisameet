@@ -422,8 +422,10 @@ class DisplaWindowBase(QWidget):
         display_date = kwargs.get('display_date')
         if display_date is None:
             self.display_date = datetime.date.today()
+            self.display_datetime = datetime.datetime.now()
         else:
             self.display_date = datetime.datetime.strptime(display_date, DATE_FORMAT).date()
+            self.display_datetime = datetime.datetime.strptime(display_date, DATE_FORMAT)
         # Setup the widget.
         self.setLayout(QGridLayout())
         self.layout().setColumnMinimumWidth(0, self.poster_width)
@@ -572,7 +574,7 @@ class SlideShow(DisplaWindowBase):
         self.hide()
         folder_path = os.path.dirname(self.config_file_path)
         self.poster_roster = PosterRoster(self.config_file_path, folder_path,
-            self.screen_id, self.display_date)
+            self.screen_id, self.display_datetime)
         if len(self.poster_roster) == 0:
             logger.info('Displaying default poster...')
             self._show()
@@ -1042,7 +1044,7 @@ class SessionDirectory(DisplaWindowBase):
         """
         items = []
         for session, posters in self.program.items():
-            if not session.ongoing(self.display_date):
+            if not session.ongoing(self.display_datetime):
                 continue
             item = QTreeWidgetItem([session.title])
             for poster in posters:

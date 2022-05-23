@@ -213,16 +213,13 @@ class PosterSession:
         """
         return cls(*[row[col_name] for col_name in PosterRoster.PROGRAM_COL_NAMES])
 
-    def ongoing(self, display_date=None, display_time: str = '12:00') -> bool:
+    def ongoing(self, display_datetime=None) -> bool:
         """Return True if the session is ongoing.
         """
-        if display_date is None:
-            now = datetime.datetime.now()
-        else:
-            display_date = display_date.strftime(DATE_FORMAT)
-            now = self.parse_datetime(f'{display_date} {display_time}')
+        if display_datetime is None:
+            display_datetime = datetime.datetime.now()
         return self.start is not None and self.end is not None and \
-            self.start <= now <= self.end
+            self.start <= display_datetime <= self.end
 
     def __str__(self):
         """String formatting.
