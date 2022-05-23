@@ -100,7 +100,7 @@ class ArgumentParser(argparse.ArgumentParser):
             help='optional time, e.g., 12:00')
 
 
-    def add_pause(self, default=120.):
+    def add_pause(self, default=300.):
         """Add the pause interval option.
         """
         self.add_argument('--pause-interval', type=float, default=default,
