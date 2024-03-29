@@ -173,3 +173,4 @@ if __name__ == '__main__':
     #process()
     #process_presenter_pics()
     #process_posters()
+    #process_poster('/data/work/pisameet/graphics/pisameet2024.pdf')
