@@ -32,7 +32,7 @@ from pisameet.qrcode_ import generate_qrcode
 
 
 # Basic conference info.
-BASE_NAME = 'pm2022'
+BASE_NAME = 'pm2024'
 LOCAL_ROOT = os.path.join(PISAMEET_BASE, BASE_NAME)
 INDICO_URL = 'https://agenda.infn.it/export/event/22092.json'
 INFO_FILE_PATH = os.path.join(LOCAL_ROOT, f'{BASE_NAME}.json')
@@ -173,4 +173,3 @@ if __name__ == '__main__':
     #process()
     #process_presenter_pics()
     #process_posters()
-    process_poster('pm2022/poster_original/200.pdf')
