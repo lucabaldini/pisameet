@@ -76,7 +76,7 @@ class ArgumentParser(argparse.ArgumentParser):
             help='the conference name')
         self.add_argument('--conference-dates', type=str, default='La Biodola, Isola d\'Elba',
             help='the conference dates')
-        self.add_argument('--conference-location', type=str, default='May 26--June 1, 2024',
+        self.add_argument('--conference-location', type=str, default='May 26-June 1, 2024',
             help='the conference location')
 
     def add_geometry(self, default_header_height=310):
