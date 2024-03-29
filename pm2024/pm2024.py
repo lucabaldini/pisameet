@@ -34,7 +34,7 @@ from pisameet.qrcode_ import generate_qrcode
 # Basic conference info.
 BASE_NAME = 'pm2024'
 LOCAL_ROOT = os.path.join(PISAMEET_BASE, BASE_NAME)
-INDICO_URL = 'https://agenda.infn.it/export/event/22092.json'
+INDICO_URL = 'https://agenda.infn.it/export/event/37033.json'
 INFO_FILE_PATH = os.path.join(LOCAL_ROOT, f'{BASE_NAME}.json')
 CONFIG_FILE_PATH = INFO_FILE_PATH.replace('.json', '.xlsx')
 ATTACH_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'indico_attachments')
@@ -165,7 +165,7 @@ def process():
 
 
 if __name__ == '__main__':
-    #donwload_info(overwrite=True)
+    donwload_info(overwrite=True)
     #dump_config_file()
     #download_attachments(True)
     #dispatch_files()
