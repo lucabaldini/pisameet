@@ -47,20 +47,21 @@ QRCODE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'qrcodes')
 
 # Definition of the posted program---mind this has to be compiled by hand.
 POSTER_PROGRAM = {
+    1: 'Detectors Techniques for Cosmology and Astroparticle Physics'
     # Monday: S8P and S2P.
-    26822: 'Detector Systems and Future accelerators',
-    26961: 'Photo Detectors and PID',
+    #26822: 'Detector Systems and Future accelerators',
+    #26961: 'Photo Detectors and PID',
     # Tuesday: S3P and S5P.
-    26950: 'Solid State Detectors',
-    26955: 'Application to life sciences and other societal challanges',
+    #26950: 'Solid State Detectors',
+    #26955: 'Application to life sciences and other societal challanges',
     # Wednesday: S4P.
-    26956: 'Calorimetry',
+    #26956: 'Calorimetry',
     # Thursday: S9P and S1P.
-    26957: 'Cryogenic, Supeconductive and Quantum Devices',
-    26958: 'Detectors Techniques for Cosmology and Astroparticle Physics',
+    #26957: 'Cryogenic, Supeconductive and Quantum Devices',
+    #26958: 'Detectors Techniques for Cosmology and Astroparticle Physics',
     # Friday: S6P and S7P.
-    26959: 'Gas Detectors',
-    26960: 'Front End, Trigger, DAQ and Data Mangement'
+    #26959: 'Gas Detectors',
+    #26960: 'Front End, Trigger, DAQ and Data Mangement'
     }
 
 
