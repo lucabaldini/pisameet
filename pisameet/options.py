@@ -72,11 +72,11 @@ class ArgumentParser(argparse.ArgumentParser):
             formatter_class=ArgumentFormatter)
         self.add_argument('cfgfile', type=str,
             help='path to the input excel configuration file')
-        self.add_argument('--conference-name', type=str, default='15th Pisa Meeting on Advanced Detectors',
+        self.add_argument('--conference-name', type=str, default='16th Pisa Meeting on Advanced Detectors',
             help='the conference name')
         self.add_argument('--conference-dates', type=str, default='La Biodola, Isola d\'Elba',
             help='the conference dates')
-        self.add_argument('--conference-location', type=str, default='May 22-28, 2022',
+        self.add_argument('--conference-location', type=str, default='May 26--June 1, 2024',
             help='the conference location')
 
     def add_geometry(self, default_header_height=310):
