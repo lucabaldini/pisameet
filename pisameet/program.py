@@ -274,6 +274,10 @@ class PosterCollectionBase:
         self.presenter_folder_path = os.path.join(self.root_folder_path, self.PRESENTER_FOLDER_NAME)
         self.qrcode_folder_path = os.path.join(self.root_folder_path, self.QRCODE_FOLDER_NAME)
         logger.debug('Reading %s sheet from %s...', self.PROGRAM_SHEET_NAME, config_file_path)
+
+        df = pd.read_excel(config_file_path, self.PROGRAM_SHEET_NAME)
+        print(df['Session ID'])
+
         self._program_df = pd.read_excel(config_file_path, self.PROGRAM_SHEET_NAME,
             dtype=self.PROGRAM_COL_DTYPES)
         logger.debug('Done, %d row(s) found.', len(self._program_df))
