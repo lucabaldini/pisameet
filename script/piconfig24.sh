@@ -25,13 +25,12 @@ done < "$file"
 #echo "Prima Colonna (Numero): ${numero[*]}"
 #echo "Seconda Colonna (Schermo): ${schermo[*]}"
 
-for ((i=0; i<${#numero[@]}; i++)); do
-    x=${numero[i]}
+for x in "${numero[@]}"
+do
     ip=$((100 + x))
-    echo "git pull on ppm$x"
-    ssh pi@192.168.30.$ip "cd pisameet; git pull; sudo reboot now;"
+    echo " updating ppm$x"
+    ssh pi@192.168.30.$ip "rm -Rf pisameet; mkdir pisameet; cd pisameet;  git config --global http.proxy http://gridsquid1.pi.infn.it:3128; git config --global http.sslverify false; git clone https://github.com/lucabaldini/pisameet.git ./; git remote set-url origin https://github.com/lucabaldini/pisameet.git; exit;";
 done
-
 
 
 

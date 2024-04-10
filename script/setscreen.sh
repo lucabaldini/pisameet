@@ -28,8 +28,9 @@ done < "$file"
 for ((i=0; i<${#numero[@]}; i++)); do
     x=${numero[i]}
     ip=$((100 + x))
-    echo "git pull on ppm$x"
-    ssh pi@192.168.30.$ip "cd pisameet; git pull; sudo reboot now;"
+    schermo_corrente=${schermo[i]}
+    echo "setting screen on ppm$x the value $schermo_corrente"
+    ssh pi@192.168.30.$ip "cd pisameet; cd pisameet; echo \"$schermo_corrente\" > screen.cfg; exit;"
 done
 
 
