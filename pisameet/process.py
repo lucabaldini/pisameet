@@ -111,7 +111,9 @@ def resize_image_to_height(file_path, height: int, output_folder_path, **kwargs)
         _resize_image(img, width, height, dest, **kwargs)
 
 
-HAARCASCADE_FILE_PATH = '/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml'
+#HAARCASCADE_FILE_PATH = '/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml'
+HAARCASCADE_FILE_PATH = '/home/lbaldini/.local/lib/python3.10/site-packages/cv2/data/haarcascade_frontalface_default.xml'
+
 
 def face_bbox(file_path, min_frac_size: float = 0.15, padding=1.85):
     """Run a simple opencv face detection and return the proper bounding box for

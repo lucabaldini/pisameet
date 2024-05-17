@@ -166,6 +166,6 @@ if __name__ == '__main__':
     #dispatch_files()
     #generate_qr_codes()
     #process()
-    #process_presenter_pics()
+    process_presenter_pics()
     #process_posters()
     #process_poster('/data/work/pisameet/graphics/pisameet2024.pdf')
