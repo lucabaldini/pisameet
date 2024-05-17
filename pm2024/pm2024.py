@@ -161,7 +161,7 @@ def process():
 
 if __name__ == '__main__':
     #donwload_info(overwrite=True)
-    dump_config_file()
+    #dump_config_file()
     #download_attachments(True)
     #dispatch_files()
     #generate_qr_codes()
