@@ -385,7 +385,15 @@ class PosterRoster(PosterCollectionBase, list):
 
     def __init__(self, config_file_path: str, root_folder_path: str, screen_id: int,
         display_date: str = None) -> None:
-        """Constructor
+        """Constructor.
+
+        Note there are two subtle tweaks that we did in 2024, to adapt to the new
+        poster session scheme, where multiple sessions are displayed in parallel:
+        we removede the break within the main for loop, so that the code will look
+        into *all* the sessions happening at a given time, and we assign the session
+        name deep inside the loop, so that, for any given scree ID we pick the proper
+        session. Note this mechanism is fragile and relies on the fact that we
+        do not mix sessions within each screen.
         """
         PosterCollectionBase.__init__(self, config_file_path, root_folder_path)
         list.__init__(self)
@@ -403,10 +411,14 @@ class PosterRoster(PosterCollectionBase, list):
                     poster = Poster.from_df_row(session_row)
                     if poster.screen_id == self.screen_id:
                         self.append(poster)
+                        self.session = session
             except ValueError as exception:
                 logger.warning('Data not available for session %s: %s', session.id_, exception)
-            self.session = session
-            break
+            # The following two lines have been modified to support multiple
+            # poster sessions in parallel---the break is removed and the session
+            # assigned is moved within the for loop.
+            #self.session = session
+            #break
         if len(self) == 0:
             logger.warning('Empty poster roster for screen %d', self.screen_id)
 
