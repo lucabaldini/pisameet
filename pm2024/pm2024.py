@@ -47,14 +47,14 @@ QRCODE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'qrcodes')
 
 # Definition of the poster program---mind this has to be compiled by hand.
 POSTER_PROGRAM = {
-    36245: 'Detector Techniques for Cosmology and Astroparticle Physics',
     36240: 'Photo Detectors and Particle ID',
+    36242: 'Applications to Industrial and Societal Challenges',
+    36239: 'Integration and Detector Systems',
     36241: 'Solid State Detectors',
     36243: 'Calorimetry',
-    36242: 'Applications to Industrial and Societal Challenges',
+    36245: 'Detector Techniques for Cosmology and Astroparticle Physics',
     36246: 'Gas Detectors',
     36247: 'Electronics and On-Detector Processing',
-    36239: 'Integration and Detector Systems',
     36244: 'Low Temperature, Quantum and Emerging Technologies'
     }
 

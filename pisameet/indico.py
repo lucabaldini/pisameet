@@ -201,7 +201,7 @@ class ConferenceInfo(dict):
         writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
 
         # Create the master sheet with the session data.
-        def _session_data(key, change_hour='15:00:00'):
+        def _session_data(key, change_hour='13:30:00'):
             """Small nested function to facilitate the session data retrival.
             """
             if key == 'startDate':
@@ -219,7 +219,7 @@ class ConferenceInfo(dict):
                     if int(date_dict['time'].split(':')[0]) < 13:
                         date_dict['time'] = change_hour
                     else:
-                        date_dict['time'] = '23:59:00'
+                        date_dict['time'] = '21:00:00'
             if key in ('startDate', 'endDate'):
                 return [self._format_date(session[key]) for session in self.values()]
             return [str(session[key]) for session in self.values()]
