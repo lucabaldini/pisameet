@@ -154,6 +154,7 @@ class ConferenceInfo(dict):
             logger.warning('%d orphan contribution(s) found...', len(contributions))
         else:
             logger.info('No orphan contributions found...')
+        logger.info(f'Program info:\n{self}')
 
     def contribution_ids(self):
         """Return all the contribution ids.
