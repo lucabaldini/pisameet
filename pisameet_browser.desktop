@@ -1,4 +1,4 @@
 [Desktop Entry]
 Type=Application
 Name=Pisa Meeting Slideshow
-Exec=/usr/bin/python3 /home/pi/pisameet/bin/browser.py /home/pi/pisameet/pm2024/pmtest.xlsx
+Exec=/usr/bin/python3 /home/pi/pisameet/bin/browser.py /home/pi/pisameet/pm2024/pm2024.xlsx
