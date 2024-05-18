@@ -31,6 +31,7 @@ import sys
 PACKAGE_NAME = 'pisameet'
 PISAMEET_ROOT = os.path.abspath(os.path.dirname(__file__))
 PISAMEET_BASE = os.path.abspath(os.path.join(PISAMEET_ROOT, os.pardir))
+PISAMEET_DATA = os.path.join(PISAMEET_BASE, 'data')
 PISAMEET_GRAPHICS = os.path.join(PISAMEET_BASE, 'graphics')
 
 MISSING_PICTURE_PATH = os.path.join(PISAMEET_GRAPHICS, 'unknown_female.png')

@@ -26,7 +26,7 @@ import PIL
 from PIL import Image
 import pdfrw
 
-from pisameet import logger
+from pisameet import logger, PISAMEET_DATA
 from pisameet.qrcode_ import generate_qrcode
 
 
@@ -111,8 +111,7 @@ def resize_image_to_height(file_path, height: int, output_folder_path, **kwargs)
         _resize_image(img, width, height, dest, **kwargs)
 
 
-#HAARCASCADE_FILE_PATH = '/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml'
-HAARCASCADE_FILE_PATH = '/home/lbaldini/.local/lib/python3.10/site-packages/cv2/data/haarcascade_frontalface_default.xml'
+HAARCASCADE_FILE_PATH = os.path.join(PISAMEET_DATA, 'haarcascade_frontalface_default.xml')
 
 
 def face_bbox(file_path, min_frac_size: float = 0.15, padding=1.85):
