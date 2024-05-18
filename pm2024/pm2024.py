@@ -97,6 +97,9 @@ def download_attachments(refresh_info=False):
     """
     if refresh_info:
         donwload_info(overwrite=True)
+    if not os.path.exists(ATTACH_FOLDER_PATH):
+        logger.info('Creating folder %s...' % ATTACH_FOLDER_PATH)
+        os.makedirs(ATTACH_FOLDER_PATH)
     CONFERENCE_INFO.download_attachments(ATTACH_FOLDER_PATH)
 
 
@@ -105,6 +108,10 @@ def dispatch_files():
     later consumption by the slideshow and the program browser.
     """
     ids = CONFERENCE_INFO.contribution_ids()
+    for folder_path in (POSTER_ORIGINAL_FOLDER_PATH, PRESENTER_ORIGINAL_FOLDER_PATH):
+        if not os.path.exists(folder_path):
+            logger.info('Creating folder %s...' % folder_path)
+            os.makedirs(folder_path)
     dispatch_posters(ids, ATTACH_FOLDER_PATH, POSTER_ORIGINAL_FOLDER_PATH)
     dispatch_pictures(ids, ATTACH_FOLDER_PATH, PRESENTER_ORIGINAL_FOLDER_PATH)
 
