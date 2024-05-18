@@ -1,4 +1,7 @@
 pisameet/screen.cfg
+pm2024/indico_attachments
+pm2024/poster_original
+pm2024/presenter_original
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
