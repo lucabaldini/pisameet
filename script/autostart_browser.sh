@@ -27,7 +27,7 @@ done < "$file"
 for x in "${numero[@]}"
 do
     ip=$((100 + x))
-    echo "rebootin ppm$x"
+    echo "rebooting ppm$x"
     ssh pi@192.168.30.$ip "cd pisameet; rm ../.config/autostart/pisameet*; cp pisameet_browser.desktop ../.config/autostart/; sudo reboot now;";
 done
 
