@@ -43,6 +43,9 @@ PRESENTER_ORIGINAL_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'presenter_original')
 POSTER_IMAGE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_images')
 PRESENTER_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'presenters')
 QRCODE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'qrcodes')
+SCREEN_TARGET_WIDTH = 1060
+POSTER_TARGET_WIDTH = 2 * SCREEN_TARGET_WIDTH
+POSTER_INTERMEDIATE_WIDTH = 2 * POSTER_TARGET_WIDTH
 
 
 # Definition of the poster program---mind this has to be compiled by hand.
@@ -134,7 +137,8 @@ def process_presenter_pics(height: int = 132):
         process_presenter_pic(file_path)
 
 
-def process_poster(file_path, width=1060, intermediate_min_size=2500):
+def process_poster(file_path, target_width=POSTER_TARGET_WIDTH,
+    intermediate_min_size=POSTER_INTERMEDIATE_WIDTH):
     """Process a single poster.
     """
     # Gauge the bounding box for the input pdf file---this will be used to
@@ -148,14 +152,14 @@ def process_poster(file_path, width=1060, intermediate_min_size=2500):
     # Convert the file to pdf.
     _file_path = pdf_to_png(file_path, POSTER_IMAGE_FOLDER_PATH, density)
     # Resize the image to the target value.
-    resize_image_to_width(_file_path, 1060, POSTER_IMAGE_FOLDER_PATH)
+    resize_image_to_width(_file_path, target_width, POSTER_IMAGE_FOLDER_PATH)
 
 
-def process_posters(width=1060):
+def process_posters(target_width=POSTER_TARGET_WIDTH):
     """Process the poster images.
     """
     for file_path in crawl(POSTER_ORIGINAL_FOLDER_PATH):
-        process_poster(file_path)
+        process_poster(file_path, target_width)
 
 
 def process():
