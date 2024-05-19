@@ -2,7 +2,7 @@
 
 
 # Nome del file contenente i valori
-file="listapi.txt"
+file="listapi_slideshow.txt"
 
 # Verifica se il file esiste
 if [ ! -f "$file" ]; then
