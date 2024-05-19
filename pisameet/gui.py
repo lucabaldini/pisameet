@@ -1033,17 +1033,18 @@ class SessionDirectory(DisplaWindowBase):
         # Load the program
         self.program = PosterProgram(kwargs.get('cfgfile'))
         self.__num_sessions = self._load_program()
-        if self.__num_sessions > 1:
-            self.toggle_timer.start()
-        else:
-            self.header_timer.stop()
         if self.__num_sessions == 0:
             abort('No valid session found for the specified date (%s)' % self.display_date)
         self.__current_index = -1
-        #file_path = os.path.join(self.program.qrcode_folder_path, 'timetable.png')
-        #pixmap = Poster._load_pixmap_h(file_path, self.portrait_height)
-        #self.header.qrcode_label.setPixmap(pixmap)
-        self.toggle_session()
+
+        #if self.__num_sessions > 1:
+        #    self.toggle_timer.start()
+        #else:
+        #    self.header_timer.stop()
+        #self.toggle_session()
+
+        self.header_timer.stop()
+        self.expand_all()
         self._show()
 
     def _load_program(self):
@@ -1067,6 +1068,13 @@ class SessionDirectory(DisplaWindowBase):
             items.append(item)
         self.tree_widget.insertTopLevelItems(0, items)
         return len(items)
+
+    def expand_all(self):
+        """Expand all the items in the program tree.
+        """
+        for i in range(self.__num_sessions):
+            item = self.tree_widget.topLevelItem(i)
+            item.setExpanded(True)
 
     def toggle_session(self):
         """Toggle the section being displayed.
