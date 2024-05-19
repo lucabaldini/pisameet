@@ -163,16 +163,3 @@ def process():
     """
     process_presenter_pics()
     process_posters()
-
-
-
-if __name__ == '__main__':
-    #donwload_info(overwrite=True)
-    #dump_config_file()
-    #download_attachments(True)
-    #dispatch_files()
-    #generate_qr_codes()
-    process()
-    #process_presenter_pics()
-    #process_posters()
-    #process_poster('/data/work/pisameet/pm2024/poster_original/407.pdf')
