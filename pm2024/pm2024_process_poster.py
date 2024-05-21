@@ -20,18 +20,24 @@
 """
 
 import argparse
+import os
 
+from pm2024 import POSTER_ORIGINAL_FOLDER_PATH
 from pm2024 import process_poster
 
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument('posters', type=int, nargs='+',
     help='the ids of the posters to be processed')
-PARSER.add_argument('width', type=float,
-    '')
+PARSER.add_argument('--width', type=int, default=2120,
+    help='target width for the output png')
+PARSER.add_argument('--intermediate_min_size', type=int, default=None,
+    help='intermediate minimum size')
+
 
 
 if __name__ == '__main__':
     args = PARSER.parse_args()
-    print(args)
-    #process()
+    for poster_id in args.posters:
+        file_path = os.path.join(POSTER_ORIGINAL_FOLDER_PATH, f'{poster_id:03}.pdf')
+        process_poster(file_path, args.width, args.intermediate_min_size)
