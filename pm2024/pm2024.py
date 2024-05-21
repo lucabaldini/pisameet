@@ -147,8 +147,14 @@ def process_poster(file_path, target_width=POSTER_TARGET_WIDTH,
     box = [float(val) for val in pdf.pages[0].MediaBox or pdf.pages[0].Parent.MediaBox]
     width = box[2] - box[0]
     height = box[3] - box[1]
-    side = min(width, height)
-    density = round(intermediate_min_size / side * 72)
+    if intermediate_min_size is None:
+        logger.info('Skipping intermediate conversion step...')
+        density = target_width / width * 72.
+        pdf_to_png(file_path, POSTER_IMAGE_FOLDER_PATH, density)
+        return
+    logger.info('Performing intermediate conversion step...')
+    size = min(width, height)
+    density = round(intermediate_min_size / size * 72)
     # Convert the file to pdf.
     _file_path = pdf_to_png(file_path, POSTER_IMAGE_FOLDER_PATH, density)
     # Resize the image to the target value.
