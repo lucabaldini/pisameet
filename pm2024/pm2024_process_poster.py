@@ -31,7 +31,7 @@ PARSER.add_argument('posters', type=int, nargs='+',
     help='the ids of the posters to be processed')
 PARSER.add_argument('--width', type=int, default=2120,
     help='target width for the output png')
-PARSER.add_argument('--intermediate_min_size', type=int, default=None,
+PARSER.add_argument('--intermediate_min_size', type=int, default=6360,
     help='intermediate minimum size')
 
 
