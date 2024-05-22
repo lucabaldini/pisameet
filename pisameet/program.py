@@ -259,8 +259,8 @@ class PosterCollectionBase:
         'Friendly ID', 'DB ID', 'Screen ID', 'Title', 'First Name', 'Last Name', 'Affiliation'
         )
     SESSION_COL_DTYPES = {'Friendly ID': int, 'DB ID': int, 'Screen ID': int}
-    POSTER_FOLDER_NAME = 'poster_images'
-    PRESENTER_FOLDER_NAME = 'presenters'
+    POSTER_FOLDER_NAME = 'posters_raster'
+    PRESENTER_FOLDER_NAME = 'presenters_crop'
     QRCODE_FOLDER_NAME = 'qrcodes'
 
     def __init__(self, config_file_path: str, root_folder_path: str = None) -> None:
