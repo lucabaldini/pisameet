@@ -37,7 +37,18 @@ PARSER.add_argument('--target_height', type=int, default=132,
 PARSER.add_argument('--overwrite', action='store_true')
 
 
-def crop_presenter_pic(input_file_path: str, target_height, overwrite: bool = False):
+
+def crop_presenter_pics(target_height, overwrite: bool = False):
+    """Process all the presenter pics.
+    """
+    for input_file_path in glob.glob(os.path.join(PRESENTER_FOLDER_PATH, '*.*')):
+        file_name = os.path.basename(input_file_path)
+        poster_id = int(file_name.split('.')[0])
+        output_file_path = os.path.join(PRESENTER_CROP_FOLDER_PATH, f'{poster_id:03}.png')
+        crop_to_face(input_file_path, output_file_path, target_height, overwrite)
+
+
+def crop_presenter_pic(poster_id: int, target_height, overwrite: bool = False):
     """Process a single presenter pic.
     """
     candidates = glob.glob(os.path.join(PRESENTER_FOLDER_PATH, f'{poster_id:03}.*'))
@@ -51,7 +62,7 @@ def crop_presenter_pic(input_file_path: str, target_height, overwrite: bool = Fa
 if __name__ == '__main__':
     args = PARSER.parse_args()
     if args.posters is None:
-        pass
+        crop_presenter_pics(args.target_height, args.overwrite)
     else:
         for poster_id in args.posters:
             crop_presenter_pic(poster_id, args.target_height, args.overwrite)
