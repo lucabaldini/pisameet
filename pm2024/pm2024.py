@@ -117,21 +117,3 @@ def dispatch_files():
             os.makedirs(folder_path)
     dispatch_posters(ids, INDICO_ATTACHMENTS_FOLDER_PATH, POSTER_FOLDER_PATH)
     dispatch_pictures(ids, INDICO_ATTACHMENTS_FOLDER_PATH, PRESENTER_FOLDER_PATH)
-
-
-def process_presenter_pic(file_path, height: int = 132, overwrite=False):
-    """Process a single presenter pic.
-    """
-    file_name = os.path.basename(file_path)
-    dest = os.path.join(PRESENTER_CROP_FOLDER_PATH, f'{file_name.split(".")[0]}.png')
-    if os.path.exists(dest):
-        logger.info('File %s already exists, skipping...', dest)
-        return
-    resize_presenter_pic(file_path, height, dest)
-
-def process_presenter_pics(height: int = 132):
-    """Process the presenter pics.
-    """
-    for file_name in os.listdir(PRESENTER_FOLDER_PATH):
-        file_path = os.path.join(PRESENTER_FOLDER_PATH, file_name)
-        process_presenter_pic(file_path)
