@@ -60,23 +60,6 @@ def crawl(folder_path: str, file_type: str = '.pdf', filter_pattern: str = None)
     return file_list
 
 
-def pdf_to_png(input_file_path: str, output_folder_path, density=72) -> str:
-    """Convert a .pdf file to a .png file.
-    """
-    assert input_file_path.endswith('.pdf')
-    file_name = os.path.basename(input_file_path).replace('.pdf', '.png')
-    output_file_path = os.path.join(output_folder_path, file_name)
-    print('Converting %s to %s (density = %d)...' % (input_file_path, output_file_path, density))
-    subprocess.run(['convert', '-density', f'{density}', input_file_path, output_file_path], check=True)
-    return output_file_path
-
-
-def process_posters(folder_path : str, output_folder_path : str):
-    """Save png versions of the posters.
-    """
-    for file_path in crawl(folder_path):
-        pdf_to_png(file_path, output_folder_path)
-
 
 def _resize_image(img, width, height, output_file_path=None, resample=Image.LANCZOS, reducing_gap=3.):
     """Base function to resize an image.

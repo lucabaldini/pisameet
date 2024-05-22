@@ -59,6 +59,7 @@ def pdf_page_size(file_path: str, page_number: int=0) -> tuple[int, int]:
     logger.debug(f'Page size: ({width}, {height}).')
     return width, height
 
+
 def pdf_to_png(input_file_path: str, output_file_path: str, density: float = _REFERENCE_DENSITY,
     compression_level: int = 0) -> str:
     """Convert a .pdf file to a .png file using imagemagick convert under the hood.
@@ -85,7 +86,8 @@ def pdf_to_png(input_file_path: str, output_file_path: str, density: float = _RE
         check=True)
     return output_file_path
 
-def _resize_image(img, width, height, output_file_path=None, resample=PIL.Image.LANCZOS,
+
+def resize_image(img, width, height, output_file_path=None, resample=PIL.Image.LANCZOS,
     reducing_gap=3., compression_level=6):
     """Base function to resize an image.
     """
@@ -96,13 +98,15 @@ def _resize_image(img, width, height, output_file_path=None, resample=PIL.Image.
         logger.info(f'Saving image to {output_file_path}...')
         img.save(output_file_path, compress_level=compression_level)
 
+
 def png_resize_to_width(input_file_path: str, output_file_path: str, width: int, **kwargs):
     """Resize an image to the target width.
     """
     with PIL.Image.open(input_file_path) as img:
         w, h = img.size
         height = round(width / w * h)
-        _resize_image(img, width, height, output_file_path, **kwargs)
+        resize_image(img, width, height, output_file_path, **kwargs)
+
 
 def png_resize_to_height(input_file_path: str, output_file_path: str, height: int, **kwargs):
     """Resize an image to the target height.
@@ -110,7 +114,8 @@ def png_resize_to_height(input_file_path: str, output_file_path: str, height: in
     with PIL.Image.open(input_file_path) as img:
         w, h = img.size
         width = round(height / h * w)
-        _resize_image(img, width, height, output_file_path, **kwargs)
+        resize_image(img, width, height, output_file_path, **kwargs)
+
 
 def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
     intermediate_width: int = None) -> str:
