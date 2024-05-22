@@ -110,19 +110,18 @@ def png_resize_to_height(input_file_path: str, output_file_path: str, height: in
         _resize_image(img, width, height, output_file_path, **kwargs)
 
 def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
-    intermediate_min_size: int = None) -> str:
+    intermediate_width: int = None) -> str:
     """Raster a pdf.
     """
     logger.info(f'Rastering {input_file_path}...')
     original_width, original_height = pdf_page_size(input_file_path)
     # Are we skipping the intermediate rastering?
-    if intermediate_min_size is None:
+    if intermediate_width is None or intermediate_width <= target_width:
         logger.debug('Skipping intermediate rastering...')
         density = target_width / original_width * _REFERENCE_DENSITY
         return pdf_to_png(input_file_path, output_file_path, density)
     logger.debug('Performing intermediate rastering...')
-    original_min_size = min(original_width, original_height)
-    density = intermediate_min_size / original_min_size * _REFERENCE_DENSITY
+    density = intermediate_width / original_width * _REFERENCE_DENSITY
     file_path = pdf_to_png(input_file_path, output_file_path, density)
     logger.debug('Resizing to target width...')
     return png_resize_to_width(file_path, file_path, target_width)
