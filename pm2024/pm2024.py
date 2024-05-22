@@ -37,11 +37,12 @@ LOCAL_ROOT = os.path.join(PISAMEET_BASE, BASE_NAME)
 INDICO_URL = 'https://agenda.infn.it/export/event/37033.json'
 INFO_FILE_PATH = os.path.join(LOCAL_ROOT, f'{BASE_NAME}.json')
 CONFIG_FILE_PATH = INFO_FILE_PATH.replace('.json', '.xlsx')
-ATTACH_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'indico_attachments')
-POSTER_ORIGINAL_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_original')
-PRESENTER_ORIGINAL_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'presenter_original')
-POSTER_IMAGE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'poster_images')
+
+INDICO_ATTACHMENTS_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'indico_attachments')
+POSTER_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'posters')
+POSTER_RASTER_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'posters_raster')
 PRESENTER_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'presenters')
+PRESENTER_CROP_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'presenters_crop')
 QRCODE_FOLDER_PATH = os.path.join(LOCAL_ROOT, 'qrcodes')
 SCREEN_TARGET_WIDTH = 1060
 POSTER_TARGET_WIDTH = 2 * SCREEN_TARGET_WIDTH
@@ -100,10 +101,10 @@ def download_attachments(refresh_info=False):
     """
     if refresh_info:
         donwload_info(overwrite=True)
-    if not os.path.exists(ATTACH_FOLDER_PATH):
-        logger.info('Creating folder %s...' % ATTACH_FOLDER_PATH)
-        os.makedirs(ATTACH_FOLDER_PATH)
-    CONFERENCE_INFO.download_attachments(ATTACH_FOLDER_PATH)
+    if not os.path.exists(INDICO_ATTACHMENTS_FOLDER_PATH):
+        logger.info('Creating folder %s...' % INDICO_ATTACHMENTS_FOLDER_PATH)
+        os.makedirs(INDICO_ATTACHMENTS_FOLDER_PATH)
+    CONFERENCE_INFO.download_attachments(INDICO_ATTACHMENTS_FOLDER_PATH)
 
 
 def dispatch_files():
@@ -111,19 +112,19 @@ def dispatch_files():
     later consumption by the slideshow and the program browser.
     """
     ids = CONFERENCE_INFO.contribution_ids()
-    for folder_path in (POSTER_ORIGINAL_FOLDER_PATH, PRESENTER_ORIGINAL_FOLDER_PATH):
+    for folder_path in (POSTER_FOLDER_PATH, PRESENTER_FOLDER_PATH):
         if not os.path.exists(folder_path):
             logger.info('Creating folder %s...' % folder_path)
             os.makedirs(folder_path)
-    dispatch_posters(ids, ATTACH_FOLDER_PATH, POSTER_ORIGINAL_FOLDER_PATH)
-    dispatch_pictures(ids, ATTACH_FOLDER_PATH, PRESENTER_ORIGINAL_FOLDER_PATH)
+    dispatch_posters(ids, INDICO_ATTACHMENTS_FOLDER_PATH, POSTER_FOLDER_PATH)
+    dispatch_pictures(ids, INDICO_ATTACHMENTS_FOLDER_PATH, PRESENTER_FOLDER_PATH)
 
 
 def process_presenter_pic(file_path, height: int = 132, overwrite=False):
     """Process a single presenter pic.
     """
     file_name = os.path.basename(file_path)
-    dest = os.path.join(PRESENTER_FOLDER_PATH, f'{file_name.split(".")[0]}.png')
+    dest = os.path.join(PRESENTER_CROP_FOLDER_PATH, f'{file_name.split(".")[0]}.png')
     if os.path.exists(dest):
         logger.info('File %s already exists, skipping...', dest)
         return
@@ -132,8 +133,8 @@ def process_presenter_pic(file_path, height: int = 132, overwrite=False):
 def process_presenter_pics(height: int = 132):
     """Process the presenter pics.
     """
-    for file_name in os.listdir(PRESENTER_ORIGINAL_FOLDER_PATH):
-        file_path = os.path.join(PRESENTER_ORIGINAL_FOLDER_PATH, file_name)
+    for file_name in os.listdir(PRESENTER_FOLDER_PATH):
+        file_path = os.path.join(PRESENTER_FOLDER_PATH, file_name)
         process_presenter_pic(file_path)
 
 
@@ -150,21 +151,21 @@ def process_poster(file_path, target_width=POSTER_TARGET_WIDTH,
     if intermediate_min_size is None:
         logger.info('Skipping intermediate conversion step...')
         density = target_width / width * 72.
-        pdf_to_png(file_path, POSTER_IMAGE_FOLDER_PATH, density)
+        pdf_to_png(file_path, POSTER_RASTER_FOLDER_PATH, density)
         return
     logger.info('Performing intermediate conversion step...')
     size = min(width, height)
     density = round(intermediate_min_size / size * 72)
     # Convert the file to pdf.
-    _file_path = pdf_to_png(file_path, POSTER_IMAGE_FOLDER_PATH, density)
+    _file_path = pdf_to_png(file_path, POSTER_RASTER_FOLDER_PATH, density)
     # Resize the image to the target value.
-    resize_image_to_width(_file_path, target_width, POSTER_IMAGE_FOLDER_PATH)
+    resize_image_to_width(_file_path, target_width, POSTER_RASTER_FOLDER_PATH)
 
 
 def process_posters(target_width=POSTER_TARGET_WIDTH):
     """Process the poster images.
     """
-    for file_path in crawl(POSTER_ORIGINAL_FOLDER_PATH):
+    for file_path in crawl(POSTER_FOLDER_PATH):
         process_poster(file_path, target_width)
 
 

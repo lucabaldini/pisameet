@@ -23,13 +23,13 @@ import argparse
 import os
 
 from pisameet import raster
-from pm2024 import POSTER_ORIGINAL_FOLDER_PATH, POSTER_IMAGE_FOLDER_PATH
+from pm2024 import POSTER_FOLDER_PATH, POSTER_RASTER_FOLDER_PATH
 
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument('posters', type=int, nargs='+',
     help='the ids of the posters to be processed')
-PARSER.add_argument('--output_folder', type=str, default=POSTER_IMAGE_FOLDER_PATH,
+PARSER.add_argument('--output_folder', type=str, default=POSTER_RASTER_FOLDER_PATH,
     help='output folder for the rasterized png files')
 PARSER.add_argument('--target_width', type=int, default=1060,
     help='target width for the output png')
@@ -41,10 +41,7 @@ def raster_poster(poster_id: int, target_width: int, intermediate_width: int, ou
     """
     """
     poster_name = f'{poster_id:03}'
-    input_file_path = os.path.join(POSTER_ORIGINAL_FOLDER_PATH, f'{poster_name}.pdf')
-    #if True:
-    #    output_file_path = os.path.join(output_folder, f'{poster_name}_{target_width}_{intermediate_width}.png')
-    #else:
+    input_file_path = os.path.join(POSTER_FOLDER_PATH, f'{poster_name}.pdf')
     output_file_path = os.path.join(output_folder, f'{poster_name}.png')
     raster.raster_pdf(input_file_path, output_file_path, target_width, intermediate_width)
 
