@@ -24,10 +24,14 @@ import sys
 from loguru import logger
 import pdfrw
 import PIL
+import PIL.Image
 
 DEFAULT_LOGURU_HANDLER = dict(sink=sys.stderr, colorize=True, format=">>> <level>{message}</level>")
 logger.remove()
 logger.add(**DEFAULT_LOGURU_HANDLER)
+
+_REFERENCE_DENSITY = 72.
+
 
 
 def pdf_page_size(file_path: str, page_number: int=0) -> tuple[int, int]:
@@ -55,7 +59,7 @@ def pdf_page_size(file_path: str, page_number: int=0) -> tuple[int, int]:
     logger.debug(f'Page size: ({width}, {height}).')
     return width, height
 
-def pdf_to_png(input_file_path: str, output_file_path: str, density: float = 72.) -> str:
+def pdf_to_png(input_file_path: str, output_file_path: str, density: float = _REFERENCE_DENSITY) -> str:
     """Convert a .pdf file to a .png file using imagemagick convert under the hood.
 
     See https://imagemagick.org/script/command-line-options.php for some basic
@@ -74,16 +78,51 @@ def pdf_to_png(input_file_path: str, output_file_path: str, density: float = 72.
     """
     if not input_file_path.endswith('.pdf'):
         raise RuntimeError(f'{input_file_path} not a pdf file?')
-    logger.info(f'Converting {input_file_path} to {output_file_path} @{density} dpi...')
+    logger.info(f'Converting {input_file_path} to {output_file_path} @{density:.3f} dpi...')
     subprocess.run(['convert', '-density', f'{density}', input_file_path, output_file_path], check=True)
     return output_file_path
 
-def raster_pdf(input_file_path: str, output_file_path: str, width: int, intermediate_size: int) -> str:
+def _resize_image(img, width, height, output_file_path=None, resample=PIL.Image.LANCZOS,
+    reducing_gap=3.):
+    """Base function to resize an image.
+    """
+    w, h = img.size
+    logger.info(f'Resizing image ({w}, {h}) -> ({width}, {height})...')
+    img = img.resize((width, height), resample, None, reducing_gap)
+    if output_file_path is not None:
+        logger.info(f'Saving image to {output_file_path}...')
+        img.save(output_file_path)
+
+def png_resize_to_width(input_file_path: str, output_file_path: str, width: int, **kwargs):
+    """Resize an image to the target width.
+    """
+    with PIL.Image.open(input_file_path) as img:
+        w, h = img.size
+        height = round(width / w * h)
+        _resize_image(img, width, height, output_file_path, **kwargs)
+
+def png_resize_to_height(input_file_path: str, output_file_path: str, height: int, **kwargs):
+    """Resize an image to the target height.
+    """
+    with PIL.Image.open(input_file_path) as img:
+        w, h = img.size
+        width = round(height / h * w)
+        _resize_image(img, width, height, output_file_path, **kwargs)
+
+def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
+    intermediate_min_size: int = None) -> str:
     """Raster a pdf.
     """
-    pass
-
-
-
-if __name__ == '__main__':
-    print(pdf_to_png('/data/work/pisameet/pm2024/poster_original/003.pdf', '/data/temp/test.png'))
+    logger.info(f'Rastering {input_file_path}...')
+    original_width, original_height = pdf_page_size(input_file_path)
+    # Are we skipping the intermediate rastering?
+    if intermediate_min_size is None:
+        logger.debug('Skipping intermediate rastering...')
+        density = target_width / original_width * _REFERENCE_DENSITY
+        return pdf_to_png(input_file_path, output_file_path, density)
+    logger.debug('Performing intermediate rastering...')
+    original_min_size = min(original_width, original_height)
+    density = intermediate_min_size / original_min_size * _REFERENCE_DENSITY
+    file_path = pdf_to_png(input_file_path, output_file_path, density)
+    logger.debug('Resizing to target width...')
+    return png_resize_to_width(file_path, file_path, target_width)

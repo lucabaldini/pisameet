@@ -22,8 +22,8 @@
 import argparse
 import os
 
-from pm2024 import POSTER_ORIGINAL_FOLDER_PATH
-from pm2024 import process_poster
+from pisameet import raster
+from pm2024 import POSTER_ORIGINAL_FOLDER_PATH, POSTER_IMAGE_FOLDER_PATH
 
 
 PARSER = argparse.ArgumentParser()
@@ -35,9 +35,16 @@ PARSER.add_argument('--intermediate_min_size', type=int, default=6360,
     help='intermediate minimum size')
 
 
+def raster_poster(poster_id: int, target_width: int, intermediate_min_size: int):
+    """
+    """
+    input_file_path = os.path.join(POSTER_ORIGINAL_FOLDER_PATH, f'{poster_id:03}.pdf')
+    output_file_path = os.path.join(POSTER_IMAGE_FOLDER_PATH, f'{poster_id:03}.png')
+    raster.raster_pdf(input_file_path, output_file_path, target_width, intermediate_min_size)
+
+
 
 if __name__ == '__main__':
     args = PARSER.parse_args()
     for poster_id in args.posters:
-        file_path = os.path.join(POSTER_ORIGINAL_FOLDER_PATH, f'{poster_id:03}.pdf')
-        process_poster(file_path, args.width, args.intermediate_min_size)
+        raster_poster(poster_id, args.width, args.intermediate_min_size)
