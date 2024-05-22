@@ -163,7 +163,12 @@ def face_bbox(file_path: str, min_frac_size: float = 0.15, padding: float = 1.85
         half_side = round(0.5 * min(width, height))
         return (x0 - half_side, y0 - half_side, x0 + half_side, y0 + half_side)
     logger.debug(f'{len(faces)} candidate bounding boxes found...')
-    x, y, w, h = faces[-1]
+    if len(faces) > 1:
+        for i, face in enumerate(faces):
+            logger.debug(f'{i}: {face}')
+    # Here we have to be clever on whether we want the first, the last or one particular
+    # bounding box, in case more than one are found.
+    x, y, w, h = faces[0]
     # Calculate the starting center and size.
     x0, y0 = x + w // 2, y + h // 2
     half_side = round(0.5 * max(w, h) * padding)
@@ -184,7 +189,7 @@ def face_bbox(file_path: str, min_frac_size: float = 0.15, padding: float = 1.85
     if abs(w - h) > 1:
         logger.warning(f'Skewed bounding box ({w} x {h})')
     bbox = (xmin, ymin, xmax, ymax)
-    logger.info(f'{len(faces)} face candidate(s) found, last bbox is ({bbox})')
+    logger.info(f'{len(faces)} face candidate(s) found, returning {bbox}...')
     return bbox
 
 
@@ -194,7 +199,7 @@ def crop_to_face(file_path: str, output_file_path: str, height: int,
     """
     if os.path.exists(output_file_path) and not overwrite:
         logger.info(f'Output file {output_file_path} exists, skipping...')
-        return 
+        return
     logger.info(f'Cropping {file_path} to face...')
     kwargs.setdefault('resample', PIL.Image.ANTIALIAS)
     kwargs.setdefault('reducing_gap', 3.)
