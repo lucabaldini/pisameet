@@ -36,15 +36,19 @@ PARSER.add_argument('--target_width', type=int, default=1060,
     help='target width for the output png')
 PARSER.add_argument('--intermediate_width', type=int, default=4240,
     help='intermediate width')
+PARSER.add_argument('--overwrite', action='store_true')
 
 
-def raster_poster(poster_id: int, target_width: int, intermediate_width: int, output_folder: str):
+
+def raster_poster(poster_id: int, target_width: int, intermediate_width: int, output_folder: str,
+    overwrite: bool = False):
     """
     """
     poster_name = f'{poster_id:03}'
     input_file_path = os.path.join(POSTER_FOLDER_PATH, f'{poster_name}.pdf')
     output_file_path = os.path.join(output_folder, f'{poster_name}.png')
-    raster.raster_pdf(input_file_path, output_file_path, target_width, intermediate_width)
+    raster.raster_pdf(input_file_path, output_file_path, target_width,
+        intermediate_width, overwrite)
 
 
 
@@ -54,7 +58,9 @@ if __name__ == '__main__':
         for file_path in crawl(POSTER_FOLDER_PATH):
             file_name = os.path.basename(file_path)
             poster_id = int(file_name.replace('.pdf', ''))
-            raster_poster(poster_id, args.target_width, args.intermediate_width, args.output_folder)
+            raster_poster(poster_id, args.target_width, args.intermediate_width,
+                args.output_folder, args.overwrite)
     else:
         for poster_id in args.posters:
-            raster_poster(poster_id, args.target_width, args.intermediate_width, args.output_folder)
+            raster_poster(poster_id, args.target_width, args.intermediate_width,
+                args.output_folder, args.overwrite)

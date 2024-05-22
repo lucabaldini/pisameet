@@ -125,9 +125,12 @@ def png_resize_to_height(input_file_path: str, output_file_path: str, height: in
 
 
 def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
-    intermediate_width: int = None) -> str:
+    intermediate_width: int = None, overwrite: bool = False) -> str:
     """Raster a pdf file and convert it to a png.
     """
+    if os.path.exists(output_file_path) and not overwrite:
+        logger.info(f'Output file {output_file_path} exists, skipping...')
+        return
     logger.info(f'Rastering {input_file_path}...')
     original_width, original_height = pdf_page_size(input_file_path)
     # Are we skipping the intermediate rastering?
