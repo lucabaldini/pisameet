@@ -21,17 +21,24 @@ import os
 import subprocess
 import sys
 
+import cv2
 from loguru import logger
 import pdfrw
 import PIL
 import PIL.Image
 
+from pisameet import PISAMEET_DATA
+
+
+# Move upstream
 DEFAULT_LOGURU_HANDLER = dict(sink=sys.stderr, colorize=True, format=">>> <level>{message}</level>")
 logger.remove()
 logger.add(**DEFAULT_LOGURU_HANDLER)
 
-_REFERENCE_DENSITY = 72.
-
+REFERENCE_DENSITY = 72.
+EXIF_ORIENTATION_TAG = 274
+EXIF_ROTATION_DICT = {3: 180, 6: 270, 8: 90}
+HAARCASCADE_FILE_PATH = os.path.join(PISAMEET_DATA, 'haarcascade_frontalface_default.xml')
 
 
 def pdf_page_size(file_path: str, page_number: int=0) -> tuple[int, int]:
@@ -60,7 +67,7 @@ def pdf_page_size(file_path: str, page_number: int=0) -> tuple[int, int]:
     return width, height
 
 
-def pdf_to_png(input_file_path: str, output_file_path: str, density: float = _REFERENCE_DENSITY,
+def pdf_to_png(input_file_path: str, output_file_path: str, density: float = REFERENCE_DENSITY,
     compression_level: int = 0) -> str:
     """Convert a .pdf file to a .png file using imagemagick convert under the hood.
 
@@ -119,17 +126,97 @@ def png_resize_to_height(input_file_path: str, output_file_path: str, height: in
 
 def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
     intermediate_width: int = None) -> str:
-    """Raster a pdf.
+    """Raster a pdf file and convert it to a png.
     """
     logger.info(f'Rastering {input_file_path}...')
     original_width, original_height = pdf_page_size(input_file_path)
     # Are we skipping the intermediate rastering?
     if intermediate_width is None or intermediate_width <= target_width:
         logger.debug('Skipping intermediate rastering...')
-        density = target_width / original_width * _REFERENCE_DENSITY
+        density = target_width / original_width * REFERENCE_DENSITY
         return pdf_to_png(input_file_path, output_file_path, density)
     logger.debug('Performing intermediate rastering...')
-    density = intermediate_width / original_width * _REFERENCE_DENSITY
+    density = intermediate_width / original_width * REFERENCE_DENSITY
     file_path = pdf_to_png(input_file_path, output_file_path, density)
     logger.debug('Resizing to target width...')
     return png_resize_to_width(file_path, file_path, target_width)
+
+
+def face_bbox(file_path: str, min_frac_size: float = 0.15, padding: float = 1.85):
+    """Run a simple opencv face detection and return the proper bounding box for
+    cropping the input image.
+
+    This is returning an approximately square (modulo 1 pixel possible difference
+    between the two sides) bounding box containing the face.
+    """
+    logger.info(f'Running face detection on {file_path}...')
+    # Run opencv and find the face.
+    cascade = cv2.CascadeClassifier(HAARCASCADE_FILE_PATH)
+    img = cv2.imread(file_path)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    height, width = img.shape
+    min_size = round(width * min_frac_size), round(height * min_frac_size)
+    faces = cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=5, minSize=min_size)
+    if len(faces) == 0:
+        logger.warning('No candidate face found, returning dummy bounding box...')
+        x0, y0 = width // 2, height // 2
+        half_side = round(0.5 * min(width, height))
+        return (x0 - half_side, y0 - half_side, x0 + half_side, y0 + half_side)
+    logger.debug(f'{len(faces)} candidate bounding boxes found...')
+    x, y, w, h = faces[-1]
+    # Calculate the starting center and size.
+    x0, y0 = x + w // 2, y + h // 2
+    half_side = round(0.5 * max(w, h) * padding)
+    # First pass on the bounding box.
+    xmin = max(x0 - half_side, 0)
+    ymin = max(y0 - half_side, 0)
+    xmax = min(x0 + half_side, width - 1)
+    ymax = min(y0 + half_side, height - 1)
+    # Second pass to avoid exceeding the physical dimensions of the original image.
+    w = xmax - xmin
+    h = ymax - ymin
+    if h > w:
+        delta = (h - w) // 2
+        ymin += delta
+        ymax -= delta
+    w = xmax - xmin
+    h = ymax - ymin
+    if abs(w - h) > 1:
+        logger.warning(f'Skewed bounding box ({w} x {h})')
+    bbox = (xmin, ymin, xmax, ymax)
+    logger.info(f'{len(faces)} face candidate(s) found, last bbox is ({bbox})')
+    return bbox
+
+
+def crop_to_face(file_path: str, output_file_path: str, height: int,
+    overwrite: bool = False,**kwargs):
+    """Resize a given input file to contain the face.
+    """
+    if os.path.exists(output_file_path) and not overwrite:
+        logger.info(f'Output file {output_file_path} exists, skipping...')
+        return 
+    logger.info(f'Cropping {file_path} to face...')
+    kwargs.setdefault('resample', PIL.Image.ANTIALIAS)
+    kwargs.setdefault('reducing_gap', 3.)
+    try:
+        with PIL.Image.open(file_path) as img:
+            # Parse the original image size and orientation.
+            w, h = img.size
+            orientation = img.getexif().get(EXIF_ORIENTATION_TAG, None)
+            logger.debug(f'Original size: {w} x {h}, orientation: {orientation}')
+            # If the image is rotated, we need to change the orientation.
+            if orientation in EXIF_ROTATION_DICT:
+                rotation = EXIF_ROTATION_DICT[orientation]
+                logger.debug(f'Applying a rotation by {rotation} degrees...')
+                img = img.rotate(rotation, expand=True)
+                w, h = img.size
+                logger.debug(f'Rotated size: {w} x {h}')
+            # Crop and scale to the target dimensions.
+            bbox = face_bbox(file_path)
+            logger.info(f'Resizing image to ({height}, {height})...')
+            img = img.resize((height, height), box=bbox, **kwargs)
+            if output_file_path is not None:
+                logger.info(f'Saving image to {output_file_path}...')
+                img.save(output_file_path)
+    except PIL.UnidentifiedImageError as exception:
+        logger.error(exception)

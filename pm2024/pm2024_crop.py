@@ -19,8 +19,39 @@
 """Process the local copies of the poster files.
 """
 
-from pm2024 import process_presenter_pics
+import argparse
+import os
+import glob
+
+from loguru import logger
+
+from pm2024 import PRESENTER_FOLDER_PATH, PRESENTER_CROP_FOLDER_PATH
+from pisameet.raster import crop_to_face
+
+
+PARSER = argparse.ArgumentParser()
+PARSER.add_argument('--posters', type=int, nargs='+',
+    help='the ids of the posters to be processed')
+PARSER.add_argument('--target_height', type=int, default=132,
+    help='target height for the output png')
+PARSER.add_argument('--overwrite', action='store_true')
+
+
+def crop_presenter_pic(input_file_path: str, target_height, overwrite: bool = False):
+    """Process a single presenter pic.
+    """
+    candidates = glob.glob(os.path.join(PRESENTER_FOLDER_PATH, f'{poster_id:03}.*'))
+    input_file_path = os.path.join(PRESENTER_FOLDER_PATH, candidates[0])
+    output_file_path = os.path.join(PRESENTER_CROP_FOLDER_PATH, f'{poster_id:03}.png')
+    crop_to_face(input_file_path, output_file_path, target_height, overwrite)
+
+
 
 
 if __name__ == '__main__':
-    process_presenter_pics()
+    args = PARSER.parse_args()
+    if args.posters is None:
+        pass
+    else:
+        for poster_id in args.posters:
+            crop_presenter_pic(poster_id, args.target_height, args.overwrite)

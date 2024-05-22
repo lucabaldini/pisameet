@@ -26,8 +26,7 @@ import pdfrw
 from pisameet import logger, PISAMEET_BASE
 from pisameet.indico import retrieve_info, ConferenceInfo
 from pisameet.dispatch import dispatch_posters, dispatch_pictures
-from pisameet.process import resize_image_to_width, process_posters,\
-    resize_presenter_pic, pdf_to_png, crawl
+from pisameet.process import crawl
 from pisameet.qrcode_ import generate_qrcode
 
 
