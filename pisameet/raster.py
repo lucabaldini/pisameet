@@ -59,7 +59,8 @@ def pdf_page_size(file_path: str, page_number: int=0) -> tuple[int, int]:
     logger.debug(f'Page size: ({width}, {height}).')
     return width, height
 
-def pdf_to_png(input_file_path: str, output_file_path: str, density: float = _REFERENCE_DENSITY) -> str:
+def pdf_to_png(input_file_path: str, output_file_path: str, density: float = _REFERENCE_DENSITY,
+    compression_level: int = 0) -> str:
     """Convert a .pdf file to a .png file using imagemagick convert under the hood.
 
     See https://imagemagick.org/script/command-line-options.php for some basic
@@ -79,11 +80,13 @@ def pdf_to_png(input_file_path: str, output_file_path: str, density: float = _RE
     if not input_file_path.endswith('.pdf'):
         raise RuntimeError(f'{input_file_path} not a pdf file?')
     logger.info(f'Converting {input_file_path} to {output_file_path} @{density:.3f} dpi...')
-    subprocess.run(['convert', '-density', f'{density}', input_file_path, output_file_path], check=True)
+    subprocess.run(['convert', '-density', f'{density}', '-define',
+        f'png:compression-level={compression_level}', input_file_path, output_file_path],
+        check=True)
     return output_file_path
 
 def _resize_image(img, width, height, output_file_path=None, resample=PIL.Image.LANCZOS,
-    reducing_gap=3.):
+    reducing_gap=3., compression_level=6):
     """Base function to resize an image.
     """
     w, h = img.size
@@ -91,7 +94,7 @@ def _resize_image(img, width, height, output_file_path=None, resample=PIL.Image.
     img = img.resize((width, height), resample, None, reducing_gap)
     if output_file_path is not None:
         logger.info(f'Saving image to {output_file_path}...')
-        img.save(output_file_path)
+        img.save(output_file_path, compress_level=compression_level)
 
 def png_resize_to_width(input_file_path: str, output_file_path: str, width: int, **kwargs):
     """Resize an image to the target width.
