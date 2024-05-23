@@ -142,8 +142,6 @@ def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
     density = intermediate_width / original_width * REFERENCE_DENSITY
     file_path = pdf_to_png(input_file_path, output_file_path, density)
     logger.debug('Resizing to target width...')
-    #print(file_path)
-    #output_file_path = file_path.replace('.png', '.bmp')
     return png_resize_to_width(file_path, file_path, target_width)
 
 
