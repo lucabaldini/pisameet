@@ -187,6 +187,10 @@ def face_bbox(file_path: str, min_frac_size: float = 0.15, padding: float = 1.85
         delta = (h - w) // 2
         ymin += delta
         ymax -= delta
+    elif h < w:
+        delta = (w - h) // 2
+        xmin += delta
+        xmax -= delta
     w = xmax - xmin
     h = ymax - ymin
     if abs(w - h) > 1:
