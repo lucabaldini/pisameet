@@ -126,7 +126,7 @@ def png_resize_to_height(input_file_path: str, output_file_path: str, height: in
 
 
 def png_horizontal_autocrop(input_file_path: str, output_file_path: str,
-    threshold: float = 0.99, padding=0.01, compression_level=6):
+    threshold: float = 0.99, padding=0.01, compression_level=6, max_aspect_ratio=1.525):
     """
     """
     import matplotlib.pyplot as plt
@@ -142,7 +142,14 @@ def png_horizontal_autocrop(input_file_path: str, output_file_path: str,
         edges, = np.where(np.diff(hist > threshold))
         xmin = max(edges.min() - padding, 0)
         xmax = min(edges.max() + padding + 1, width)
-        ratio = (xmax - xmin) / width
+        deltax = (xmax - xmin)
+        if height / deltax > max_aspect_ratio:
+            logger.warning(f'Cropped width ({deltax}) exceeds maximum aspect ratio')
+            pad = int(0.5 * (height / max_aspect_ratio - deltax))
+            logger.debug(f'Padding back by {pad} pixels...')
+            xmin -= pad
+            xmax += pad
+        ratio = deltax / width
         logger.debug(f'Horizontal compression ratio: {ratio:.3f}')
         bbox = (xmin, 0, xmax, height)
         logger.debug(f'Target bounding box: {bbox}')
