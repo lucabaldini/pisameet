@@ -23,6 +23,7 @@ import sys
 
 import cv2
 from loguru import logger
+import numpy as np
 import pdfrw
 import PIL
 import PIL.Image
@@ -122,6 +123,32 @@ def png_resize_to_height(input_file_path: str, output_file_path: str, height: in
         w, h = img.size
         width = round(height / h * w)
         resize_image(img, width, height, output_file_path, **kwargs)
+
+
+def png_horizontal_autocrop(input_file_path: str, output_file_path: str,
+    threshold: float = 0.99, padding=0.01, compression_level=6):
+    """
+    """
+    import matplotlib.pyplot as plt
+    logger.info(f'Cropping image {input_file_path}...')
+    with PIL.Image.open(input_file_path) as img:
+        logger.debug('Decoding image data...')
+        width, height = img.size
+        channel = lambda ch: np.array(img.getdata(0)).reshape((height, width))
+        data = sum(channel(ch) for ch in (0, 1, 2))
+        threshold *= data.max()
+        padding = int(padding * width)
+        hist = data.mean(axis=0)
+        edges, = np.where(np.diff(hist > threshold))
+        xmin = max(edges.min() - padding, 0)
+        xmax = min(edges.max() + padding + 1, width)
+        ratio = (xmax - xmin) / width
+        logger.debug(f'Horizontal compression ratio: {ratio:.3f}')
+        bbox = (xmin, 0, xmax, height)
+        logger.debug(f'Target bounding box: {bbox}')
+        img = img.crop(bbox)
+        logger.info(f'Saving cropped image to {output_file_path}')
+        img.save(output_file_path, compress_level=compression_level)
 
 
 def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
@@ -233,3 +260,8 @@ def crop_to_face(file_path: str, output_file_path: str, height: int,
                 img.save(output_file_path)
     except PIL.UnidentifiedImageError as exception:
         logger.error(exception)
+
+
+
+if __name__ == '__main__':
+    png_horizontal_autocrop('data/test_image.png', '/home/lbaldini/test.png')
