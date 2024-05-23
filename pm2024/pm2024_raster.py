@@ -40,7 +40,7 @@ PARSER.add_argument('--autocrop', action='store_true')
 PARSER.add_argument('--overwrite', action='store_true')
 
 
-_CROP_LIST = [212, 23, 60]
+_AUTOCROP_LIST = [212, 23, 60]
 
 
 
@@ -51,6 +51,8 @@ def raster_poster(poster_id: int, target_width: int, intermediate_width: int, ou
     poster_name = f'{poster_id:03}'
     input_file_path = os.path.join(POSTER_FOLDER_PATH, f'{poster_name}.pdf')
     output_file_path = os.path.join(output_folder, f'{poster_name}.png')
+    if poster_id in _AUTOCROP_LIST:
+        autocrop = True
     raster.raster_pdf(input_file_path, output_file_path, target_width,
         intermediate_width, overwrite, autocrop)
 
