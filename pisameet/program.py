@@ -508,6 +508,8 @@ class PosterProgram(PosterCollectionBase, dict):
     def dump_report(self):
         """Dump a program report for diagnostics purposes.
         """
+        basic_stats = {'posters': 0, 'pics': 0, 'qrcodes': 0}
+        missing_stats = {'posters': 0, 'pics': 0, 'qrcodes': 0}
         for session, posters in self.items():
             logger.info(session)
             cnt = Counter([poster.screen_id for poster in posters])
@@ -520,9 +522,17 @@ class PosterProgram(PosterCollectionBase, dict):
                 num_posters, num_screens, min(mult), max(mult), mean_mult)
             for poster in posters:
                 if self.missing_poster_image(poster.friendly_id):
-                    pass
+                    missing_stats['posters'] += 1
+                else:
+                    basic_stats['posters'] += 1
                 if self.missing_presenter_image(poster.friendly_id):
-                    pass
+                    missing_stats['pics'] += 1
+                else:
+                    basic_stats['pics'] += 1
                 if self.missing_qrcode_image(poster.friendly_id):
-                    pass
+                    missing_stats['qrcodes'] += 1
+                else:
+                    basic_stats['qrcodes'] += 1
             logger.info('Screen statistics: %s', cnt)
+        logger.info(f'Basic statistics: {basic_stats}')
+        logger.info(f'Missing elements: {missing_stats}')
