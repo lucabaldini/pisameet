@@ -37,6 +37,14 @@ PARSER.add_argument('--target_height', type=int, default=132,
 PARSER.add_argument('--overwrite', action='store_true')
 
 
+_CUSTOM_BBOX_DICT = {
+    71: (100, 50, 500, 450),
+    129: (289, 77, 861, 649),
+    244: (0, 0, 2300, 2300),
+    304: (700, 1200, 1300, 1800),
+    349: (200, 100, 600, 500)
+}
+
 
 def crop_presenter_pics(target_height, overwrite: bool = False):
     """Process all the presenter pics.
@@ -45,7 +53,8 @@ def crop_presenter_pics(target_height, overwrite: bool = False):
         file_name = os.path.basename(input_file_path)
         poster_id = int(file_name.split('.')[0])
         output_file_path = os.path.join(PRESENTER_CROP_FOLDER_PATH, f'{poster_id:03}.png')
-        crop_to_face(input_file_path, output_file_path, target_height, overwrite)
+        bbox = _CUSTOM_BBOX_DICT.get(poster_id)
+        crop_to_face(input_file_path, output_file_path, target_height, overwrite, bbox)
 
 
 def crop_presenter_pic(poster_id: int, target_height, overwrite: bool = False):
@@ -54,7 +63,8 @@ def crop_presenter_pic(poster_id: int, target_height, overwrite: bool = False):
     candidates = glob.glob(os.path.join(PRESENTER_FOLDER_PATH, f'{poster_id:03}.*'))
     input_file_path = os.path.join(PRESENTER_FOLDER_PATH, candidates[0])
     output_file_path = os.path.join(PRESENTER_CROP_FOLDER_PATH, f'{poster_id:03}.png')
-    crop_to_face(input_file_path, output_file_path, target_height, overwrite)
+    bbox = _CUSTOM_BBOX_DICT.get(poster_id)
+    crop_to_face(input_file_path, output_file_path, target_height, overwrite, bbox)
 
 
 

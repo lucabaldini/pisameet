@@ -23,6 +23,7 @@ import sys
 
 import cv2
 from loguru import logger
+import numpy as np
 import pdfrw
 import PIL
 import PIL.Image
@@ -124,8 +125,41 @@ def png_resize_to_height(input_file_path: str, output_file_path: str, height: in
         resize_image(img, width, height, output_file_path, **kwargs)
 
 
+def png_horizontal_autocrop(input_file_path: str, output_file_path: str,
+    threshold: float = 0.99, padding=0.01, compression_level=6, max_aspect_ratio=1.52):
+    """
+    """
+    import matplotlib.pyplot as plt
+    logger.info(f'Cropping image {input_file_path}...')
+    with PIL.Image.open(input_file_path) as img:
+        logger.debug('Decoding image data...')
+        width, height = img.size
+        channel = lambda ch: np.array(img.getdata(0)).reshape((height, width))
+        data = sum(channel(ch) for ch in (0, 1, 2))
+        threshold *= data.max()
+        padding = int(padding * width)
+        hist = data.mean(axis=0)
+        edges, = np.where(np.diff(hist > threshold))
+        xmin = max(edges.min() - padding, 0)
+        xmax = min(edges.max() + padding + 1, width)
+        deltax = (xmax - xmin)
+        if height / deltax > max_aspect_ratio:
+            logger.warning(f'Cropped width ({deltax}) exceeds maximum aspect ratio')
+            pad = int(0.5 * (height / max_aspect_ratio - deltax))
+            logger.debug(f'Padding back by {pad} pixels...')
+            xmin -= pad
+            xmax += pad
+        ratio = deltax / width
+        logger.debug(f'Horizontal compression ratio: {ratio:.3f}')
+        bbox = (xmin, 0, xmax, height)
+        logger.debug(f'Target bounding box: {bbox}')
+        img = img.crop(bbox)
+        logger.info(f'Saving cropped image to {output_file_path}')
+        img.save(output_file_path, compress_level=compression_level)
+
+
 def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
-    intermediate_width: int = None, overwrite: bool = False) -> str:
+    intermediate_width: int = None, overwrite: bool = False, autocrop: bool = False) -> str:
     """Raster a pdf file and convert it to a png.
     """
     if os.path.exists(output_file_path) and not overwrite:
@@ -141,11 +175,13 @@ def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
     logger.debug('Performing intermediate rastering...')
     density = intermediate_width / original_width * REFERENCE_DENSITY
     file_path = pdf_to_png(input_file_path, output_file_path, density)
+    if autocrop:
+        png_horizontal_autocrop(file_path, file_path)
     logger.debug('Resizing to target width...')
     return png_resize_to_width(file_path, file_path, target_width)
 
 
-def face_bbox(file_path: str, min_frac_size: float = 0.15, padding: float = 1.85):
+def face_bbox(file_path: str, min_frac_size: float = 0.145, padding: float = 1.85):
     """Run a simple opencv face detection and return the proper bounding box for
     cropping the input image.
 
@@ -187,6 +223,10 @@ def face_bbox(file_path: str, min_frac_size: float = 0.15, padding: float = 1.85
         delta = (h - w) // 2
         ymin += delta
         ymax -= delta
+    elif h < w:
+        delta = (w - h) // 2
+        xmin += delta
+        xmax -= delta
     w = xmax - xmin
     h = ymax - ymin
     if abs(w - h) > 1:
@@ -197,7 +237,7 @@ def face_bbox(file_path: str, min_frac_size: float = 0.15, padding: float = 1.85
 
 
 def crop_to_face(file_path: str, output_file_path: str, height: int,
-    overwrite: bool = False,**kwargs):
+    overwrite: bool = False, bbox=None, **kwargs):
     """Resize a given input file to contain the face.
     """
     if os.path.exists(output_file_path) and not overwrite:
@@ -220,7 +260,8 @@ def crop_to_face(file_path: str, output_file_path: str, height: int,
                 w, h = img.size
                 logger.debug(f'Rotated size: {w} x {h}')
             # Crop and scale to the target dimensions.
-            bbox = face_bbox(file_path)
+            if bbox is None:
+                bbox = face_bbox(file_path)
             logger.info(f'Resizing image to ({height}, {height})...')
             img = img.resize((height, height), box=bbox, **kwargs)
             if output_file_path is not None:
