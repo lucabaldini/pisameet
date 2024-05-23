@@ -126,7 +126,7 @@ def png_resize_to_height(input_file_path: str, output_file_path: str, height: in
 
 
 def png_horizontal_autocrop(input_file_path: str, output_file_path: str,
-    threshold: float = 0.99, padding=0.01, compression_level=6, max_aspect_ratio=1.51):
+    threshold: float = 0.99, padding=0.01, compression_level=6, max_aspect_ratio=1.52):
     """
     """
     import matplotlib.pyplot as plt
