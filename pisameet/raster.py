@@ -201,7 +201,7 @@ def face_bbox(file_path: str, min_frac_size: float = 0.145, padding: float = 1.8
 
 
 def crop_to_face(file_path: str, output_file_path: str, height: int,
-    overwrite: bool = False,**kwargs):
+    overwrite: bool = False, bbox=None, **kwargs):
     """Resize a given input file to contain the face.
     """
     if os.path.exists(output_file_path) and not overwrite:
@@ -224,7 +224,8 @@ def crop_to_face(file_path: str, output_file_path: str, height: int,
                 w, h = img.size
                 logger.debug(f'Rotated size: {w} x {h}')
             # Crop and scale to the target dimensions.
-            bbox = face_bbox(file_path)
+            if bbox is None:
+                bbox = face_bbox(file_path)
             logger.info(f'Resizing image to ({height}, {height})...')
             img = img.resize((height, height), box=bbox, **kwargs)
             if output_file_path is not None:
