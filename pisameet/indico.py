@@ -154,7 +154,7 @@ class ConferenceInfo(dict):
             logger.warning('%d orphan contribution(s) found...', len(contributions))
         else:
             logger.info('No orphan contributions found...')
-        logger.info(f'Program info:\n{self}')
+        #logger.info(f'Program info:\n{self}')
 
     def contribution_ids(self):
         """Return all the contribution ids.
@@ -317,6 +317,7 @@ class ConferenceInfo(dict):
         """Download all the files attached to the given conference program.
         """
         logger.info('Downloading files...')
+        num_downloads = 0
         for session in self.values():
             logger.info('Processing session "%s"', session["title"])
             for contribution in session['contributions']:
@@ -337,11 +338,13 @@ class ConferenceInfo(dict):
                         response = requests.get(url)
                         with open(file_path, 'wb') as f:
                             f.write(response.content)
+                        num_downloads += 1
                     # And, of course, we need to write the timestamp, as well.
                     logger.info('Writing file timestamp to %s...', file_path)
                     if not dry_run:
                         with open(tstamp_file_path, 'w') as f:
                             f.write(timestamp)
+        logger.info(f'{num_downloads} additional file(s) downloaded.')
 
     def generate_qr_codes(self, folder_path):
         """Generate all the QR codes for the poster contributions.
