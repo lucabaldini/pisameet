@@ -152,7 +152,7 @@ def png_horizontal_autocrop(input_file_path: str, output_file_path: str,
 
 
 def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
-    intermediate_width: int = None, overwrite: bool = False) -> str:
+    intermediate_width: int = None, overwrite: bool = False, autocrop: bool = False) -> str:
     """Raster a pdf file and convert it to a png.
     """
     if os.path.exists(output_file_path) and not overwrite:
@@ -168,6 +168,8 @@ def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
     logger.debug('Performing intermediate rastering...')
     density = intermediate_width / original_width * REFERENCE_DENSITY
     file_path = pdf_to_png(input_file_path, output_file_path, density)
+    if autocrop:
+        png_horizontal_autocrop(file_path, file_path)
     logger.debug('Resizing to target width...')
     return png_resize_to_width(file_path, file_path, target_width)
 
