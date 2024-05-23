@@ -269,8 +269,3 @@ def crop_to_face(file_path: str, output_file_path: str, height: int,
                 img.save(output_file_path)
     except PIL.UnidentifiedImageError as exception:
         logger.error(exception)
-
-
-
-if __name__ == '__main__':
-    png_horizontal_autocrop('data/test_image.png', '/home/lbaldini/test.png')
