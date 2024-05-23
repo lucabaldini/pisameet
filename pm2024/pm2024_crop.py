@@ -38,6 +38,7 @@ PARSER.add_argument('--overwrite', action='store_true')
 
 
 _CUSTOM_BBOX_DICT = {
+    71: (100, 50, 500, 450),
     244: (0, 0, 2300, 2300),
     349: (200, 100, 600, 500)
 }
