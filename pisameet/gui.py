@@ -28,7 +28,7 @@ import pandas as pd
 # pylint: disable=no-name-in-module, too-many-instance-attributes
 from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect,\
     QTableWidget, QTableWidgetItem, QHeaderView, QTreeWidget, QTreeWidgetItem
-from PyQt5.QtGui import QKeyEvent, QColor
+from PyQt5.QtGui import QKeyEvent, QColor, QFont
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
 from pisameet import logger, abort, read_screen_id
@@ -843,7 +843,10 @@ class ProgramBrowser(DisplaWindowBase):
                 affiliation = presenter.affiliation
                 if pd.isna(affiliation):
                     affiliation = 'N/A'
-                values = [f'[{poster.friendly_id}] {poster.title}', presenter.full_name()]
+                label = f'[{poster.friendly_id}] {poster.title}'
+                if self.program.missing_poster_image(poster.friendly_id):
+                    label = f'{label} (?)'
+                values = [label, presenter.full_name()]
                 child = QTreeWidgetItem(values)
                 child.poster = poster
                 item.addChild(child)
