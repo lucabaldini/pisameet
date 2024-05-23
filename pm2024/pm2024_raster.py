@@ -40,6 +40,9 @@ PARSER.add_argument('--autocrop', action='store_true')
 PARSER.add_argument('--overwrite', action='store_true')
 
 
+_CROP_LIST = [212, 23, 60]
+
+
 
 def raster_poster(poster_id: int, target_width: int, intermediate_width: int, output_folder: str,
     overwrite: bool = False, autocrop: bool = False):
