@@ -356,15 +356,30 @@ class PosterCollectionBase:
         """
         return self._image_path_base(poster_id, self.POSTER_FOLDER_NAME, MISSING_POSTER_PATH)
 
+    def missing_poster_image(self, poster_id):
+        """
+        """
+        return self.poster_image_path(poster_id) == MISSING_POSTER_PATH
+
     def presenter_image_path(self, poster_id):
         """Return the path to the presenter image.
         """
         return self._image_path_base(poster_id, self.PRESENTER_FOLDER_NAME, MISSING_PICTURE_PATH)
 
+    def missing_presenter_image(self, poster_id):
+        """
+        """
+        return self.presenter_image_path(poster_id) == MISSING_PICTURE_PATH
+
     def qrcode_image_path(self, poster_id):
         """Return the path to the qrcode image.
         """
         return self._image_path_base(poster_id, self.QRCODE_FOLDER_NAME, MISSING_QRCODE_PATH)
+
+    def missing_qrcode_image(self, poster_id):
+        """
+        """
+        return self.qrcode_image_path(poster_id) == MISSING_QRCODE_PATH
 
     def load_poster_pixmaps(self, poster, poster_width, portrait_height):
         """Load all the necessary pixmaps for a given poster.
@@ -504,7 +519,10 @@ class PosterProgram(PosterCollectionBase, dict):
             logger.info('%d posters on %d screen(s), multiplicity: %d--%d (average %.2f)',
                 num_posters, num_screens, min(mult), max(mult), mean_mult)
             for poster in posters:
-                self.poster_image_path(poster.friendly_id)
-                self.presenter_image_path(poster.friendly_id)
-                self.qrcode_image_path(poster.friendly_id)
-            #logger.info('Stats: %s', cnt)
+                if self.missing_poster_image(poster.friendly_id):
+                    pass
+                if self.missing_presenter_image(poster.friendly_id):
+                    pass
+                if self.missing_qrcode_image(poster.friendly_id):
+                    pass
+            logger.info('Screen statistics: %s', cnt)
