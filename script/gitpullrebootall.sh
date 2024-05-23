@@ -29,7 +29,7 @@ for ((i=0; i<${#numero[@]}; i++)); do
     x=${numero[i]}
     ip=$((100 + x))
     echo "git pull on ppm$x"
-    ssh pi@192.168.30.$ip "cd pisameet; git pull;"
+    ssh pi@192.168.30.$ip "cd pisameet; git pull; sudo reboot now;"
 done
 
 
