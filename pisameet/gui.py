@@ -839,13 +839,15 @@ class ProgramBrowser(DisplaWindowBase):
         for session, posters in self.program.items():
             item = QTreeWidgetItem([session.title])
             for poster in posters:
+                if self.program.missing_poster_image(poster.friendly_id):
+                    continue
                 presenter = poster.presenter
                 affiliation = presenter.affiliation
                 if pd.isna(affiliation):
                     affiliation = 'N/A'
                 label = f'[{poster.friendly_id}] {poster.title}'
-                if self.program.missing_poster_image(poster.friendly_id):
-                    label = f'{label} (?)'
+                #if self.program.missing_poster_image(poster.friendly_id):
+                #    label = f'{label} (?)'
                 values = [label, presenter.full_name()]
                 child = QTreeWidgetItem(values)
                 child.poster = poster
