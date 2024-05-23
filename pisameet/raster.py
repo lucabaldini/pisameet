@@ -145,7 +145,7 @@ def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
     return png_resize_to_width(file_path, file_path, target_width)
 
 
-def face_bbox(file_path: str, min_frac_size: float = 0.15, padding: float = 1.85):
+def face_bbox(file_path: str, min_frac_size: float = 0.145, padding: float = 1.85):
     """Run a simple opencv face detection and return the proper bounding box for
     cropping the input image.
 
