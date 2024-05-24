@@ -40,7 +40,7 @@ PARSER.add_argument('--autocrop', action='store_true')
 PARSER.add_argument('--overwrite', action='store_true')
 
 
-_AUTOCROP_LIST = [23, 60, 100, 114, 198, 208, 211, 212, 220, 234, 340, 436, 437, 471]
+_AUTOCROP_LIST = [23, 60, 100, 114, 198, 208, 211, 212, 220, 234, 262, 340, 436, 437, 471]
 
 
 
