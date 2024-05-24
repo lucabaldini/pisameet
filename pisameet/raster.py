@@ -139,8 +139,15 @@ def png_horizontal_autocrop(input_file_path: str, output_file_path: str,
         padding = int(padding * width + 1)
         hist = data.mean(axis=0)
         edges, = np.where(np.diff(hist > threshold))
-        xmin = max(edges.min() - padding, 0)
-        xmax = min(edges.max() + padding + 1, width)
+        # Note edges can be empty if there is nothing to crop.
+        try:
+            xmin = max(edges.min() - padding, 0)
+            xmax = min(edges.max() + padding + 1, width)
+        except ValueError as e:
+            logger.warning(e)
+            logger.info(f'Saving verbatim copy of the image to {output_file_path}')
+            img.save(output_file_path, compress_level=compression_level)
+            return
         deltax = (xmax - xmin)
         if height / deltax > max_aspect_ratio:
             logger.warning(f'Cropped width ({deltax}) exceeds maximum aspect ratio')
