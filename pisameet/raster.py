@@ -126,7 +126,7 @@ def png_resize_to_height(input_file_path: str, output_file_path: str, height: in
 
 
 def png_horizontal_autocrop(input_file_path: str, output_file_path: str,
-    threshold: float = 0.99, padding=0.01, compression_level=6, max_aspect_ratio=1.52):
+    threshold: float = 0.99, padding: float = 0.001, compression_level=6, max_aspect_ratio=1.52):
     """
     """
     import matplotlib.pyplot as plt
@@ -137,7 +137,7 @@ def png_horizontal_autocrop(input_file_path: str, output_file_path: str,
         channel = lambda ch: np.array(img.getdata(0)).reshape((height, width))
         data = sum(channel(ch) for ch in (0, 1, 2))
         threshold *= data.max()
-        padding = int(padding * width)
+        padding = int(padding * width + 1)
         hist = data.mean(axis=0)
         edges, = np.where(np.diff(hist > threshold))
         xmin = max(edges.min() - padding, 0)
