@@ -129,7 +129,6 @@ def png_horizontal_autocrop(input_file_path: str, output_file_path: str,
     threshold: float = 0.99, padding: float = 0.001, compression_level=6, max_aspect_ratio=1.52):
     """
     """
-    import matplotlib.pyplot as plt
     logger.info(f'Cropping image {input_file_path}...')
     with PIL.Image.open(input_file_path) as img:
         logger.debug('Decoding image data...')
@@ -158,8 +157,23 @@ def png_horizontal_autocrop(input_file_path: str, output_file_path: str,
         img.save(output_file_path, compress_level=compression_level)
 
 
+def png_horizontal_padding(input_file_path: str, output_file_path: str, aspect_ratio=1.52):
+    """
+    """
+    logger.info(f'Padding image {input_file_path}...')
+    with PIL.Image.open(input_file_path) as img:
+        width, height = img.size
+        target_width = int(height / aspect_ratio)
+        delta = target_width - width
+        logger.debug(f'Padding to {target_width} x {height}...')
+        output = PIL.Image.new(img.mode, (target_width, height), (255, 255, 255))
+        output.paste(img, (delta // 2, 0))
+        output.save(output_file_path)
+
+
 def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
-    intermediate_width: int = None, overwrite: bool = False, autocrop: bool = False) -> str:
+    intermediate_width: int = None, overwrite: bool = False, autocrop: bool = False,
+    max_aspect_ratio=1.52) -> str:
     """Raster a pdf file and convert it to a png.
     """
     if os.path.exists(output_file_path) and not overwrite:
@@ -167,6 +181,7 @@ def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
         return
     logger.info(f'Rastering {input_file_path}...')
     original_width, original_height = pdf_page_size(input_file_path)
+    aspect_ratio = original_height / original_width
     # Are we skipping the intermediate rastering?
     if intermediate_width is None or intermediate_width <= target_width:
         logger.debug('Skipping intermediate rastering...')
@@ -177,6 +192,9 @@ def raster_pdf(input_file_path: str, output_file_path: str, target_width: int,
     file_path = pdf_to_png(input_file_path, output_file_path, density)
     if autocrop:
         png_horizontal_autocrop(file_path, file_path)
+    elif aspect_ratio > max_aspect_ratio:
+        logger.warning(f'Aspect ratio ({aspect_ratio:.3f}) is too large for {input_file_path}!')
+        png_horizontal_padding(file_path, file_path)
     logger.debug('Resizing to target width...')
     return png_resize_to_width(file_path, file_path, target_width)
 
