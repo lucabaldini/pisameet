@@ -157,7 +157,7 @@ def png_horizontal_autocrop(input_file_path: str, output_file_path: str,
         img.save(output_file_path, compress_level=compression_level)
 
 
-def png_horizontal_padding(input_file_path: str, output_file_path: str, aspect_ratio=1.48):
+def png_horizontal_padding(input_file_path: str, output_file_path: str, aspect_ratio=1.50):
     """
     """
     logger.info(f'Padding image {input_file_path}...')
