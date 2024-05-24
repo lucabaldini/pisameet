@@ -1,6 +1,7 @@
 #! /bin/bash
 
 
+
 # Nome del file contenente i valori
 file="listapi.txt"
 
