@@ -511,6 +511,7 @@ class PosterProgram(PosterCollectionBase, dict):
         basic_stats = {'posters': 0, 'pics': 0, 'qrcodes': 0}
         missing_stats = {'posters': 0, 'pics': 0, 'qrcodes': 0}
         missing_pics = []
+        missing_posters = []
         for session, posters in self.items():
             logger.info(session)
             cnt = Counter([poster.screen_id for poster in posters])
@@ -524,6 +525,7 @@ class PosterProgram(PosterCollectionBase, dict):
             for poster in posters:
                 if self.missing_poster_image(poster.friendly_id):
                     missing_stats['posters'] += 1
+                    missing_posters.append(poster)
                 else:
                     basic_stats['posters'] += 1
                 if self.missing_presenter_image(poster.friendly_id):
@@ -541,4 +543,7 @@ class PosterProgram(PosterCollectionBase, dict):
         logger.info(f'Missing elements: {missing_stats}')
         logger.info(f'Oprhan posters with no presenter pic:')
         for poster in missing_pics:
+            logger.info(poster)
+        logger.info(f'Missing posters:')
+        for poster in missing_posters:
             logger.info(poster)
