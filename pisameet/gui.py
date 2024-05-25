@@ -571,7 +571,7 @@ class SlideShow(DisplaWindowBase):
         self.resume_timer.setSingleShot(True)
         self.resume_timer.timeout.connect(self.resume)
         self.reload_timer = QTimer()
-        self.reload_timer.setInterval(500)
+        self.reload_timer.setInterval(10000)
         self.reload_timer.timeout.connect(self._check_reload)
         # We're good to go!
         self._load_roster()
