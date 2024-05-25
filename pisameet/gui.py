@@ -603,6 +603,7 @@ class SlideShow(DisplaWindowBase):
             self._show()
             pix1, pix2 = Poster.load_default_pixmaps(self.poster_width, self.portrait_height)
             self.poster_label.setPixmap(pix1)
+            self.header.clear()
             self.header.qrcode_label.setPixmap(pix2)
             return
         self.poster_roster.load_pixmaps(self.poster_width, self.portrait_height)
