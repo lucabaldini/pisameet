@@ -581,6 +581,9 @@ class SlideShow(DisplaWindowBase):
     def _check_reload(self):
         """
         """
+        # Deal with the case where the session is empty.
+        if self.poster_roster.session is None:
+            return
         if not self.poster_roster.session.ongoing():
             logger.info(f'Session {self.poster_roster.session} is over, reloading the program...')
             self._load_roster()
