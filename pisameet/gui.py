@@ -1038,7 +1038,7 @@ class SessionDirectory(DisplaWindowBase):
         """
         super().__init__(header_class=ScreenHeaderMinimal, **kwargs)
         self.advance_interval = self.sec_to_msec(kwargs['advance_interval'])
-        subtitle = f'{self.DISPLAY_TYPE} ({self.display_date.strftime(DATE_PRETTY_FORMAT)})'
+        subtitle = f'{self.DISPLAY_TYPE} ({datetime.date.today().strftime(DATE_PRETTY_FORMAT)})'
         self.header.set_subtitle(subtitle)
         self.poster_label.hide()
         self.tree_widget = ProgramTreeWidget(self.poster_width, screen_id=True)
