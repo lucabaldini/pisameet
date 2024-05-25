@@ -581,7 +581,6 @@ class SlideShow(DisplaWindowBase):
     def _check_reload(self):
         """
         """
-        logger.debug('Cheking if the session needs to be restarted...')
         if not self.poster_roster.session.ongoing():
             logger.info(f'Session {self.poster_roster.session} is over, reloading the program...')
             self._load_roster()
