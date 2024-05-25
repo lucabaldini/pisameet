@@ -425,8 +425,8 @@ class DisplaWindowBase(QWidget):
         # current day and time. Note that we cache both the date and the datetime
         # of the display.
         if display_date is None:
-            self.display_date = datetime.date.today()
-            self.display_datetime = datetime.datetime.now()
+            self.display_date = None#datetime.date.today()
+            self.display_datetime = None#datetime.datetime.now()
         # Otherwise we also parse the optional display time and proceed.
         else:
             display_time = kwargs.get('display_time')
@@ -570,14 +570,28 @@ class SlideShow(DisplaWindowBase):
         self.resume_timer.setInterval(self.pause_interval)
         self.resume_timer.setSingleShot(True)
         self.resume_timer.timeout.connect(self.resume)
+        self.reload_timer = QTimer()
+        self.reload_timer.setInterval(10000)
+        self.reload_timer.timeout.connect(self._check_reload)
         # We're good to go!
         self._load_roster()
         self.header_timer.start()
+        self.reload_timer.start()
+
+    def _check_reload(self):
+        """
+        """
+        logger.debug('Cheking if the session needs to be restarted...')
+        if not self.poster_roster.session.ongoing():
+            logger.info(f'Session {self.poster_roster.session} is over, reloading the program...')
+            self._load_roster()
+            logger.info(f'Current session: {self.poster_roster.session}')
 
     def _load_roster(self):
         """Load a given session from the underlying configuration file.
         """
         logger.info('Loading poster roster...')
+        self.stop()
         self.hide()
         folder_path = os.path.dirname(self.config_file_path)
         self.poster_roster = PosterRoster(self.config_file_path, folder_path,
