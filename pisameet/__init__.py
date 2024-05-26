@@ -38,6 +38,8 @@ MISSING_PICTURE_PATH = os.path.join(PISAMEET_GRAPHICS, 'unknown_female.png')
 MISSING_POSTER_PATH = os.path.join(PISAMEET_GRAPHICS, 'pisameet2024.png')
 MISSING_QRCODE_PATH = os.path.join(PISAMEET_GRAPHICS, 'unknown_qrcode.png')
 
+# Magic file to induce a reload in the apps that support it.
+MAGIC_FILE_PATH = os.path.join(PISAMEET_BASE, '.reload')
 
 
 class TerminalColors:
@@ -142,3 +144,14 @@ def read_screen_id():
         screen_id = int(input_file.read())
     logger.info('Local screen identifier: %d', screen_id)
     return screen_id
+
+
+def read_magic_file():
+    """
+    """
+    if os.path.exists(MAGIC_FILE_PATH):
+        logger.info('Magic file found!')
+        os.remove(MAGIC_FILE_PATH)
+        logger.info('Magic file removed.')
+        return 1
+    return 0

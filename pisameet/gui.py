@@ -31,7 +31,7 @@ from PyQt5.QtWidgets import QLabel, QGridLayout, QWidget, QGraphicsOpacityEffect
 from PyQt5.QtGui import QKeyEvent, QColor, QFont
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
-from pisameet import logger, abort, read_screen_id
+from pisameet import logger, abort, read_screen_id, read_magic_file
 from pisameet.profile import psstatus
 from pisameet.program import Poster, PosterRoster, PosterProgram, DATE_FORMAT,\
     DATE_PRETTY_FORMAT, DATETIME_FORMAT
@@ -581,6 +581,9 @@ class SlideShow(DisplaWindowBase):
     def _check_reload(self):
         """
         """
+        if read_magic_file():
+            self._load_roster()
+            return
         # Deal with the case where the session is empty.
         if self.poster_roster.session is None:
             return
@@ -1076,6 +1079,9 @@ class SessionDirectory(DisplaWindowBase):
     def _check_reload(self):
         """
         """
+        if read_magic_file():
+            self._load_roster()
+            return 
         logger.debug('Checking if directory needs to be reloaded.')
         if datetime.datetime.now() > self._reload_due:
             self.__num_sessions = self._load_program()

@@ -3,6 +3,7 @@ pm2024/indico_attachments
 pm2024/posters
 pm2024/presenters
 pm2024/pm2024.json
+.reload
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
