@@ -670,7 +670,10 @@ class SlideShow(DisplaWindowBase):
     def display_poster(self, index: int = 0) -> None:
         """Display a given poster.
         """
-        self.__current_index = index % len(self.poster_roster)
+        try:
+            self.__current_index = index % len(self.poster_roster)
+        except ZeroDivisionError:
+            self.__current_index = 0
         self.header.update(self.__current_index)
         poster = self.poster_roster[self.__current_index]
         self.poster_label.setPixmap(poster.poster_pixmap)
