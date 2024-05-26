@@ -1043,7 +1043,7 @@ class SessionDirectory(DisplaWindowBase):
         """
         super().__init__(header_class=ScreenHeaderMinimal, **kwargs)
         self.advance_interval = self.sec_to_msec(kwargs['advance_interval'])
-        subtitle = f'{self.DISPLAY_TYPE} ({datetime.date.today().strftime(DATE_PRETTY_FORMAT)})'
+        subtitle = f'{self.DISPLAY_TYPE}'
         self.header.set_subtitle(subtitle)
         self.poster_label.hide()
         self.tree_widget = ProgramTreeWidget(self.poster_width, screen_id=True)
@@ -1053,11 +1053,13 @@ class SessionDirectory(DisplaWindowBase):
         self.toggle_timer.setInterval(self.advance_interval)
         self.toggle_timer.timeout.connect(self.toggle_session)
         self.header_timer.start()
+        self.reload_timer = QTimer()
+        self.reload_timer.setInterval(10000)
+        self.reload_timer.timeout.connect(self._check_reload)
+        self._reload_due = None
         # Load the program
         self.program = PosterProgram(kwargs.get('cfgfile'))
         self.__num_sessions = self._load_program()
-        if self.__num_sessions == 0:
-            abort('No valid session found for the specified date (%s)' % self.display_date)
         self.__current_index = -1
 
         #if self.__num_sessions > 1:
@@ -1067,16 +1069,31 @@ class SessionDirectory(DisplaWindowBase):
         #self.toggle_session()
 
         self.header_timer.stop()
+        self.reload_timer.start()
         self.expand_all()
         self._show()
+
+    def _check_reload(self):
+        """
+        """
+        logger.debug('Checking if directory needs to be reloaded.')
+        if datetime.datetime.now() > self._reload_due:
+            self.__num_sessions = self._load_program()
+            self.__current_index = -1
+            self.expand_all()
 
     def _load_program(self):
         """Load the program.
         """
+        self._reload_due = None
+        self.tree_widget.clear()
         items = []
         for session, posters in self.program.items():
             if not session.ongoing(self.display_datetime):
                 continue
+            end = session.end
+            if self._reload_due is None or end < self._reload_due:
+                self._reload_due = end
             item = QTreeWidgetItem([session.title])
             for poster in posters:
                 presenter = poster.presenter
@@ -1090,6 +1107,7 @@ class SessionDirectory(DisplaWindowBase):
                 item.addChild(child)
             items.append(item)
         self.tree_widget.insertTopLevelItems(0, items)
+        logger.info(f'Reload due on {self._reload_due}')
         return len(items)
 
     def expand_all(self):
