@@ -210,6 +210,8 @@ class RosterTable(QTableWidget):
         row : int
             The row identifier.
         """
+        print(f'Set current row {row}')
+        print(f'Highlighted row {self._highlighted_row}')
         for col in range(self.columnCount()):
             if self._highlighted_row is not None:
                 self.item(self._highlighted_row, col).setForeground(self._default_color)
@@ -617,6 +619,7 @@ class SlideShow(DisplaWindowBase):
         self._show()
         self.display_poster()
         if len(self.poster_roster) > 1:
+            self.__current_index = 0
             self.start()
 
     def running(self):
