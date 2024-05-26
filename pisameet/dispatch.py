@@ -49,6 +49,9 @@ def pdf_info(file_path: str):
     if box is None:
         logger.warning('No media box for %s...', file_path)
         return num_pages, None
+    if float(box[3]) == 0:
+        logger.warning(f'zero height for {file_path}')
+        return num_pages, None
     aspect_ratio = float(box[2]) / float(box[3])
     return num_pages, aspect_ratio
 
