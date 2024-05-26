@@ -1,4 +1,5 @@
 [Desktop Entry]
 Type=Application
 Name=Pisa Meeting Slideshow
-Exec=/usr/bin/python3 /home/pi/pisameet/bin/slideshow.py /home/pi/pisameet/pm2024/pm2024.xlsx
+Exec= bash -c '/usr/bin/python3 /home/pi/pisameet/bin/slideshow.py /home/pi/pisameet/pm2024/pm2024.xlsx &> /home/pi/slideshow.log'
+
