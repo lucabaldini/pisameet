@@ -218,6 +218,7 @@ class PosterSession:
         """
         if current_datetime is None:
             current_datetime = datetime.datetime.now()
+        # Note we want one <= and one <!
         return self.start is not None and self.end is not None and \
             self.start <= current_datetime < self.end
 
