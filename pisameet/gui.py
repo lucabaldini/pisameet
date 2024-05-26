@@ -210,11 +210,12 @@ class RosterTable(QTableWidget):
         row : int
             The row identifier.
         """
-        logger.info(f'Set current row {row}')
-        logger.info(f'Highlighted row {self._highlighted_row}')
         for col in range(self.columnCount()):
             if self._highlighted_row is not None:
-                self.item(self._highlighted_row, col).setForeground(self._default_color)
+                try:
+                    self.item(self._highlighted_row, col).setForeground(self._default_color)
+                except AttributeError:
+                    logger.warning(f'Could not highlight row {self._highlighted_row, col}')
             self.item(row, col).setForeground(self._highlight_color)
         self._highlighted_row = row
 
