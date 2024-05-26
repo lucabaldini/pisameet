@@ -1083,11 +1083,8 @@ class SessionDirectory(DisplaWindowBase):
     def _check_reload(self):
         """
         """
-        if read_magic_file():
-            self._load_roster()
-            return
         logger.debug('Checking if directory needs to be reloaded.')
-        if datetime.datetime.now() > self._reload_due:
+        if read_magic_file() or datetime.datetime.now() > self._reload_due:
             self.__num_sessions = self._load_program()
             self.__current_index = -1
             self.expand_all()
