@@ -219,7 +219,7 @@ class PosterSession:
         if current_datetime is None:
             current_datetime = datetime.datetime.now()
         return self.start is not None and self.end is not None and \
-            self.start <= current_datetime <= self.end
+            self.start <= current_datetime < self.end
 
     def __str__(self):
         """String formatting.
