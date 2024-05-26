@@ -576,7 +576,6 @@ class SlideShow(DisplaWindowBase):
         # We're good to go!
         self._load_roster()
         self.header_timer.start()
-        self.reload_timer.start()
 
     def _check_reload(self):
         """
@@ -630,12 +629,14 @@ class SlideShow(DisplaWindowBase):
         """
         self.__status = SlideShowStatus.RUNNING
         self.advance_timer.start()
+        self.reload_timer.start()
 
     def stop(self):
         """Stop the slideshow.
         """
         self.__status = SlideShowStatus.STOPPED
         self.advance_timer.stop()
+        self.reload_timer.stop()
 
     def pause(self):
         """Pause the slideShow.
@@ -1081,7 +1082,7 @@ class SessionDirectory(DisplaWindowBase):
         """
         if read_magic_file():
             self._load_roster()
-            return 
+            return
         logger.debug('Checking if directory needs to be reloaded.')
         if datetime.datetime.now() > self._reload_due:
             self.__num_sessions = self._load_program()
