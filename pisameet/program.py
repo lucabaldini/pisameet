@@ -281,19 +281,16 @@ class PosterCollectionBase:
 
     def session_list(self):
         """Return a list with all the PosterSession objects.
-
-        Note we are filtering the sessions to avoid having multiple copies of the
-        same entry in the menu. This is horrible and should be streamlined.
         """
-        sessions = []
-        visited = []
-        for _, row in self._program_df.iterrows():
-            session = PosterSession.from_df_row(row)
-            if session.title not in visited:
-                visited.append(session.title)
-                sessions.append(session)
-        return sessions
-        #return [PosterSession.from_df_row(row) for _, row in self._program_df.iterrows()]
+        #sessions = []
+        #visited = []
+        #for _, row in self._program_df.iterrows():
+        #    session = PosterSession.from_df_row(row)
+        #    if session.title not in visited:
+        #        #visited.append(session.title)
+        #        sessions.append(session)
+        #return sessions
+        return [PosterSession.from_df_row(row) for _, row in self._program_df.iterrows()]
 
     def session_data_frame(self, session_id):
         """Return a pandas data frame with all the data for a given session.
